@@ -4,8 +4,7 @@
 	"description": "Discord bot that converts reponds to voice messages",
 	"main": "dist/index.js",
 	"scripts": {
-		"build": "babel src -d dist",
-		"start": "nodemon dist/index.js"
+		"start": "nodemon --exec babel-node src/index.js"
 	},
 	"author": "branko.rovcanin",
 	"license": "ISC",
@@ -21,8 +20,8 @@
 		"prism-media": "^1.3.5"
 	},
 	"devDependencies": {
-		"@babel/cli": "^7.16.8",
 		"@babel/core": "^7.16.9",
+		"@babel/node": "^7.20.7",
 		"@babel/preset-env": "^7.16.8"
 	},
 	"babel": {
