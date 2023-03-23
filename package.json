@@ -1,0 +1,18 @@
+{
+  "name": "voice-message-chat-bot",
+  "version": "1.0.0",
+  "description": "Discord bot that converts reponds to voice messages",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "branko.rovcanin",
+  "license": "ISC",
+  "dependencies": {
+    "@google-cloud/speech": "^5.4.0",
+    "discord.js": "^14.8.0",
+    "dotenv": "^16.0.3",
+    "nodemon": "^2.0.22",
+    "openai": "^3.2.1"
+  }
+}

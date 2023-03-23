@@ -1,0 +1,2 @@
+1088375970509115402 - discord client id
+61NfHBW1HzftGLTriCo3ZAxdCdK7bqqJ - discord client secret
