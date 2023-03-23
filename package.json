@@ -2,9 +2,10 @@
 	"name": "voice-message-chat-bot",
 	"version": "1.0.0",
 	"description": "Discord bot that converts reponds to voice messages",
-	"main": "index.js",
+	"main": "dist/index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"build": "babel src -d dist",
+		"start": "nodemon dist/index.js"
 	},
 	"author": "branko.rovcanin",
 	"license": "ISC",
@@ -18,5 +19,15 @@
 		"nodemon": "^2.0.22",
 		"openai": "^3.2.1",
 		"prism-media": "^1.3.5"
+	},
+	"devDependencies": {
+		"@babel/cli": "^7.16.8",
+		"@babel/core": "^7.16.9",
+		"@babel/preset-env": "^7.16.8"
+	},
+	"babel": {
+		"presets": [
+			"@babel/preset-env"
+		]
 	}
 }
