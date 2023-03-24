@@ -10,13 +10,16 @@ export const deleteFile = (fileName) => {
 	});
 };
 
-export const genereteBasicResponseIfNeccessary = (message) => {
+export const genereteBasicResponseIfNeccessary = (client, message) => {
 	if (message.content === "Hello World!") {
-		return sendMessageToProperChannel(
+		sendMessageToProperChannel(
+			client,
 			`Hello, ${message.author.username}`,
 			message.channelId
 		);
+		return true;
 	}
+	return false;
 };
 
 export const sendMessageToProperChannel = async (
