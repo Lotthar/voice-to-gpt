@@ -1,6 +1,8 @@
 import { Configuration, OpenAIApi } from "openai";
 import { v4 as uuidv4 } from "uuid";
-require("dotenv").config();
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // Set up your API key and model ID
 const configuration = new Configuration({

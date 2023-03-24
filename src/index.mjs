@@ -1,10 +1,12 @@
 import { Client, Events, GatewayIntentBits } from "discord.js";
-import { generateOpenAIAnswer } from "./open-ai";
+import { generateOpenAIAnswer } from "./open-ai.mjs";
 import {
 	sendMessageToProperChannel,
 	genereteBasicResponseIfNeccessary,
-} from "./util";
-require("dotenv").config();
+} from "./util.mjs";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // Set up Discord client for bot
 const discordClient = new Client({

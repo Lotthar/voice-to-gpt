@@ -1,4 +1,4 @@
-import { fs } from "node:fs";
+import fs from "fs";
 
 export const deleteFile = (fileName) => {
 	fs.unlink(fileName, (err) => {
