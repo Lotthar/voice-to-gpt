@@ -1,7 +1,7 @@
 import { ChannelType, VoiceChannel } from "discord.js";
 import { VoiceConnectionStatus, entersState, joinVoiceChannel } from "@discordjs/voice";
 import { createFileFromRawAudio } from "./record.mjs";
-const opusStream = null;
+import { processAudioStreamIntoText } from "./audioText.mjs";
 
 export const joinVoiceChannelAndGetConnection = (newState) => {
   const connection = joinVoiceChannel({
@@ -18,7 +18,7 @@ export const joinVoiceChannelAndGetConnection = (newState) => {
 const addConnectionReadyEvent = (connection) => {
   connection.on(VoiceConnectionStatus.Ready, () => {
     console.log("The connection has entered the Ready state - ready to play audio!");
-    addConnectionOnSpeakingEvents(connection);
+    addSpeakingEvent(connection);
   });
 };
 
@@ -38,10 +38,10 @@ const addConnectionDisconnectedEvent = (connection) => {
   });
 };
 
-const addConnectionOnSpeakingEvents = (connection) => {
-  connection.receiver.speaking.on("start", (userId) => {
+const addSpeakingEvent = (connection) => {
+  connection.receiver.speaking.on("start", async (userId) => {
     console.log(`User ${userId} started speaking`);
-    const rawAudio = createFileFromRawAudio(connection, userId);
+    await createFileFromRawAudio(connection, userId, processAudioStreamIntoText);
   });
   return true;
 };
@@ -55,3 +55,5 @@ export const checkIfInvalidVoiceChannel = (oldState, newState) => {
 
   return true;
 };
+
+// AIzaSyBkKyZzkWaiTC-5ILILM3UR8Di21kAsEPs

@@ -1,6 +1,6 @@
 import { Client, Events, GatewayIntentBits } from "discord.js";
 import { generateOpenAIAnswer } from "./open-ai.mjs";
-import { sendMessageToProperChannel, genereteBasicResponseIfNeccessary } from "./util.mjs";
+import { sendMessageToProperChannel } from "./util.mjs";
 import {
   joinVoiceChannelAndGetConnection,
   checkIfInvalidVoiceChannel,
@@ -28,7 +28,6 @@ discordClient.once(Events.ClientReady, (client) => {
 discordClient.on(Events.MessageCreate, async (message) => {
   if (message.author.bot) return;
   console.log(`Message recieved: "${message}"`);
-  if (genereteBasicResponseIfNeccessary(discordClient, message)) return;
   const answer = await generateOpenAIAnswer(message.content);
   sendMessageToProperChannel(discordClient, answer, message.channelId);
 });

@@ -1,4 +1,5 @@
 import fs from "fs";
+import ffmpeg from "fluent-ffmpeg";
 
 export const deleteFile = (fileName) => {
   fs.unlink(fileName, (err) => {
@@ -10,12 +11,17 @@ export const deleteFile = (fileName) => {
   });
 };
 
-export const genereteBasicResponseIfNeccessary = (client, message) => {
-  if (message.content === "Hello World!") {
-    sendMessageToProperChannel(client, `Hello, ${message.author.username}`, message.channelId);
-    return true;
-  }
-  return false;
+export const convertOggFileToMp3 = (oggFilePath, mp3FilePath, onConvertClbc) => {
+  // TODO: maybe change library for conversion .ogg file is working
+  const ffm = ffmpeg();
+  ffm.input(oggFilePath);
+  ffm.audioChannels(2);
+  ffm.audioCodec("libmp3lame");
+  ffm
+    .output(mp3FilePath)
+    .on("end", () => onConvertClbc())
+    .on("error", (err) => console.error(err))
+    .run();
 };
 
 export const sendMessageToProperChannel = async (client, message, channelId) => {

@@ -1,26 +1,34 @@
-import { sendMessageToProperChannel } from "./util.mjs";
 import prism from "prism-media";
 import { EndBehaviorType } from "@discordjs/voice";
 import { pipeline } from "node:stream";
 import { createWriteStream } from "node:fs";
+import path from "path";
+import { convertOggFileToMp3 } from "./util.mjs";
 
 let isCurrentlyProcessing = false;
 
-export const createFileFromRawAudio = (connection, userId) => {
-  const filename = `./recordings/${userId}.ogg`;
-  const out = createWriteStream(filename);
+export const createFileFromRawAudio = async (connection, userId, processAudioToSpeechClbc) => {
+  const oggFilePath = path.join("./recordings", `${userId}.ogg`);
+  const mp3FilePath = path.join("./recordings", `${userId}.mp3`);
+  const outputStream = createWriteStream(oggFilePath);
+  console.log(`Mp3 file path: ${mp3FilePath}`);
   if (isCurrentlyProcessing) return;
   const opusStream = getOpusStream(connection, userId);
   const oggStream = getOggStream();
   isCurrentlyProcessing = true;
-  pipeline(opusStream, oggStream, out, (error) => {
+  pipeline(opusStream, oggStream, outputStream, async (error) => {
     if (error) {
-      console.warn(`Error recording file ${filename} - ${error.message}`);
+      console.warn(`Error recording file ${oggFilePath} - ${error.message}`);
     } else {
-      console.log(`Recorded ${filename}`);
+      console.log(`Recorded ${oggFilePath}`);
+      convertOggFileToMp3(oggFilePath, mp3FilePath, onConvertToMp3);
     }
     isCurrentlyProcessing = false;
   });
+};
+
+const onConvertToMp3 = () => {
+  console.log("Conversion from .ogg to .mp3 is complete!");
 };
 
 /**
@@ -53,9 +61,6 @@ const getOggStream = () => {
       channelCount: 2,
       sampleRate: 48000,
     }),
-    pageSizeControl: {
-      maxPackets: 10,
-    },
     crc: false,
   });
 };
