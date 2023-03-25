@@ -1,17 +1,16 @@
 import prism from "prism-media";
 import { EndBehaviorType } from "@discordjs/voice";
 import { pipeline } from "node:stream";
-import { createWriteStream } from "node:fs";
+import { createWriteStream, readFileSync } from "node:fs";
+import { playOpenAiAnswerAfterSpeech } from "./audio-text.mjs";
+import { processAudioStreamIntoText } from "./google-speech-to-text.mjs";
 import path from "path";
-import { convertOggFileToMp3 } from "./util.mjs";
 
 let isCurrentlyProcessing = false;
 
-export const createFileFromRawAudio = async (connection, userId, processAudioToSpeechClbc) => {
+export const createOggFileForProcessing = async (connection, userId) => {
   const oggFilePath = path.join("./recordings", `${userId}.ogg`);
-  const mp3FilePath = path.join("./recordings", `${userId}.mp3`);
   const outputStream = createWriteStream(oggFilePath);
-  console.log(`Mp3 file path: ${mp3FilePath}`);
   if (isCurrentlyProcessing) return;
   const opusStream = getOpusStream(connection, userId);
   const oggStream = getOggStream();
@@ -21,14 +20,15 @@ export const createFileFromRawAudio = async (connection, userId, processAudioToS
       console.warn(`Error recording file ${oggFilePath} - ${error.message}`);
     } else {
       console.log(`Recorded ${oggFilePath}`);
-      convertOggFileToMp3(oggFilePath, mp3FilePath, onConvertToMp3);
+      const file = readFileSync(oggFilePath);
+      await playOpenAiAnswerAfterSpeech(
+        connection,
+        file.toString("base64"),
+        processAudioStreamIntoText
+      );
+      isCurrentlyProcessing = false;
     }
-    isCurrentlyProcessing = false;
   });
-};
-
-const onConvertToMp3 = () => {
-  console.log("Conversion from .ogg to .mp3 is complete!");
 };
 
 /**
@@ -36,9 +36,8 @@ const onConvertToMp3 = () => {
  *
  * @param {*} opusStream - given opus stream to process
  */
-export const getRawAudioResourceFromStream = (connection, userId) => {
-  const opusStream = getOpusStream(connection, userId);
-  return opusStream.pipe(new prism.opus.Decoder({ frameSize: 960, channels: 2, rate: 48000 }));
+export const getOpusDecoder = (opusStream) => {
+  return new prism.opus.Decoder({ frameSize: 960, channels: 2, rate: 48000 });
 };
 
 /**

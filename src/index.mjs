@@ -4,7 +4,7 @@ import { sendMessageToProperChannel } from "./util.mjs";
 import {
   joinVoiceChannelAndGetConnection,
   checkIfInvalidVoiceChannel,
-} from "./voiceConnection.mjs";
+} from "./voice-connection.mjs";
 import dotenv from "dotenv";
 
 dotenv.config();

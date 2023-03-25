@@ -1,7 +1,6 @@
 import { ChannelType, VoiceChannel } from "discord.js";
 import { VoiceConnectionStatus, entersState, joinVoiceChannel } from "@discordjs/voice";
-import { createFileFromRawAudio } from "./record.mjs";
-import { processAudioStreamIntoText } from "./audioText.mjs";
+import { createOggFileForProcessing } from "./record.mjs";
 
 export const joinVoiceChannelAndGetConnection = (newState) => {
   const connection = joinVoiceChannel({
@@ -41,9 +40,8 @@ const addConnectionDisconnectedEvent = (connection) => {
 const addSpeakingEvent = (connection) => {
   connection.receiver.speaking.on("start", async (userId) => {
     console.log(`User ${userId} started speaking`);
-    await createFileFromRawAudio(connection, userId, processAudioStreamIntoText);
+    await createOggFileForProcessing(connection, userId);
   });
-  return true;
 };
 
 export const checkIfInvalidVoiceChannel = (oldState, newState) => {
