@@ -10,25 +10,35 @@ let isCurrentlyProcessing = false;
 
 export const createOggFileForProcessing = async (connection, userId) => {
   const oggFilePath = path.join("./recordings", `${userId}.ogg`);
-  const outputStream = createWriteStream(oggFilePath);
   if (isCurrentlyProcessing) return;
+  isCurrentlyProcessing = true;
   const opusStream = getOpusStream(connection, userId);
   const oggStream = getOggStream();
-  isCurrentlyProcessing = true;
+  pipelineOpusStreamIntoFile(connection, opusStream, oggStream, oggFilePath);
+};
+
+const pipelineOpusStreamIntoFile = (connection, opusStream, oggStream, oggFilePath) => {
+  const outputStream = createWriteStream(oggFilePath);
   pipeline(opusStream, oggStream, outputStream, async (error) => {
     if (error) {
       console.warn(`Error recording file ${oggFilePath} - ${error.message}`);
     } else {
       console.log(`Recorded ${oggFilePath}`);
-      const file = readFileSync(oggFilePath);
-      await playOpenAiAnswerAfterSpeech(
-        connection,
-        file.toString("base64"),
-        processAudioStreamIntoText
-      );
       isCurrentlyProcessing = false;
+      readOpusFileAndPlayAnswer(connection, oggFilePath);
     }
   });
+};
+
+const readOpusFileAndPlayAnswer = async (connection, oggFilePath) => {
+  // TODO: ovdje odraditi konverziju .ogg to .flac ako ke uopste moguce
+  const flacFilePath = path.join("./recordings", `sample.flac`);
+  const audioFile = readFileSync(flacFilePath);
+  await playOpenAiAnswerAfterSpeech(
+    connection,
+    audioFile.toString("base64"),
+    processAudioStreamIntoText
+  );
 };
 
 /**
@@ -42,7 +52,7 @@ export const getOpusDecoder = (opusStream) => {
 
 /**
  *  A Readable object mode stream of Opus packets
-    Will end when the voice connection is destroyed, or the user has not said anything for 100ms
+    Will end when the voice connection is destroyed, or the user has not said anything for 500ms
  * @param {*} connection - voice channel connection object
  */
 const getOpusStream = (connection, userId) => {
@@ -60,6 +70,9 @@ const getOggStream = () => {
       channelCount: 2,
       sampleRate: 48000,
     }),
+    pageSizeControl: {
+      maxPackets: 10,
+    },
     crc: false,
   });
 };
