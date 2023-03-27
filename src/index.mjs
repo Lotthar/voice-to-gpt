@@ -1,18 +1,19 @@
 import { Client, Events, GatewayIntentBits } from "discord.js";
 import { generateOpenAIAnswer } from "./open-ai.mjs";
-import { sendMessageToProperChannel } from "./util.mjs";
 import {
   joinVoiceChannelAndGetConnection,
   checkIfInvalidVoiceChannel,
+  sendMessageToProperChannel,
 } from "./voice-connection.mjs";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 let voiceChannelConnection;
+export let currentChannelId = null;
 
 // Set up Discord client for bot
-const discordClient = new Client({
+export const discordClient = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
@@ -29,12 +30,14 @@ discordClient.on(Events.MessageCreate, async (message) => {
   if (message.author.bot) return;
   console.log(`Message recieved: "${message}"`);
   const answer = await generateOpenAIAnswer(message.content);
-  sendMessageToProperChannel(discordClient, answer, message.channelId);
+  currentChannelId = message.channelId;
+  sendMessageToProperChannel(answer, currentChannelId);
 });
 
 discordClient.on(Events.VoiceStateUpdate, async (oldState, newState) => {
   try {
     if (checkIfInvalidVoiceChannel(oldState, newState)) return;
+    currentChannelId = newState.channelId;
     voiceChannelConnection = joinVoiceChannelAndGetConnection(newState);
   } catch (error) {
     console.error(error);

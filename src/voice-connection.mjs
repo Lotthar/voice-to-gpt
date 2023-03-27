@@ -3,10 +3,10 @@ import {
   VoiceConnectionStatus,
   entersState,
   joinVoiceChannel,
-  VoiceReceiver,
+  EndBehaviorType,
 } from "@discordjs/voice";
-import opus from "@discordjs/opus";
-import { createOggFileForProcessing, getOpusStream } from "./record.mjs";
+import { createFlacAudioFileForProcessing } from "./audio-util.mjs";
+import { discordClient, currentChannelId } from "./index.mjs";
 
 export const joinVoiceChannelAndGetConnection = (newState) => {
   const connection = joinVoiceChannel({
@@ -44,16 +44,19 @@ const addConnectionDisconnectedEvent = (connection) => {
 };
 
 const addSpeakingEvent = (connection) => {
+  let opusStream = null;
   const receiver = connection.receiver;
-  const encoder = new opus.OpusEncoder(48000, 2);
-  let opusStream;
   receiver.speaking.on("start", async (userId) => {
     opusStream = getOpusStream(receiver, userId);
   });
 
   receiver.speaking.on("end", async (userId) => {
-    console.log(`User ${userId} finished speaking`);
-    await createOggFileForProcessing(opusStream, userId);
+    if (opusStream === null) {
+      console.log(`Opus stream was not able to  start after userId: ${userId} started speaking`);
+      return;
+    }
+    console.log(`User ${userId} finished speaking, creating an answer...`);
+    await createFlacAudioFileForProcessing(connection, opusStream, userId);
   });
 };
 
@@ -67,4 +70,21 @@ export const checkIfInvalidVoiceChannel = (oldState, newState) => {
   return true;
 };
 
-// AIzaSyBkKyZzkWaiTC-5ILILM3UR8Di21kAsEPs
+/**
+ *  A Readable object mode stream of Opus packets
+    Will end when the voice connection is destroyed, or the user has not said anything for 500ms
+ * @param {*} receiver - voice channel voice reciever object
+ */
+export const getOpusStream = (receiver, userId) => {
+  return receiver.subscribe(userId, {
+    end: {
+      behavior: EndBehaviorType.AfterSilence,
+      duration: 500,
+    },
+  });
+};
+
+export const sendMessageToProperChannel = async (message) => {
+  const channel = await discordClient.channels.fetch(currentChannelId);
+  channel.send(message);
+};

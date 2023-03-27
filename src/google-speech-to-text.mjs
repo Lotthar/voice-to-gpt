@@ -6,16 +6,17 @@ const speechToTextClient = new SpeechClient({
   keyFilename: "./gcloud_keyfile.json",
 });
 
-export const processAudioStreamIntoText = async (speechBase64Content) => {
+export const processAudioStreamIntoText = async (speechAudioBase64) => {
   const request = {
     audio: {
-      content: speechBase64Content,
+      content: speechAudioBase64,
     },
     config: {
-      encoding: "OGG_OPUS",
+      encoding: "FLAC",
       sampleRateHertz: 48000,
       audioChannelCount: 2,
       languageCode: "en-US",
+      enableSeparateRecognitionPerChannel: true,
     },
   };
 
