@@ -12,9 +12,9 @@ export const processAudioStreamIntoText = async (speechBase64Content) => {
       content: speechBase64Content,
     },
     config: {
-      encoding: "FLAC",
-      sampleRateHertz: 16000,
-      audioChannelCount: 1,
+      encoding: "OGG_OPUS",
+      sampleRateHertz: 48000,
+      audioChannelCount: 2,
       languageCode: "en-US",
     },
   };

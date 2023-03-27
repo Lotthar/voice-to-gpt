@@ -1,6 +1,12 @@
 import { ChannelType, VoiceChannel } from "discord.js";
-import { VoiceConnectionStatus, entersState, joinVoiceChannel } from "@discordjs/voice";
-import { createOggFileForProcessing } from "./record.mjs";
+import {
+  VoiceConnectionStatus,
+  entersState,
+  joinVoiceChannel,
+  VoiceReceiver,
+} from "@discordjs/voice";
+import opus from "@discordjs/opus";
+import { createOggFileForProcessing, getOpusStream } from "./record.mjs";
 
 export const joinVoiceChannelAndGetConnection = (newState) => {
   const connection = joinVoiceChannel({
@@ -38,9 +44,16 @@ const addConnectionDisconnectedEvent = (connection) => {
 };
 
 const addSpeakingEvent = (connection) => {
-  connection.receiver.speaking.on("start", async (userId) => {
-    console.log(`User ${userId} started speaking`);
-    await createOggFileForProcessing(connection, userId);
+  const receiver = connection.receiver;
+  const encoder = new opus.OpusEncoder(48000, 2);
+  let opusStream;
+  receiver.speaking.on("start", async (userId) => {
+    opusStream = getOpusStream(receiver, userId);
+  });
+
+  receiver.speaking.on("end", async (userId) => {
+    console.log(`User ${userId} finished speaking`);
+    await createOggFileForProcessing(opusStream, userId);
   });
 };
 

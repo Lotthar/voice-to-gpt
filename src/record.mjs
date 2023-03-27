@@ -1,35 +1,33 @@
 import prism from "prism-media";
-import { EndBehaviorType } from "@discordjs/voice";
+import { EndBehaviorType, VoiceReceiver, demuxProbe, createAudioResource } from "@discordjs/voice";
 import { StreamEncoder } from "flac-bindings";
 import { pipeline } from "node:stream";
 import { createWriteStream, createReadStream } from "node:fs";
 import { playOpenAiAnswerAfterSpeech } from "./audio-text.mjs";
 import { processAudioStreamIntoText } from "./google-speech-to-text.mjs";
+
 import path from "path";
-import pkg from "@discordjs/opus";
-const { OpusEncoder } = pkg;
 
 let isCurrentlyProcessing = false;
 
-export const createOggFileForProcessing = async (connection, userId) => {
-  const oggFilePath = path.join("./recordings", `${userId}.ogg`);
-  if (isCurrentlyProcessing) return;
-  isCurrentlyProcessing = true;
-  const opusStream = getOpusStream(connection, userId);
-  // const oggStream = getOggStream();
-  const flacFilePath = path.join("./recordings", `test.flac`);
-
-  const flacFile = opusStream
-    // TODO: Swap decoder with any other possible NE RADI PRSIM ENCODER/DECODER na novim OPUS fajlovima
-    //  izgleda da je problem velicina buffer-a
-    // Probati OpusDecored iz discord opus paketa
-    .pipe(new prism.opus.Decoder({ rate: 48000, channels: 2, frameSize: 960 }))
-    .pipe(getFlacEncoder())
-    .pipe(createWriteStream(flacFilePath));
-  flacFile.on("finish", () => {
-    console.log("Successfully created .flac audio file!");
-    readFlacFileAndPlayAnswer(connection, flacFilePath);
+export const createOggFileForProcessing = async (opusStream, userId) => {
+  const oggFilePath = path.join("./recordings", `test.ogg`);
+  const oggOut = createWriteStream(oggFilePath);
+  // const flacEncoder = getFlacEncoder();
+  pipeline(opusStream, getOggStream(), oggOut, async (error) => {
+    if (error) {
+      console.warn(`Error recording file ${oggFilePath} - ${error.message}`);
+    } else {
+      console.log(`Recorded ${oggFilePath}`);
+      const oggStream = await probeAndCreateResource(createReadStream(oggFilePath));
+      console.log("breakpoint");
+    }
   });
+};
+
+const probeAndCreateResource = async (readableStream) => {
+  const { stream, type } = await demuxProbe(readableStream);
+  return createAudioResource(stream, { inputType: type });
 };
 
 const pipelineOpusStreamIntoFile = (connection, opusStream, oggStream, oggFilePath) => {
@@ -71,8 +69,8 @@ const getFlacEncoder = () => {
     Will end when the voice connection is destroyed, or the user has not said anything for 500ms
  * @param {*} connection - voice channel connection object
  */
-const getOpusStream = (connection, userId) => {
-  return connection.receiver.subscribe(userId, {
+export const getOpusStream = (receiver, userId) => {
+  return receiver.subscribe(userId, {
     end: {
       behavior: EndBehaviorType.AfterSilence,
       duration: 500,
