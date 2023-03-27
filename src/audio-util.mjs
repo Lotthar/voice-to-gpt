@@ -54,13 +54,3 @@ class OpusDecodingStream extends Transform {
     callback();
   }
 }
-
-// const deleteFile = (fileName) => {
-//   unlink(fileName, (err) => {
-//     if (err) {
-//       console.error(`Failed to delete file: ${err}!`);
-//     } else {
-//       console.log(`File ${fileName} deleted!`);
-//     }
-//   });
-// };

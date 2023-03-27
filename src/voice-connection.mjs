@@ -6,7 +6,7 @@ import {
   EndBehaviorType,
 } from "@discordjs/voice";
 import { createFlacAudioFileForProcessing } from "./audio-util.mjs";
-import { discordClient, currentChannelId } from "./index.mjs";
+import { currentChannelId, discordClient } from "./index.mjs";
 
 export const joinVoiceChannelAndGetConnection = (newState) => {
   const connection = joinVoiceChannel({

@@ -12,17 +12,22 @@ export const playOpenAiAnswerAfterSpeech = async (connection, audioContent, audi
 const playAudioResourceFromText = (connection, openAiAnswer) => {
   const resourceLink = getURIForVoiceFromText(openAiAnswer);
   const resource = createAudioResource(resourceLink);
-  const player = createAndSubscribeAudioPlayer(connection);
+  const player = createAndSubscribeAudioPlayer(
+    connection,
+    openAiAnswer,
+    sendMessageToProperChannel
+  );
   player.play(resource);
 };
 
-const createAndSubscribeAudioPlayer = (connection) => {
+const createAndSubscribeAudioPlayer = (connection, text, sendTextMsgClbc) => {
   const player = createAudioPlayer();
   player.on("error", (error) => {
     console.error("Error:", error.message, "with audio", error.resource.metadata.title);
   });
   player.on(AudioPlayerStatus.Playing, () => {
     console.log("The audio answer has started playing!");
+    sendTextMsgClbc(text);
   });
   connection.subscribe(player);
   return player;

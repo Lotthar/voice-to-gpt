@@ -20,8 +20,7 @@
     "libsodium-wrappers": "^0.7.11",
     "nodemon": "^2.0.22",
     "openai": "^3.2.1",
-    "opusscript": "^0.0.8",
-    "prism-media": "^2.0.0-alpha.0"
+    "opusscript": "^0.0.8"
   },
   "devDependencies": {
     "@babel/core": "^7.16.9",
