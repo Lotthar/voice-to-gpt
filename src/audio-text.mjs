@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import { generateOpenAIAnswer } from "./open-ai.mjs";
 import { sendMessageToProperChannel } from "./voice-connection.mjs";
 import { createAudioResource, createAudioPlayer, AudioPlayerStatus } from "@discordjs/voice";

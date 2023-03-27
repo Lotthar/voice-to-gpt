@@ -29,6 +29,6 @@ export const generateOpenAIAnswer = async (transcript) => {
     temperature: 0,
   });
   let result = openAIresponse.data.choices[0].text;
-  console.log(result);
+  console.log(`OpenAI answer: ${result}`);
   return result;
 };

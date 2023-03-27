@@ -24,6 +24,6 @@ export const processAudioStreamIntoText = async (speechAudioBase64) => {
   const transcription = response.results
     .map((result) => result.alternatives[0].transcript)
     .join("\n");
-  console.log(`Transcription: ${transcription}`);
+  console.log(`Google Speech to Text transcription: "${transcription}"`);
   return transcription;
 };

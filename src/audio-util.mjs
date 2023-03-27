@@ -15,9 +15,7 @@ export const createFlacAudioFileForProcessing = async (connection, opusStream, u
     .pipe(getFlacEncoder()) // encoded packets are then encoded to .flac
     .pipe(outputStream); // and piped into the output file
   outputStream.on("finish", async () => {
-    console.log(
-      `Temporary .flac audio file: ${flacFilePath} created for processing google stt transcript`
-    );
+    console.log(`Temp audio file: ${flacFilePath} created for processing google STT transcript!`);
     await readFlacAudioFileAndPlayAnswer(connection, flacFilePath);
   });
 };
