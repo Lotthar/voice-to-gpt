@@ -1,7 +1,6 @@
 import { createWriteStream, readFileSync, unlink } from "node:fs";
 import { Transform } from "node:stream";
 import { playOpenAiAnswerAfterSpeech } from "./audio-text.mjs";
-import { processAudioStreamIntoText } from "./google-speech-to-text.mjs";
 import { StreamEncoder } from "flac-bindings";
 import opus from "@discordjs/opus";
 import path from "path";
@@ -22,11 +21,7 @@ export const createFlacAudioFileForProcessing = async (connection, opusStream, u
 
 const readFlacAudioFileAndPlayAnswer = async (connection, flacFilePath) => {
   const flacAudioFile = readFileSync(flacFilePath);
-  await playOpenAiAnswerAfterSpeech(
-    connection,
-    flacAudioFile.toString("base64"),
-    processAudioStreamIntoText
-  );
+  await playOpenAiAnswerAfterSpeech(connection, flacAudioFile.toString("base64"));
 };
 
 const getFlacEncoder = () => {

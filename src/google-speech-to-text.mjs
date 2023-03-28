@@ -6,7 +6,7 @@ const speechToTextClient = new SpeechClient({
   keyFilename: "./gcloud_keyfile.json",
 });
 
-export const processAudioStreamIntoText = async (speechAudioBase64) => {
+export const processAudioContentIntoText = async (speechAudioBase64) => {
   const request = {
     audio: {
       content: speechAudioBase64,
