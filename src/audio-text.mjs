@@ -32,7 +32,6 @@ const initAndSubscribeAudioPlayerToVoiceChannel = (connection, text) => {
 
 const addOnPlayingPlayerEvent = (text) => {
   player.on(AudioPlayerStatus.Playing, () => {
-    console.log("The audio answer has started playing!");
     sendMessageToProperChannel(text);
   });
 };

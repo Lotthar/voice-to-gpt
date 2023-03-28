@@ -19,11 +19,18 @@ export const processAudioContentIntoText = async (speechAudioBase64) => {
       enableSeparateRecognitionPerChannel: true,
     },
   };
+  return await callGoogleSpeechApi(request);
+};
 
-  const [response] = await speechToTextClient.recognize(request);
-  const transcription = response.results
-    .map((result) => result.alternatives[0].transcript)
-    .join("\n");
-  console.log(`Google Speech to Text transcription: "${transcription}"`);
-  return transcription;
+const callGoogleSpeechApi = async (request) => {
+  let transcription = "";
+  try {
+    const [response] = await speechToTextClient.recognize(request);
+    transcription = response.results.map((result) => result.alternatives[0].transcript).join("\n");
+    console.log(`Google Speech to Text transcription: "${transcription}"`);
+  } catch (error) {
+    console.log(error);
+  } finally {
+    return transcription;
+  }
 };
