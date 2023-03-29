@@ -20,7 +20,6 @@ const chatHistory = [];
  * @returns - OpenAI response text
  */
 export const generateOpenAIAnswer = async (transcript) => {
-  console.log(`Getting Open AI answer for "${transcript}"`);
   chatHistory.push(transcript);
   const openAIresponse = await openai.createCompletion({
     model: "text-davinci-003",

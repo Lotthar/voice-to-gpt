@@ -15,7 +15,7 @@ export const processAudioContentIntoText = async (speechAudioBase64) => {
       encoding: "FLAC",
       sampleRateHertz: 48000,
       audioChannelCount: 2,
-      languageCode: "en-US",
+      languageCode: "sr-RS",
       enableSeparateRecognitionPerChannel: true,
     },
   };

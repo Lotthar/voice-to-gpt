@@ -28,7 +28,6 @@ discordClient.once(Events.ClientReady, (client) => {
 
 discordClient.on(Events.MessageCreate, async (message) => {
   if (message.author.bot) return;
-  console.log(`Message recieved: "${message}"`);
   const answer = await generateOpenAIAnswer(message.content);
   currentChannelId = message.channelId;
   sendMessageToProperChannel(answer, currentChannelId);

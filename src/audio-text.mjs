@@ -8,7 +8,7 @@ const DEFAULT_ANSWER_URI =
   "translate.google.com/translate_tts?ie=UTF-8&q=%0AHi%20there!%20How%20can%20I%20help%20you%3F&tl=en&total=1&idx=0&textlen=30&client=tw-ob&prev=input&ttsspeed=1";
 
 const player = createAudioPlayer();
-let currentAudioURIs = [];
+let currentAnswerAudioURIs = [];
 
 export const playOpenAiAnswerAfterSpeech = async (connection, audioContent) => {
   const transcript = await processAudioContentIntoText(audioContent);
@@ -18,9 +18,9 @@ export const playOpenAiAnswerAfterSpeech = async (connection, audioContent) => {
 
 const playAudioResourceFromText = async (connection, text) => {
   generateTTSResourceURIArray(text);
-  if (currentAudioURIs.length === 0) currentAudioURIs.push(DEFAULT_ANSWER_URI);
+  if (currentAnswerAudioURIs.length === 0) currentAnswerAudioURIs.push(DEFAULT_ANSWER_URI);
   initAndSubscribeAudioPlayerToVoiceChannel(connection, text);
-  player.play(createAudioResource(currentAudioURIs.shift()));
+  player.play(createAudioResource(currentAnswerAudioURIs.shift()));
 };
 
 const initAndSubscribeAudioPlayerToVoiceChannel = (connection, text) => {
@@ -38,9 +38,9 @@ const addOnPlayingPlayerEvent = (text) => {
 
 const addOnIdlePlayerEvent = () => {
   player.on(AudioPlayerStatus.Idle, () => {
-    if (currentAudioURIs.length > 0) {
-      console.log("Playing another part of the answer...");
-      player.play(createAudioResource(currentAudioURIs.shift()));
+    // Continuing to play until array of answer parts is empty
+    if (currentAnswerAudioURIs.length > 0) {
+      player.play(createAudioResource(currentAnswerAudioURIs.shift()));
     }
   });
 };
@@ -53,10 +53,10 @@ const addOnErrorPlayerEvent = () => {
 
 const generateTTSResourceURIArray = async (text) => {
   const ttsResourceLink = googleTTS.getAllAudioUrls(text, {
-    lang: "en",
+    lang: "sr",
     slow: false,
     host: "https://translate.google.com",
     splitPunct: ",.?",
   });
-  currentAudioURIs = ttsResourceLink.map((resource) => resource.url);
+  currentAnswerAudioURIs = ttsResourceLink.map((resource) => resource.url);
 };
