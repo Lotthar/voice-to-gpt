@@ -4,6 +4,8 @@ import {
   joinVoiceChannelAndGetConnection,
   checkIfInvalidVoiceChannel,
   sendMessageToProperChannel,
+  destroyConnectionIfNoOneLeft,
+  getConnection,
 } from "./voice-connection.mjs";
 import dotenv from "dotenv";
 
@@ -28,18 +30,23 @@ discordClient.once(Events.ClientReady, (client) => {
 
 discordClient.on(Events.MessageCreate, async (message) => {
   if (message.author.bot) return;
-  const answer = await generateOpenAIAnswer(message.content);
-  currentChannelId = message.channelId;
-  sendMessageToProperChannel(answer, currentChannelId);
+  // Only answer to messages in the channel when the bot is specifically mentioned!
+  if (message.mentions.has(discordClient.user.id) && message.mentions.users.size === 1) {
+    const answer = await generateOpenAIAnswer(message.content);
+    currentChannelId = message.channelId;
+    sendMessageToProperChannel(answer, currentChannelId);
+  }
 });
 
 discordClient.on(Events.VoiceStateUpdate, async (oldState, newState) => {
   try {
     if (checkIfInvalidVoiceChannel(oldState, newState)) return;
     currentChannelId = newState.channelId;
-    voiceChannelConnection = joinVoiceChannelAndGetConnection(newState);
+    voiceChannelConnection = getConnection(newState.guild.id);
+    if (!voiceChannelConnection)
+      voiceChannelConnection = joinVoiceChannelAndGetConnection(newState);
   } catch (error) {
-    console.error(error);
+    console.log(error);
   }
 });
 

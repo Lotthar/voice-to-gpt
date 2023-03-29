@@ -4,6 +4,7 @@ import {
   entersState,
   joinVoiceChannel,
   EndBehaviorType,
+  getVoiceConnection,
 } from "@discordjs/voice";
 import { createFlacAudioFileForProcessing } from "./audio-util.mjs";
 import { currentChannelId, discordClient } from "./index.mjs";
@@ -51,16 +52,12 @@ const addSpeakingEvent = (connection) => {
   });
 
   receiver.speaking.on("end", async (userId) => {
-    if (opusStream === null) {
-      console.log(`Opus stream was not able to  start after userId: ${userId} started speaking`);
-      return;
-    }
     console.log(`User ${userId} finished speaking, creating an answer...`);
     await createFlacAudioFileForProcessing(connection, opusStream, userId);
   });
 };
 
-export const checkIfInvalidVoiceChannel = (oldState, newState) => {
+export const checkIfInvalidVoiceChannel = async (oldState, newState, connection) => {
   if (newState.member.user.bot || !newState.channelId || newState.channelId === oldState.channelId)
     return true;
 
@@ -84,7 +81,21 @@ export const getOpusStream = (receiver, userId) => {
   });
 };
 
-export const sendMessageToProperChannel = async (message) => {
-  const channel = await discordClient.channels.fetch(currentChannelId);
-  channel.send(message);
+export const sendMessageToProperChannel = async (message) =>
+  await getCurrentChannel().send(message);
+
+export const destroyConnectionIfNoOneLeft = async (connection) => {
+  const channel = await getCurrentChannel();
+  const member = isUserChannelMember("VoiceToGPT", channel);
+  if (member && channel.members.size === 1) {
+    connection.destroy();
+    return true;
+  }
+  return false;
 };
+
+const getCurrentChannel = async () => await discordClient.channels.fetch(currentChannelId);
+
+const isUserChannelMember = (name) => getCurrentChannel().members.some((m) => m.name === name);
+
+export const getConnection = (guildId) => getVoiceConnection(guildId);
