@@ -1,6 +1,6 @@
 import { generateOpenAIAnswer } from "./openai-api.mjs";
 import { sendMessageToProperChannel } from "./discord-util.mjs";
-import { processAudioContentIntoText, generateTTSResourceURIArray } from "./googl-api.mjs";
+import { processAudioContentIntoText, generateTTSResourceURIArray } from "./google-api.mjs";
 import { createAudioResource, createAudioPlayer, AudioPlayerStatus } from "@discordjs/voice";
 
 const DEFAULT_ANSWER_URI =

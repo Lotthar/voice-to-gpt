@@ -1,5 +1,6 @@
 import { SpeechClient } from "@google-cloud/speech";
 import * as googleTTS from "google-tts-api";
+import { currentVoiceLanguage } from "./index.mjs";
 
 // Set up Google Cloud Speech-to-Text API
 const speechToTextClient = new SpeechClient({
@@ -9,7 +10,7 @@ const speechToTextClient = new SpeechClient({
 
 export const generateTTSResourceURIArray = (text) => {
   const ttsResourceLink = googleTTS.getAllAudioUrls(text, {
-    lang: "en",
+    lang: currentVoiceLanguage.ttsCode,
     slow: false,
     host: "https://translate.google.com",
     splitPunct: ",.?",
@@ -26,7 +27,7 @@ export const processAudioContentIntoText = async (speechAudioBase64) => {
       encoding: "FLAC",
       sampleRateHertz: 48000,
       audioChannelCount: 2,
-      languageCode: "en-US",
+      languageCode: currentVoiceLanguage.sttCode,
       enableSeparateRecognitionPerChannel: true,
     },
   };

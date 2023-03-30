@@ -6,6 +6,8 @@ import {
   sendMessageToProperChannel,
   getConnection,
   botIsMentioned,
+  getMessageContentWithoutMention,
+  getLanguageFromMessage,
 } from "./discord-util.mjs";
 import dotenv from "dotenv";
 
@@ -13,6 +15,7 @@ dotenv.config();
 
 let voiceChannelConnection;
 export let currentChannelId = null;
+export let currentVoiceLanguage = getLanguageFromMessage();
 
 // Set up Discord client for bot
 export const discordClient = new Client({
@@ -33,8 +36,16 @@ discordClient.on(Events.MessageCreate, async (message) => {
   // Only answer to messages in the channel when the bot is specifically mentioned!
   if (botIsMentioned(message)) {
     currentChannelId = message.channelId;
+    let messageContent = getMessageContentWithoutMention(message);
+    if (messageContent.startsWith("!")) {
+      currentVoiceLanguage = getLanguageFromMessage(messageContent);
+      sendMessageToProperChannel(
+        `You successfully changed voice communication language to ${currentVoiceLanguage.name}`
+      );
+      return;
+    }
     message.channel.sendTyping();
-    const answer = await generateOpenAIAnswer(message.content);
+    const answer = await generateOpenAIAnswer(messageContent);
     sendMessageToProperChannel(answer);
   }
 });

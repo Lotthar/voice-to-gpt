@@ -82,8 +82,33 @@ export const sendMessageToProperChannel = async (message) => {
 export const botIsMentioned = (message) =>
   message.mentions.has(discordClient.user.id) && message.mentions.users.size === 1;
 
+export const getMessageContentWithoutMention = (message) => {
+  const mentioned = message.mentions.members.first(); // get first mentioned member
+  return message.content.replace(`<@${mentioned.id}> `, ""); // remove mention
+};
+
 const getCurrentChannel = async () => await discordClient.channels.fetch(currentChannelId);
 
 const isUserChannelMember = (name, channel) => channel.members.some((m) => m.displayName === name);
 
 export const getConnection = (guildId) => getVoiceConnection(guildId);
+
+export const getLanguageFromMessage = (message) => {
+  if (!message) return Languages[0];
+  message = message.substring(1);
+  let lang = Languages.find((lang) => lang.name.toLowerCase() === message.toLowerCase());
+  return lang ? lang : Languages[0];
+};
+
+const Languages = [
+  {
+    name: "English",
+    sttCode: "en-US",
+    ttsCode: "en",
+  },
+  {
+    name: "Serbian",
+    sttCode: "sr-RS",
+    ttsCode: "sr",
+  },
+];
