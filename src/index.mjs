@@ -1,12 +1,12 @@
 import { Client, Events, GatewayIntentBits } from "discord.js";
-import { generateOpenAIAnswer } from "./open-ai.mjs";
+import { generateOpenAIAnswer } from "./openai-api.mjs";
 import {
   joinVoiceChannelAndGetConnection,
   checkIfInvalidVoiceChannel,
   sendMessageToProperChannel,
   getConnection,
   botIsMentioned,
-} from "./voice-connection.mjs";
+} from "./discord-util.mjs";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -32,8 +32,9 @@ discordClient.on(Events.MessageCreate, async (message) => {
   if (message.author.bot) return;
   // Only answer to messages in the channel when the bot is specifically mentioned!
   if (botIsMentioned(message)) {
-    const answer = await generateOpenAIAnswer(message.content);
     currentChannelId = message.channelId;
+    message.channel.sendTyping();
+    const answer = await generateOpenAIAnswer(message.content);
     sendMessageToProperChannel(answer);
   }
 });

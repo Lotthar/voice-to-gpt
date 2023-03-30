@@ -1,5 +1,5 @@
-import { generateOpenAIAnswer } from "./open-ai.mjs";
-import { sendMessageToProperChannel } from "./voice-connection.mjs";
+import { generateOpenAIAnswer } from "./openai-api.mjs";
+import { sendMessageToProperChannel } from "./discord-util.mjs";
 import { processAudioContentIntoText, generateTTSResourceURIArray } from "./googl-api.mjs";
 import { createAudioResource, createAudioPlayer, AudioPlayerStatus } from "@discordjs/voice";
 

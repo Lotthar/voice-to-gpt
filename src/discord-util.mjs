@@ -4,7 +4,6 @@ import {
   joinVoiceChannel,
   EndBehaviorType,
   getVoiceConnection,
-  VoiceReceiver,
 } from "@discordjs/voice";
 import { createFlacAudioFileForProcessing } from "./audio-util.mjs";
 import { currentChannelId, discordClient } from "./index.mjs";
@@ -80,7 +79,6 @@ export const sendMessageToProperChannel = async (message) => {
   const channel = await getCurrentChannel();
   channel.send(message);
 };
-
 export const botIsMentioned = (message) =>
   message.mentions.has(discordClient.user.id) && message.mentions.users.size === 1;
 
