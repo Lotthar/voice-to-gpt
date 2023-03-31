@@ -16,7 +16,6 @@ export const playOpenAiAnswerAfterSpeech = async (connection, audioContent) => {
 };
 
 const playAudioResourceFromText = async (connection, text) => {
-  player.stop();
   currentAnswerAudioURIs = generateTTSResourceURIArray(text);
   if (currentAnswerAudioURIs.length === 0) currentAnswerAudioURIs.push(DEFAULT_ANSWER_URI);
   initAndSubscribeAudioPlayerToVoiceChannel(connection, text);
@@ -31,7 +30,7 @@ const initAndSubscribeAudioPlayerToVoiceChannel = (connection, text) => {
 };
 
 const addOnIdlePlayerEvent = () => {
-  player.on(AudioPlayerStatus.Idle, () => {
+  player.on(AudioPlayerStatus.Idle, async () => {
     // Continuing to play until array of answer parts is empty
     if (currentAnswerAudioURIs.length > 0) {
       player.play(createAudioResource(currentAnswerAudioURIs.shift()));

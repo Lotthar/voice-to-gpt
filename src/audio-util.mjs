@@ -1,4 +1,4 @@
-import { createWriteStream, readFileSync, unlink } from "node:fs";
+import { createWriteStream, readFileSync } from "node:fs";
 import { Transform } from "node:stream";
 import { playOpenAiAnswerAfterSpeech } from "./audio-text.mjs";
 import { StreamEncoder } from "flac-bindings";
@@ -14,11 +14,11 @@ export const createFlacAudioFileForProcessing = async (connection, opusStream, u
     .pipe(flacFileOutput); // encoded .flac data is piped into the output file
 
   flacFileOutput.on("finish", async () => {
-    await readFlacAudioFileAndPlayAnswer(connection, flacFilePath);
+    await readFlacAudioFileAndPlayAnswer(connection, flacFilePath, userId);
   });
 };
 
-const readFlacAudioFileAndPlayAnswer = async (connection, flacFilePath) => {
+const readFlacAudioFileAndPlayAnswer = async (connection, flacFilePath, userId) => {
   const flacAudioFile = readFileSync(flacFilePath);
   await playOpenAiAnswerAfterSpeech(connection, flacAudioFile.toString("base64"));
 };
