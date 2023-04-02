@@ -14,11 +14,11 @@ export const createFlacAudioFileForProcessing = async (connection, opusStream, u
     .pipe(flacFileOutput); // encoded .flac data is piped into the output file
 
   flacFileOutput.on("finish", async () => {
-    await readFlacAudioFileAndPlayAnswer(connection, flacFilePath, userId);
+    await readFlacAudioFileAndPlayAnswer(connection, flacFilePath);
   });
 };
 
-const readFlacAudioFileAndPlayAnswer = async (connection, flacFilePath, userId) => {
+const readFlacAudioFileAndPlayAnswer = async (connection, flacFilePath) => {
   const flacAudioFile = readFileSync(flacFilePath);
   await playOpenAiAnswerAfterSpeech(connection, flacAudioFile.toString("base64"));
 };

@@ -9,8 +9,8 @@ const configuration = new Configuration({
   apiKey: process.env.OPEN_API_KEY,
 });
 const openai = new OpenAIApi(configuration);
-const conversationId = uuidv4();
-const chatHistory = [];
+
+const chatHistory = [{ role: "system", content: `You are a JavaScript developer.` }];
 
 /**
  *
@@ -20,14 +20,20 @@ const chatHistory = [];
  * @returns - OpenAI response text
  */
 export const generateOpenAIAnswer = async (transcript) => {
-  chatHistory.push(transcript);
-  const openAIresponse = await openai.createCompletion({
-    model: "text-davinci-003",
-    prompt: `Conversation with ${conversationId}\n\n${chatHistory.join("\n")}\n\n${transcript}`,
-    max_tokens: 1024,
-    temperature: 0,
-  });
-  let result = openAIresponse.data.choices[0].text;
-  console.log(`OpenAI answer: ${result}`);
-  return result;
+  // TODO: chat history da se pamti u neki fajl i da ga ako je prazan uvijek popuni
+  chatHistory.push({ role: "user", content: transcript });
+  let result = "";
+  try {
+    const response = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo",
+      messages: chatHistory,
+      max_tokens: 2000,
+    });
+    result = response.data.choices[0].message.content.trim();
+    chatHistory.push({ role: "assistant", content: result });
+  } catch (error) {
+    console.error(error);
+  } finally {
+    return result;
+  }
 };
