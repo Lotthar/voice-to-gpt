@@ -1,6 +1,6 @@
 import { SpeechClient } from "@google-cloud/speech";
 import * as googleTTS from "google-tts-api";
-import { currentVoiceLanguage } from "./index.mjs";
+import { currentVoiceLanguage } from "./discord-util.mjs";
 
 // Set up Google Cloud Speech-to-Text API
 const speechToTextClient = new SpeechClient({

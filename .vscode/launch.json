@@ -6,7 +6,7 @@
       "request": "launch",
       "name": "Launch Program",
       "runtimeExecutable": "nodemon",
-      "runtimeArgs": ["--inspect=9229", "-r", "dotenv/config", "src/index.mjs"],
+      "runtimeArgs": ["--inspect=9229", "-r", "dotenv/config", "src/index.mjs", "--ignore", "history/"],
       "restart": true,
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"

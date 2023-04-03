@@ -8,6 +8,21 @@ import {
 import { createFlacAudioFileForProcessing } from "./audio-util.mjs";
 import { currentChannelId, discordClient } from "./index.mjs";
 
+const Languages = [
+  {
+    name: "English",
+    sttCode: "en-US",
+    ttsCode: "en",
+  },
+  {
+    name: "Serbian",
+    sttCode: "sr-RS",
+    ttsCode: "sr",
+  },
+];
+
+export let currentVoiceLanguage = Languages[0];
+
 export const joinVoiceChannelAndGetConnection = (newState) => {
   const connection = joinVoiceChannel({
     channelId: newState.channelId,
@@ -93,22 +108,20 @@ const isUserChannelMember = (name, channel) => channel.members.some((m) => m.dis
 
 export const getConnection = (guildId) => getVoiceConnection(guildId);
 
+export const setBotSpeakingLanguageIfChanged = (message) => {
+  const command = "!lang !";
+  if (message.startsWith(command)) {
+    currentVoiceLanguage = getLanguageFromMessage(message.replace(command, ""));
+    sendMessageToProperChannel(
+      `You successfully changed voice communication language to ${currentVoiceLanguage.name}`
+    );
+    return true;
+  }
+  return false;
+};
+
 export const getLanguageFromMessage = (message) => {
-  if (!message) return Languages[0];
   message = message.substring(1);
   let lang = Languages.find((lang) => lang.name.toLowerCase() === message.toLowerCase());
   return lang ? lang : Languages[0];
 };
-
-const Languages = [
-  {
-    name: "English",
-    sttCode: "en-US",
-    ttsCode: "en",
-  },
-  {
-    name: "Serbian",
-    sttCode: "sr-RS",
-    ttsCode: "sr",
-  },
-];

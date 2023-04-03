@@ -1,5 +1,5 @@
 import { Client, Events, GatewayIntentBits } from "discord.js";
-import { generateOpenAIAnswer } from "./openai-api.mjs";
+import { generateOpenAIAnswer, setBotSystemMessageIfChanged } from "./openai-api.mjs";
 import {
   joinVoiceChannelAndGetConnection,
   checkIfInvalidVoiceChannel,
@@ -7,7 +7,7 @@ import {
   getConnection,
   botIsMentioned,
   getMessageContentWithoutMention,
-  getLanguageFromMessage,
+  setBotSpeakingLanguageIfChanged,
 } from "./discord-util.mjs";
 import dotenv from "dotenv";
 
@@ -15,7 +15,6 @@ dotenv.config();
 
 let voiceChannelConnection;
 export let currentChannelId = null;
-export let currentVoiceLanguage = getLanguageFromMessage();
 
 // Set up Discord client for bot
 export const discordClient = new Client({
@@ -37,14 +36,9 @@ discordClient.on(Events.MessageCreate, async (message) => {
   if (botIsMentioned(message)) {
     currentChannelId = message.channelId;
     let messageContent = getMessageContentWithoutMention(message);
-    if (messageContent.startsWith("!")) {
-      currentVoiceLanguage = getLanguageFromMessage(messageContent);
-      sendMessageToProperChannel(
-        `You successfully changed voice communication language to ${currentVoiceLanguage.name}`
-      );
-      return;
-    }
     message.channel.sendTyping();
+    if (setBotSpeakingLanguageIfChanged(messageContent)) return;
+    if (setBotSystemMessageIfChanged(messageContent)) return;
     const answer = await generateOpenAIAnswer(messageContent);
     sendMessageToProperChannel(answer);
   }
