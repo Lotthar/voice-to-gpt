@@ -1,7 +1,8 @@
 import { Configuration, OpenAIApi } from "openai";
 import { currentChannelId } from "./index.mjs";
-import { saveArrayToJsonFile, readArrayFromJsonFile } from "./files-util.mjs";
+import { saveArrayToJsonFile, readArrayFromJsonFile } from "./chathistory-util.mjs";
 import { sendMessageToProperChannel } from "./discord-util.mjs";
+import { countResponseTokens, modelName } from "./chathistory-util.mjs";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -12,6 +13,7 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration);
 let chatHistory = [];
 let currentSystemMessage = null;
+
 /**
  *
  * 	Use OpenAI API to generate response based on text input
@@ -32,11 +34,12 @@ export const generateOpenAIAnswer = async (transcript) => {
 
 const getOpenAiResponse = async () => {
   let result = null;
+  let numResponseTokens = await countResponseTokens(chatHistory);
   try {
     const response = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo",
+      model: modelName,
       messages: chatHistory,
-      max_tokens: 3000,
+      max_tokens: numResponseTokens,
     });
     result = response.data.choices[0].message.content.trim();
   } catch (error) {
@@ -67,11 +70,7 @@ const resetHistoryIfNewSystemMessage = () => {
 
 const retrieveChatHistoryOrCreateNew = async () => {
   const jsonFilePath = `./history/${currentChannelId}-history.json`;
-  if (chatHistory.length > 0) {
-    // Narrowing down message array for OpenAI request since it will overpass token limit otherwise
-    if (chatHistory.length >= 5) chatHistory.splice(1, 2);
-    return;
-  }
+  if (chatHistory.length > 0) return;
   chatHistory = await readArrayFromJsonFile(jsonFilePath);
   if (chatHistory !== null) return;
   chatHistory = [{ role: "system", content: currentSystemMessage }];
