@@ -69,7 +69,7 @@ const retrieveChatHistoryOrCreateNew = async () => {
   const jsonFilePath = `./history/${currentChannelId}-history.json`;
   if (chatHistory.length > 0) {
     // Narrowing down message array for OpenAI request since it will overpass token limit otherwise
-    if (chatHistory.length >= 6) chatHistory.splice(1, 1);
+    if (chatHistory.length >= 5) chatHistory.splice(1, 2);
     return;
   }
   chatHistory = await readArrayFromJsonFile(jsonFilePath);

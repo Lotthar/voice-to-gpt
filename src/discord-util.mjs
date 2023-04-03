@@ -90,10 +90,6 @@ const destroyConnectionIfOnlyBotRemains = async (connection) => {
   }
 };
 
-export const sendMessageToProperChannel = async (message) => {
-  const channel = await getCurrentChannel();
-  channel.send(message);
-};
 export const botIsMentioned = (message) =>
   message.mentions.has(discordClient.user.id) && message.mentions.users.size === 1;
 
@@ -124,4 +120,22 @@ export const getLanguageFromMessage = (message) => {
   message = message.substring(1);
   let lang = Languages.find((lang) => lang.name.toLowerCase() === message.toLowerCase());
   return lang ? lang : Languages[0];
+};
+
+export const sendMessageToProperChannel = async (message, maxLength = 2000) => {
+  const channel = await getCurrentChannel();
+  if (message.length <= maxLength) {
+    await channel.send(message);
+    return;
+  }
+  const messageParts = [];
+  let currentIndex = 0;
+  while (currentIndex < message.length) {
+    const part = message.slice(currentIndex, currentIndex + maxLength);
+    messageParts.push(part);
+    currentIndex += maxLength;
+  }
+  for (const part of messageParts) {
+    await channel.send(part);
+  }
 };
