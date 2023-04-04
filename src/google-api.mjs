@@ -2,7 +2,6 @@ import { SpeechClient } from "@google-cloud/speech";
 import * as googleTTS from "google-tts-api";
 import { currentVoiceLanguage } from "./discord-util.mjs";
 
-// Set up Google Cloud Speech-to-Text API
 const speechToTextClient = new SpeechClient({
   projectId: "voicetogpt",
   keyFilename: "./gcloud_keyfile.json",
@@ -35,14 +34,19 @@ export const processAudioContentIntoText = async (speechAudioBase64) => {
 };
 
 const callGoogleSpeechApi = async (request) => {
-  let transcription = "";
   try {
     const [response] = await speechToTextClient.recognize(request);
-    transcription = response.results.map((result) => result.alternatives[0].transcript).join("\n");
+    let transcription = extractTranscriptionFromResponse(response);
     console.log(`Google Speech to Text transcription: "${transcription}"`);
+    return transcription;
   } catch (error) {
     console.log(error);
-  } finally {
-    return transcription;
+    return null;
   }
+};
+
+const extractTranscriptionFromResponse = (apiResponse) => {
+  return [
+    ...new Set(apiResponse.results.map((result) => result.alternatives[0].transcript.trim())),
+  ].join("\n");
 };

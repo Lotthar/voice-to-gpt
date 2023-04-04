@@ -1,6 +1,11 @@
 import { Configuration, OpenAIApi } from "openai";
 import { currentChannelId } from "./index.mjs";
-import { saveArrayToJsonFile, readArrayFromJsonFile } from "./chathistory-util.mjs";
+import {
+  retrieveChatHistoryOrCreateNew,
+  resetHistoryIfNewSystemMessage,
+  saveChatHistory,
+  chatHistory,
+} from "./chathistory-util.mjs";
 import { sendMessageToProperChannel } from "./discord-util.mjs";
 import { countResponseTokens, modelName } from "./chathistory-util.mjs";
 import dotenv from "dotenv";
@@ -11,24 +16,17 @@ const configuration = new Configuration({
   apiKey: process.env.OPEN_API_KEY,
 });
 const openai = new OpenAIApi(configuration);
-let chatHistory = [];
 let currentSystemMessage = null;
 
-/**
- *
- * 	Use OpenAI API to generate response based on text input
- *
- * @param {*} transcript - text send to OpenAI API
- * @returns - OpenAI response text
- */
 export const generateOpenAIAnswer = async (transcript) => {
-  await retrieveChatHistoryOrCreateNew();
-  resetHistoryIfNewSystemMessage();
+  if (transcript === null) return "Nothing was said or it is not understood.";
+  await retrieveChatHistoryOrCreateNew(currentSystemMessage, currentChannelId);
+  resetHistoryIfNewSystemMessage(currentSystemMessage);
   chatHistory.push({ role: "user", content: transcript });
   const result = await getOpenAiResponse();
   if (result === null) return "Error in response!";
   chatHistory.push({ role: "assistant", content: result });
-  await saveChatHistory();
+  await saveChatHistory(currentChannelId);
   return result;
 };
 
@@ -49,7 +47,7 @@ const getOpenAiResponse = async () => {
   }
 };
 
-export const setBotSystemMessageIfChanged = (message) => {
+export const botSystemMessageChanged = (message) => {
   const command = "!system ";
   if (message.startsWith(command)) {
     currentSystemMessage = message.replace(command, "");
@@ -59,25 +57,4 @@ export const setBotSystemMessageIfChanged = (message) => {
     return true;
   }
   return false;
-};
-
-const resetHistoryIfNewSystemMessage = () => {
-  if (currentSystemMessage !== null && chatHistory[0].content !== currentSystemMessage) {
-    chatHistory = [{ role: "system", content: currentSystemMessage }];
-    console.log(`Chat history has been reset. New system message: ${currentSystemMessage}`);
-  }
-};
-
-const retrieveChatHistoryOrCreateNew = async () => {
-  const jsonFilePath = `./history/${currentChannelId}-history.json`;
-  if (chatHistory.length > 0) return;
-  chatHistory = await readArrayFromJsonFile(jsonFilePath);
-  if (chatHistory !== null) return;
-  chatHistory = [{ role: "system", content: currentSystemMessage }];
-  await saveChatHistory(jsonFilePath);
-};
-
-const saveChatHistory = async (jsonFilePath) => {
-  if (!jsonFilePath) jsonFilePath = `./history/${currentChannelId}-history.json`;
-  await saveArrayToJsonFile(chatHistory, jsonFilePath);
 };

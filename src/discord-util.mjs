@@ -8,6 +8,8 @@ import {
 import { createFlacAudioFileForProcessing } from "./audio-util.mjs";
 import { currentChannelId, discordClient } from "./index.mjs";
 
+const BOT_NAME = "VoiceToGPT";
+
 const Languages = [
   {
     name: "English",
@@ -83,7 +85,7 @@ export const checkIfInvalidVoiceChannel = async (oldState, newState) => {
 const destroyConnectionIfOnlyBotRemains = async (connection) => {
   if (!connection) return;
   const channel = await getCurrentChannel();
-  const member = isUserChannelMember("VoiceToGPT", channel);
+  const member = isUserChannelMember(BOT_NAME, channel);
   if (member && channel.members.size === 1) {
     console.log("Destroying current voice connection!");
     connection.destroy();
@@ -104,7 +106,7 @@ const isUserChannelMember = (name, channel) => channel.members.some((m) => m.dis
 
 export const getConnection = (guildId) => getVoiceConnection(guildId);
 
-export const setBotSpeakingLanguageIfChanged = (message) => {
+export const botSpeakingLanguageChanged = (message) => {
   const command = "!lang !";
   if (message.startsWith(command)) {
     currentVoiceLanguage = getLanguageFromMessage(message.replace(command, ""));
