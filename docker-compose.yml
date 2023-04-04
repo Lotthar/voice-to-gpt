@@ -1,0 +1,11 @@
+version: '3.3'
+services:
+  voice-to-gpt:
+    build: .
+    image: voice-to-gpt:latest
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./history:/app/history
+    environment:
+      - NODE_ENV=development
