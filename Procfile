@@ -1,0 +1,1 @@
+worker: node --exec babel-node src/index.mjs --ignore history/

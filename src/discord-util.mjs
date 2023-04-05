@@ -6,7 +6,7 @@ import {
   getVoiceConnection,
 } from "@discordjs/voice";
 import { createFlacAudioFileForProcessing } from "./audio-util.mjs";
-import { currentChannelId, discordClient } from "./index.mjs";
+import { currentChannelId, discordClient } from "./bot.mjs";
 
 const BOT_NAME = "VoiceToGPT";
 

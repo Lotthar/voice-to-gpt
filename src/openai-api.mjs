@@ -1,5 +1,5 @@
 import { Configuration, OpenAIApi } from "openai";
-import { currentChannelId } from "./index.mjs";
+import { currentChannelId } from "./bot.mjs";
 import {
   retrieveChatHistoryOrCreateNew,
   resetHistoryIfNewSystemMessage,
