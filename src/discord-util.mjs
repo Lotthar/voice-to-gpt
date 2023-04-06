@@ -52,7 +52,7 @@ const addSpeakingEvent = (connection) => {
 
   receiver.speaking.on("end", async (userId) => {
     console.log(`User ${userId} finished speaking, creating an answer...`);
-    await createFlacAudioFileForProcessing(connection, opusStream, userId);
+    await createFlacAudioFileForProcessing(connection, opusStream);
   });
 };
 

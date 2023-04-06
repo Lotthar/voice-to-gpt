@@ -16,12 +16,10 @@ const configuration = new Configuration({
   apiKey: process.env.OPEN_API_KEY,
 });
 const openai = new OpenAIApi(configuration);
-let currentSystemMessage = null;
 
 export const generateOpenAIAnswer = async (transcript) => {
   if (transcript === null) return "Nothing was said or it is not understood.";
-  await retrieveChatHistoryOrCreateNew(currentSystemMessage, currentChannelId);
-  resetHistoryIfNewSystemMessage(currentSystemMessage);
+  await retrieveChatHistoryOrCreateNew(currentChannelId);
   chatHistory.push({ role: "user", content: transcript });
   const result = await getOpenAiResponse();
   if (result === null) return "Error in response!";
@@ -31,26 +29,25 @@ export const generateOpenAIAnswer = async (transcript) => {
 };
 
 const getOpenAiResponse = async () => {
-  let result = null;
-  let numResponseTokens = await countResponseTokens(chatHistory);
   try {
+    let numResponseTokens = await countResponseTokens(chatHistory);
     const response = await openai.createChatCompletion({
       model: modelName,
       messages: chatHistory,
       max_tokens: numResponseTokens,
     });
-    result = response.data.choices[0].message.content.trim();
+    return response.data.choices[0].message.content.trim();
   } catch (error) {
     console.log(error);
-  } finally {
-    return result;
+    return null;
   }
 };
 
-export const botSystemMessageChanged = (message) => {
+export const botSystemMessageChanged = async (message, channelId) => {
   const command = "!system ";
   if (message.startsWith(command)) {
-    currentSystemMessage = message.replace(command, "");
+    let currentSystemMessage = message.replace(command, "");
+    await resetHistoryIfNewSystemMessage(currentSystemMessage, channelId);
     sendMessageToProperChannel(
       `You successfully changed bot's system message to: ${currentSystemMessage}`
     );

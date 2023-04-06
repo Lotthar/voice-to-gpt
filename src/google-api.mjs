@@ -1,26 +1,19 @@
 import { SpeechClient } from "@google-cloud/speech";
 import * as googleTTS from "google-tts-api";
 import { currentVoiceLanguage } from "./discord-util.mjs";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const speechToTextClient = new SpeechClient({
-  projectId: "voicetogpt",
+  projectId: process.env.STT_API_PROJECT_ID,
   keyFilename: "./gcloud_keyfile.json",
 });
 
-export const generateTTSResourceURIArray = (text) => {
-  const ttsResourceLink = googleTTS.getAllAudioUrls(text, {
-    lang: currentVoiceLanguage.ttsCode,
-    slow: false,
-    host: "https://translate.google.com",
-    splitPunct: ",.?",
-  });
-  return ttsResourceLink.map((resource) => resource.url);
-};
-
-export const processAudioContentIntoText = async (speechAudioBase64) => {
+export const processAudioContentIntoText = async (audioDataBase64) => {
   const request = {
     audio: {
-      content: speechAudioBase64,
+      content: audioDataBase64,
     },
     config: {
       encoding: "FLAC",
@@ -43,6 +36,16 @@ const callGoogleSpeechApi = async (request) => {
     console.log(error);
     return null;
   }
+};
+
+export const generateTTSResourceURIArray = (text) => {
+  const ttsResourceLink = googleTTS.getAllAudioUrls(text, {
+    lang: currentVoiceLanguage.ttsCode,
+    slow: false,
+    host: "https://translate.google.com",
+    splitPunct: ",.?",
+  });
+  return ttsResourceLink.map((resource) => resource.url);
 };
 
 const extractTranscriptionFromResponse = (apiResponse) => {

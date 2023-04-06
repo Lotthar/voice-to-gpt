@@ -38,7 +38,8 @@ discordClient.on(Events.MessageCreate, async (message) => {
     let messageContent = getMessageContentWithoutMention(message);
     message.channel.sendTyping();
     if (botSpeakingLanguageChanged(messageContent)) return;
-    if (botSystemMessageChanged(messageContent)) return;
+    const systemMsgChanged = await botSystemMessageChanged(messageContent, currentChannelId);
+    if (systemMsgChanged) return;
     const answer = await generateOpenAIAnswer(messageContent);
     sendMessageToProperChannel(answer);
   }
