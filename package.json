@@ -4,7 +4,7 @@
   "description": "Discord bot that converts reponds to voice messages",
   "main": "src/index.mjs",
   "scripts": {
-    "start": "nodemon --exec babel-node src/index.mjs --ignore history/"
+    "start": "npx babel-node src/bot.mjs"
   },
   "author": "branko.rovcanin",
   "license": "ISC",
