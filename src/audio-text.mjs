@@ -3,9 +3,6 @@ import { sendMessageToProperChannel } from "./discord-util.mjs";
 import { processAudioContentIntoText, generateTTSResourceURIArray } from "./google-api.mjs";
 import { createAudioResource, createAudioPlayer, AudioPlayerStatus } from "@discordjs/voice";
 
-const DEFAULT_ANSWER_URI =
-  "translate.google.com/translate_tts?ie=UTF-8&q=%0AHi%20there!%20How%20can%20I%20help%20you%3F&tl=en&total=1&idx=0&textlen=30&client=tw-ob&prev=input&ttsspeed=1";
-
 const player = createAudioPlayer();
 let currentAnswerAudioURIs = [];
 
