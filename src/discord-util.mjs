@@ -79,11 +79,11 @@ export const getMessageContentWithoutMention = (message) => {
   return message.content.replace(`<@${mentioned.id}> `, ""); // remove mention
 };
 
-export const botSpeakingLanguageChanged = (message) => {
+export const botSpeakingLanguageChanged = async (message) => {
   const command = "!lang !";
   if (message.startsWith(command)) {
     const langName = message.replace(command, "");
-    resetLangugageIfChanged(langName, currentChannelId);
+    await resetLangugageIfChanged(langName, currentChannelId);
     sendMessageToProperChannel(
       `You successfully changed voice communication language to ${langName}`
     );
@@ -119,7 +119,7 @@ const getOpusStream = (receiver, userId) => {
   return receiver.subscribe(userId, {
     end: {
       behavior: EndBehaviorType.AfterSilence,
-      duration: 500,
+      duration: 1000,
     },
   });
 };

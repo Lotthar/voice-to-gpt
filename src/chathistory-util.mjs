@@ -44,7 +44,6 @@ export const saveHistoryToJsonFile = async (array, filePath) => {
   try {
     const jsonString = JSON.stringify(array, null, 2);
     await uploadFileToS3(filePath, jsonString);
-    console.log(`Successfully saved array to ${filePath}`);
   } catch (error) {
     console.error("Error saving array to JSON file:", error);
   }
@@ -53,9 +52,7 @@ export const saveHistoryToJsonFile = async (array, filePath) => {
 export const readHistoryFromJsonFile = async (filePath) => {
   try {
     const jsonStream = await downloadFileFromS3(filePath);
-    let jsonArray = await readJsonStream(jsonStream);
-    console.log(`Successfully read array from ${filePath}`);
-    return jsonArray;
+    return await readJsonStream(jsonStream);
   } catch (error) {
     console.error("Error reading array from JSON file:", error);
     return null;

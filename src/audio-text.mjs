@@ -6,7 +6,7 @@ import { createAudioResource, createAudioPlayer, AudioPlayerStatus } from "@disc
 const DEFAULT_ANSWER_URI =
   "translate.google.com/translate_tts?ie=UTF-8&q=%0AHi%20there!%20How%20can%20I%20help%20you%3F&tl=en&total=1&idx=0&textlen=30&client=tw-ob&prev=input&ttsspeed=1";
 
-const player = createAudioPlayer();
+let player = null;
 let currentAnswerAudioURIs = [];
 
 export const playOpenAiAnswerAfterSpeech = async (connection, audioContent) => {
@@ -18,15 +18,16 @@ export const playOpenAiAnswerAfterSpeech = async (connection, audioContent) => {
 const playAudioResourceFromText = async (connection, text) => {
   currentAnswerAudioURIs = generateTTSResourceURIArray(text);
   if (currentAnswerAudioURIs.length === 0) currentAnswerAudioURIs.push(DEFAULT_ANSWER_URI);
-  initAndSubscribeAudioPlayerToVoiceChannel(connection, text);
+  if (player === null) initAndSubscribeAudioPlayerToVoiceChannel(connection, text);
   player.play(createAudioResource(currentAnswerAudioURIs.shift()));
+  sendMessageToProperChannel(text);
 };
 
-const initAndSubscribeAudioPlayerToVoiceChannel = (connection, text) => {
+const initAndSubscribeAudioPlayerToVoiceChannel = (connection) => {
+  player = createAudioPlayer();
   addOnIdlePlayerEvent();
   addOnErrorPlayerEvent();
   connection.subscribe(player);
-  sendMessageToProperChannel(text);
 };
 
 const addOnIdlePlayerEvent = () => {

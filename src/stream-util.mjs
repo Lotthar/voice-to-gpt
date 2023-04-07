@@ -12,7 +12,7 @@ export class OpusDecodingStream extends Transform {
   }
 }
 
-export const opusStreamToFlacBase64 = (opusStream, opusEncoder, flacEncoder) => {
+export const opusStreamToFlacBase64 = async (opusStream, opusEncoder, flacEncoder) => {
   const finalAudioDataStream = new PassThrough();
   return new Promise((resolve, reject) => {
     opusStream
