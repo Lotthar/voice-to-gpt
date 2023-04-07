@@ -6,8 +6,11 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const speechToTextClient = new SpeechClient({
-  projectId: process.env.STT_API_PROJECT_ID,
-  keyFilename: "./gcloud_keyfile.json",
+  projectId: process.env.GCLOUD_PROJECT_ID,
+  credentials: {
+    client_email: process.env.GCLOUD_CLIENT_EMAIL,
+    private_key: process.env.GCLOUD_PRIVATE_KEY.replace(/\\n/g, "\n"),
+  },
 });
 
 export const processAudioContentIntoText = async (audioDataBase64) => {
