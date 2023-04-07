@@ -8,8 +8,6 @@ COPY package*.json ./
 RUN npm install
 # Copy the application code into the container
 COPY . .
-# Expose the port your application will run on
-EXPOSE 3000
 
 # Start the application
 CMD [ "npm", "start" ]
