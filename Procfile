@@ -1,0 +1,1 @@
+worker: npx babel-node src/bot.mjs
