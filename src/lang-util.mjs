@@ -29,7 +29,7 @@ export const loadCurrentVoiceLangugageIfNone = async (channelId) => {
     Object.assign(currentVoiceLanguage, getLanguageFromName(langName));
     console.log(`Current voice channel language is ${currentVoiceLanguage.name}`);
   } catch (error) {
-    console.log("No current voice language from s3, setting default...");
+    console.error("No current voice language from s3, setting default...");
     setCurrentLanguage(VoiceLanguages[0].name, channelId);
   }
 };
@@ -47,7 +47,7 @@ const setCurrentLanguage = async (langName, channelId) => {
     await uploadFileToS3(langPath, langName);
     Object.assign(currentVoiceLanguage, getLanguageFromName(langName));
   } catch (error) {
-    console.log("Error setting current voice language:", error);
+    console.error("Error setting current voice language:", error);
     return null;
   }
 };

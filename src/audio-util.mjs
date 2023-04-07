@@ -15,7 +15,7 @@ export const createFlacAudioContentFromOpus = async (opusStream) => {
   try {
     return await opusStreamToFlacBase64(opusStream, opusEncoder, flacEncoder);
   } catch (error) {
-    console.log("Error converting to .flac audio stream: ", error);
+    console.error("Error converting to .flac audio stream: ", error);
     throw error;
   }
 };

@@ -57,7 +57,7 @@ export const readHistoryFromJsonFile = async (filePath) => {
     console.log(`Successfully read array from ${filePath}`);
     return jsonArray;
   } catch (error) {
-    console.log("Error reading array from JSON file:", error);
+    console.error("Error reading array from JSON file:", error);
     return null;
   }
 };
@@ -67,7 +67,7 @@ const setCurrentSystemMessage = async (message, channelId) => {
     const sysMessagePath = getSystemMessagePath(channelId);
     await uploadFileToS3(sysMessagePath, message);
   } catch (error) {
-    console.log("Error setting current system message:", error);
+    console.error("Error setting current system message:", error);
     return null;
   }
 };
@@ -78,7 +78,7 @@ const getCurrentSystemMessage = async (channelId) => {
     const systemMsgS3Stream = await downloadFileFromS3(systemMsgPath);
     return await readTextStream(systemMsgS3Stream);
   } catch (error) {
-    console.log("Error getting current system message:", error);
+    console.error("Error getting current system message:", error);
     return null;
   }
 };

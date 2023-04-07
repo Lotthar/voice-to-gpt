@@ -32,17 +32,21 @@ discordClient.once(Events.ClientReady, (client) => {
 });
 
 discordClient.on(Events.MessageCreate, async (message) => {
-  if (message.author.bot) return;
-  // Only answer to messages in the channel when the bot is specifically mentioned!
-  if (botIsMentioned(message)) {
-    currentChannelId = message.channelId;
-    let messageContent = getMessageContentWithoutMention(message);
-    message.channel.sendTyping();
-    if (botSpeakingLanguageChanged(messageContent)) return;
-    const systemMsgChanged = await botSystemMessageChanged(messageContent, currentChannelId);
-    if (systemMsgChanged) return;
-    const answer = await generateOpenAIAnswer(messageContent);
-    sendMessageToProperChannel(answer);
+  try {
+    if (message.author.bot) return;
+    // Only answer to messages in the channel when the bot is specifically mentioned!
+    if (botIsMentioned(message)) {
+      currentChannelId = message.channelId;
+      let messageContent = getMessageContentWithoutMention(message);
+      message.channel.sendTyping();
+      if (botSpeakingLanguageChanged(messageContent)) return;
+      const systemMsgChanged = await botSystemMessageChanged(messageContent, currentChannelId);
+      if (systemMsgChanged) return;
+      const answer = await generateOpenAIAnswer(messageContent);
+      sendMessageToProperChannel(answer);
+    }
+  } catch (error) {
+    console.error("Error in MessageCreate event: ", error);
   }
 });
 
@@ -55,7 +59,7 @@ discordClient.on(Events.VoiceStateUpdate, async (oldState, newState) => {
     if (!voiceChannelConnection)
       voiceChannelConnection = joinVoiceChannelAndGetConnection(newState);
   } catch (error) {
-    console.log(error);
+    console.error("Error in VoiceStateUpdate event: ", error);
   }
 });
 

@@ -25,7 +25,7 @@ export const uploadFileToS3 = async (key, content) => {
     const response = await s3.send(new PutObjectCommand(params));
     return response;
   } catch (error) {
-    console.error("Error uploading to s3 bucket:", error);
+    console.error("Error uploading data to AWS S3 bucket:", error);
     throw error;
   }
 };
@@ -41,7 +41,7 @@ export const downloadFileFromS3 = async (key) => {
     const response = await s3.send(new GetObjectCommand(params));
     return response.Body;
   } catch (error) {
-    console.error("Error downloading file from s3 bucket:", error);
+    console.error("Error downloading data from AWS S3 bucket:", error);
     throw error;
   }
 };

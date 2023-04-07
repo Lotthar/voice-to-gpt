@@ -20,17 +20,17 @@ export const joinVoiceChannelAndGetConnection = (newState) => {
     selfMute: true,
     selfDeaf: false,
   });
-  addConnectionReadyEvent(connection);
+  addVoiceConnectionReadyEvent(connection);
 };
 
-const addConnectionReadyEvent = (connection) => {
+const addVoiceConnectionReadyEvent = (connection) => {
   connection.on(VoiceConnectionStatus.Ready, () => {
-    console.log("The connection has entered the Ready state - ready to play audio!");
-    addSpeakingEvent(connection);
+    console.log("Bot is connected and ready to answer users questions!");
+    addSpeakingEvents(connection);
   });
 };
 
-const addSpeakingEvent = (connection) => {
+const addSpeakingEvents = (connection) => {
   let opusStream = null;
   const receiver = connection.receiver;
   receiver.speaking.on("start", async (userId) => {
@@ -43,7 +43,7 @@ const addSpeakingEvent = (connection) => {
       const voiceAudioBase64 = await createFlacAudioContentFromOpus(opusStream);
       await playOpenAiAnswerAfterSpeech(connection, voiceAudioBase64);
     } catch (error) {
-      console.log("Error playing answer on voice channel: ", error);
+      console.error("Error playing answer on voice channel: ", error);
       sendMessageToProperChannel("There was problem with the answer");
     }
   });

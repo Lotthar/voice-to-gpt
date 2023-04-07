@@ -8,6 +8,8 @@ import {
 import { sendMessageToProperChannel } from "./discord-util.mjs";
 import { createRequire } from "module";
 import { pushQAtoHistory } from "./chathistory-util.mjs";
+import dotenv from "dotenv";
+dotenv.config();
 
 const require = createRequire(import.meta.url);
 const { Tiktoken } = require("@dqbd/tiktoken/lite");
@@ -15,11 +17,6 @@ const { load } = require("@dqbd/tiktoken/load");
 const registry = require("@dqbd/tiktoken/registry.json");
 const models = require("@dqbd/tiktoken/model_to_encoding.json");
 
-import dotenv from "dotenv";
-
-dotenv.config();
-
-// Set up your API key and model ID
 const configuration = new Configuration({
   apiKey: process.env.OPEN_API_KEY,
 });
@@ -38,7 +35,7 @@ export const generateOpenAIAnswer = async (question) => {
 
 const getOpenAiResponse = async (question) => {
   try {
-    let numResponseTokens = await countResponseTokens(chatHistory);
+    let numResponseTokens = await countApiResponseTokens(chatHistory);
     const response = await openai.createChatCompletion({
       model: modelName,
       messages: [...chatHistory, { role: "user", content: question }],
@@ -46,7 +43,7 @@ const getOpenAiResponse = async (question) => {
     });
     return response.data.choices[0].message.content.trim();
   } catch (error) {
-    console.log(error);
+    console.error("Error calling Open AI API: ", error);
     return null;
   }
 };
@@ -64,18 +61,16 @@ export const botSystemMessageChanged = async (message, channelId) => {
   return false;
 };
 
-const countResponseTokens = async () => {
+const countApiResponseTokens = async () => {
   let totalTokens = 0;
   let tokenCount = null;
   for (const message of chatHistory) {
     tokenCount = await countTokens(message.content);
     totalTokens += tokenCount;
   }
-
   const responseTokens = 4096 - totalTokens - 100;
-  if (responseTokens < 2000) countResponseTokens(chatHistory.splice(1, 2));
+  if (responseTokens < 2000) countApiResponseTokens(chatHistory.splice(1, 2));
   if (responseTokens > 0) return responseTokens;
-
   throw new Error("Prompt too long. Please shorten your input.");
 };
 

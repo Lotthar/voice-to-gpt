@@ -36,7 +36,7 @@ const callGoogleSpeechApi = async (request) => {
     console.log(`Google Speech to Text transcription: "${transcription}"`);
     return transcription;
   } catch (error) {
-    console.log(error);
+    console.error("Error calling google Speech-to-Text API: ", error);
     return null;
   }
 };
