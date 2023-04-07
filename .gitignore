@@ -1,2 +1,3 @@
 node_modules
 gcloud_keyfile.json
+.env

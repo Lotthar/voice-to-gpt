@@ -5,7 +5,9 @@ import {
   EndBehaviorType,
   getVoiceConnection,
 } from "@discordjs/voice";
-import { createFlacAudioFileForProcessing } from "./audio-util.mjs";
+import { createFlacAudioContentFromOpus } from "./audio-util.mjs";
+import { playOpenAiAnswerAfterSpeech } from "./audio-text.mjs";
+
 import { currentChannelId, discordClient } from "./bot.mjs";
 
 const BOT_NAME = "VoiceToGPT";
@@ -52,7 +54,13 @@ const addSpeakingEvent = (connection) => {
 
   receiver.speaking.on("end", async (userId) => {
     console.log(`User ${userId} finished speaking, creating an answer...`);
-    await createFlacAudioFileForProcessing(connection, opusStream);
+    try {
+      const voiceAudioBase64 = await createFlacAudioContentFromOpus(opusStream);
+      await playOpenAiAnswerAfterSpeech(connection, voiceAudioBase64);
+    } catch (error) {
+      console.log("Error playing answer on voice channel: ", error);
+      sendMessageToProperChannel("There was problem with the answer");
+    }
   });
 };
 

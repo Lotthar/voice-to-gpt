@@ -1,29 +1,10 @@
-import { PassThrough, Transform } from "node:stream";
-import { playOpenAiAnswerAfterSpeech } from "./audio-text.mjs";
 import { StreamEncoder } from "flac-bindings";
 import opus from "@discordjs/opus";
+import { opusStreamToFlacBase64 } from "./stream-util.mjs";
 
-export const createFlacAudioFileForProcessing = async (connection, opusStream) => {
-  const finalAudioDataStream = new PassThrough();
-  opusStream
-    .pipe(new OpusDecodingStream({}, new opus.OpusEncoder(48000, 2))) // First we decode opus packets streaming from voice channel
-    .pipe(getFlacEncoder()) // encoded packets are then encoded to .flac format
-    .pipe(finalAudioDataStream); // encoded .flac data is piped into the output stream
-
-  const audioDataChunks = [];
-  finalAudioDataStream.on("data", (chunk) => {
-    audioDataChunks.push(chunk);
-  });
-
-  // Handle the 'end' event
-  finalAudioDataStream.on("end", async () => {
-    const audioDataBuffer = Buffer.concat(audioDataChunks);
-    await playOpenAiAnswerAfterSpeech(connection, audioDataBuffer.toString("base64"));
-  });
-};
-
-const getFlacEncoder = () => {
-  return new StreamEncoder({
+export const createFlacAudioContentFromOpus = async (opusStream) => {
+  const opusEncoder = new opus.OpusEncoder(48000, 2);
+  const flacEncoder = new StreamEncoder({
     compressionLevel: 5,
     totalSamples: -1,
     bitsPerSample: 16,
@@ -31,16 +12,10 @@ const getFlacEncoder = () => {
     channels: 2,
     verify: false,
   });
+  try {
+    return await opusStreamToFlacBase64(opusStream, opusEncoder, flacEncoder);
+  } catch (error) {
+    console.log("Error converting to .flac audio stream: ", error);
+    throw error;
+  }
 };
-
-class OpusDecodingStream extends Transform {
-  constructor(options, encoder) {
-    super(options);
-    this.encoder = encoder;
-  }
-
-  _transform(data, encoding, callback) {
-    this.push(this.encoder.decode(data));
-    callback();
-  }
-}

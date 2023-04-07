@@ -1,15 +1,7 @@
-import fs from "fs/promises";
-import { createRequire } from "module";
 import { downloadFileFromS3, uploadFileToS3 } from "./aws-s3-util.mjs";
-const require = createRequire(import.meta.url);
-const { Tiktoken } = require("@dqbd/tiktoken/lite");
-const { load } = require("@dqbd/tiktoken/load");
-const registry = require("@dqbd/tiktoken/registry.json");
-const models = require("@dqbd/tiktoken/model_to_encoding.json");
+import { readJsonStream, readTextStream } from "./stream-util.mjs";
 
-export const modelName = "gpt-3.5-turbo";
 export let chatHistory = [];
-const model = await load(registry[models[modelName]]);
 
 export const resetHistoryIfNewSystemMessage = async (systemMessage, channelId) => {
   const currentSystemMessage = await getCurrentSystemMessage(channelId);
@@ -29,7 +21,7 @@ export const retrieveChatHistoryOrCreateNew = async (channelId) => {
   const jsonFilePath = getHistoryPath(channelId);
   // if we alraedy hava an array loaded in memory, skip reading from file
   if (chatHistory.length > 0) return;
-  chatHistory = await readArrayFromJsonFile(jsonFilePath);
+  chatHistory = await readHistoryFromJsonFile(jsonFilePath);
   if (chatHistory !== null) return;
   // We create new history and if there is a system message set up we add it to history
   const currentSysMessage = await getCurrentSystemMessage(channelId);
@@ -39,10 +31,16 @@ export const retrieveChatHistoryOrCreateNew = async (channelId) => {
 
 export const saveChatHistory = async (channelId, jsonFilePath) => {
   if (!jsonFilePath) jsonFilePath = getHistoryPath(channelId);
-  await saveArrayToJsonFile(chatHistory, jsonFilePath);
+  await saveHistoryToJsonFile(chatHistory, jsonFilePath);
 };
 
-export const saveArrayToJsonFile = async (array, filePath) => {
+export const pushQAtoHistory = async (question, answer, channelId) => {
+  chatHistory.push({ role: "user", content: question });
+  chatHistory.push({ role: "assistant", content: answer });
+  await saveChatHistory(channelId);
+};
+
+export const saveHistoryToJsonFile = async (array, filePath) => {
   try {
     const jsonString = JSON.stringify(array, null, 2);
     await uploadFileToS3(filePath, jsonString);
@@ -52,7 +50,7 @@ export const saveArrayToJsonFile = async (array, filePath) => {
   }
 };
 
-export const readArrayFromJsonFile = async (filePath) => {
+export const readHistoryFromJsonFile = async (filePath) => {
   try {
     const jsonStream = await downloadFileFromS3(filePath);
     let jsonArray = await readJsonStream(jsonStream);
@@ -78,56 +76,11 @@ const getCurrentSystemMessage = async (channelId) => {
   try {
     const systemMsgPath = getSystemMessagePath(channelId);
     const systemMsgS3Stream = await downloadFileFromS3(systemMsgPath);
-    return await readSystemMessageStream(systemMsgS3Stream);
+    return await readTextStream(systemMsgS3Stream);
   } catch (error) {
     console.log("Error getting current system message:", error);
     return null;
   }
-};
-
-const readJsonStream = async (stream) => {
-  return new Promise((resolve, reject) => {
-    let jsonString = "";
-    stream
-      .on("data", (chunk) => (jsonString += chunk.toString()))
-      .on("error", (err) => reject(err))
-      .on("end", () => resolve(JSON.parse(jsonString)));
-  });
-};
-
-const readSystemMessageStream = async (stream) => {
-  return new Promise((resolve, reject) => {
-    let message = "";
-    stream
-      .on("data", (chunk) => (message += chunk.toString()))
-      .on("error", (err) => reject(err))
-      .on("end", () => resolve(message));
-  });
-};
-
-export const countResponseTokens = async () => {
-  let totalTokens = 0;
-  let tokenCount = null;
-  for (const message of chatHistory) {
-    tokenCount = await countTokens(message.content);
-    totalTokens += tokenCount;
-  }
-
-  const responseTokens = 4096 - totalTokens - 100;
-  if (responseTokens < 2000) {
-    countResponseTokens(chatHistory.splice(1, 2));
-  }
-  if (responseTokens <= 0) {
-    throw new Error("Prompt too long. Please shorten your input.");
-  }
-  return responseTokens;
-};
-
-const countTokens = async (text) => {
-  const encoder = new Tiktoken(model.bpe_ranks, model.special_tokens, model.pat_str);
-  const tokens = encoder.encode(text);
-  encoder.free();
-  return tokens.length;
 };
 
 const getHistoryPath = (channelId) => `history/${channelId}-history.json`;

@@ -4,7 +4,8 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// Configure the AWS SDK with your credentials and region
+const BUCKET = process.env.S3_BUCKET;
+
 const s3 = new S3({
   region: process.env.AWS_REGION,
   credentials: {
@@ -12,8 +13,6 @@ const s3 = new S3({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
 });
-
-const BUCKET = "voice-to-gpt";
 
 export const uploadFileToS3 = async (key, content) => {
   const params = {
