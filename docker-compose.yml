@@ -2,7 +2,7 @@ version: '3.3'
 services:
   voice-to-gpt:
     build: .
-    image: voice-to-gpt:latest
+    image: registry.heroku.com/discord-voice-to-gpt/worker
     ports:
       - '3000:3000'
     volumes:
