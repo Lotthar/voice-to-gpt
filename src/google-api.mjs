@@ -1,6 +1,6 @@
 import { SpeechClient } from "@google-cloud/speech";
 import * as googleTTS from "google-tts-api";
-import { currentVoiceLanguage } from "./discord-util.mjs";
+import { currentVoiceLanguage } from "./lang-util.mjs";
 import dotenv from "dotenv";
 
 dotenv.config();

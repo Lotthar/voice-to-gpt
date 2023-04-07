@@ -7,25 +7,10 @@ import {
 } from "@discordjs/voice";
 import { createFlacAudioContentFromOpus } from "./audio-util.mjs";
 import { playOpenAiAnswerAfterSpeech } from "./audio-text.mjs";
-
 import { currentChannelId, discordClient } from "./bot.mjs";
+import { resetLangugageIfChanged } from "./lang-util.mjs";
 
 const BOT_NAME = "VoiceToGPT";
-
-const Languages = [
-  {
-    name: "English",
-    sttCode: "en-US",
-    ttsCode: "en",
-  },
-  {
-    name: "Serbian",
-    sttCode: "sr-RS",
-    ttsCode: "sr",
-  },
-];
-
-export let currentVoiceLanguage = Languages[0];
 
 export const joinVoiceChannelAndGetConnection = (newState) => {
   const connection = joinVoiceChannel({
@@ -64,20 +49,6 @@ const addSpeakingEvent = (connection) => {
   });
 };
 
-/**
- *  A Readable object mode stream of Opus packets
-    Will end when the voice connection is destroyed, or the user has not said anything for 500ms
- * @param {*} receiver - voice channel voice reciever object
- */
-export const getOpusStream = (receiver, userId) => {
-  return receiver.subscribe(userId, {
-    end: {
-      behavior: EndBehaviorType.AfterSilence,
-      duration: 500,
-    },
-  });
-};
-
 export const checkIfInvalidVoiceChannel = async (oldState, newState) => {
   if (newState.member.user.bot) return true;
   if (newState.channel && newState.channel.type === ChannelType.GuildVoice) return false;
@@ -108,28 +79,17 @@ export const getMessageContentWithoutMention = (message) => {
   return message.content.replace(`<@${mentioned.id}> `, ""); // remove mention
 };
 
-const getCurrentChannel = async () => await discordClient.channels.fetch(currentChannelId);
-
-const isUserChannelMember = (name, channel) => channel.members.some((m) => m.displayName === name);
-
-export const getConnection = (guildId) => getVoiceConnection(guildId);
-
 export const botSpeakingLanguageChanged = (message) => {
   const command = "!lang !";
   if (message.startsWith(command)) {
-    currentVoiceLanguage = getLanguageFromMessage(message.replace(command, ""));
+    const langName = message.replace(command, "");
+    resetLangugageIfChanged(langName, currentChannelId);
     sendMessageToProperChannel(
-      `You successfully changed voice communication language to ${currentVoiceLanguage.name}`
+      `You successfully changed voice communication language to ${langName}`
     );
     return true;
   }
   return false;
-};
-
-export const getLanguageFromMessage = (message) => {
-  message = message.substring(1);
-  let lang = Languages.find((lang) => lang.name.toLowerCase() === message.toLowerCase());
-  return lang ? lang : Languages[0];
 };
 
 export const sendMessageToProperChannel = async (message, maxLength = 2000) => {
@@ -149,3 +109,23 @@ export const sendMessageToProperChannel = async (message, maxLength = 2000) => {
     await channel.send(part);
   }
 };
+
+/**
+ *  A Readable object mode stream of Opus packets
+    Will end when the voice connection is destroyed, or the user has not said anything for 500ms
+ * @param {*} receiver - voice channel voice reciever object
+ */
+const getOpusStream = (receiver, userId) => {
+  return receiver.subscribe(userId, {
+    end: {
+      behavior: EndBehaviorType.AfterSilence,
+      duration: 500,
+    },
+  });
+};
+
+const getCurrentChannel = async () => await discordClient.channels.fetch(currentChannelId);
+
+const isUserChannelMember = (name, channel) => channel.members.some((m) => m.displayName === name);
+
+export const getConnection = (guildId) => getVoiceConnection(guildId);

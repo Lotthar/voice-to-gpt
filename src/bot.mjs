@@ -9,6 +9,7 @@ import {
   getMessageContentWithoutMention,
   botSpeakingLanguageChanged,
 } from "./discord-util.mjs";
+import { loadCurrentVoiceLangugageIfNone } from "./lang-util.mjs";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -50,6 +51,7 @@ discordClient.on(Events.VoiceStateUpdate, async (oldState, newState) => {
     currentChannelId = newState.channelId ? newState.channelId : oldState.channelId;
     if (await checkIfInvalidVoiceChannel(oldState, newState)) return;
     voiceChannelConnection = getConnection(newState.guild.id);
+    await loadCurrentVoiceLangugageIfNone(currentChannelId);
     if (!voiceChannelConnection)
       voiceChannelConnection = joinVoiceChannelAndGetConnection(newState);
   } catch (error) {
