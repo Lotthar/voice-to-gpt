@@ -12,6 +12,8 @@ import { resetLangugageIfChanged } from "./lang-util.mjs";
 
 const BOT_NAME = "VoiceToGPT";
 
+let opusStream = null;
+
 export const joinVoiceChannelAndGetConnection = (newState) => {
   const connection = joinVoiceChannel({
     channelId: newState.channelId,
@@ -31,10 +33,9 @@ const addVoiceConnectionReadyEvent = (connection) => {
 };
 
 const addSpeakingEvents = (connection) => {
-  let opusStream = null;
   const receiver = connection.receiver;
   receiver.speaking.on("start", async (userId) => {
-    opusStream = getOpusStream(receiver, userId);
+    if (opusStream === null) opusStream = getOpusStream(receiver, userId);
   });
 
   receiver.speaking.on("end", async (userId) => {
@@ -42,6 +43,7 @@ const addSpeakingEvents = (connection) => {
     try {
       const voiceAudioBase64 = await createFlacAudioContentFromOpus(opusStream);
       await playOpenAiAnswerAfterSpeech(connection, voiceAudioBase64);
+      opusStream = null;
     } catch (error) {
       console.error("Error playing answer on voice channel: ", error);
       sendMessageToProperChannel("There was problem with the answer");
@@ -119,7 +121,7 @@ const getOpusStream = (receiver, userId) => {
   return receiver.subscribe(userId, {
     end: {
       behavior: EndBehaviorType.AfterSilence,
-      duration: 1000,
+      duration: 500,
     },
   });
 };
