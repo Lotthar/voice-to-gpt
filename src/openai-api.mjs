@@ -35,10 +35,11 @@ export const generateOpenAIAnswer = async (question) => {
 
 const getOpenAiResponse = async (question) => {
   try {
-    let numResponseTokens = await countApiResponseTokens(chatHistory);
+    let currentChatHistory = [...chatHistory, { role: "user", content: question }];
+    let numResponseTokens = countApiResponseTokens(currentChatHistory);
     const response = await openai.createChatCompletion({
       model: modelName,
-      messages: [...chatHistory, { role: "user", content: question }],
+      messages: currentChatHistory,
       max_tokens: numResponseTokens,
     });
     return response.data.choices[0].message.content.trim();
@@ -53,28 +54,23 @@ export const botSystemMessageChanged = async (message, channelId) => {
   if (message.startsWith(command)) {
     let currentSystemMessage = message.replace(command, "");
     await resetHistoryIfNewSystemMessage(currentSystemMessage, channelId);
-    sendMessageToProperChannel(
-      `You successfully changed bot's system message to: ${currentSystemMessage}`
-    );
+    sendMessageToProperChannel(`You changed system message to: ${currentSystemMessage}`);
     return true;
   }
   return false;
 };
 
-const countApiResponseTokens = async () => {
-  let totalTokens = 0;
-  let tokenCount = null;
-  for (const message of chatHistory) {
-    tokenCount = await countTokens(message.content);
-    totalTokens += tokenCount;
-  }
+const countApiResponseTokens = (currentChatHistory) => {
+  let totalTokens = currentChatHistory
+    .map((message) => countTokens(message.content))
+    .reduce((total, tokenValue) => total + tokenValue);
   const responseTokens = 4096 - totalTokens - 100;
-  if (responseTokens < 2000) countApiResponseTokens(chatHistory.splice(1, 2));
-  if (responseTokens > 0) return responseTokens;
-  throw new Error("Prompt too long. Please shorten your input.");
+  if (responseTokens > 2000) return responseTokens;
+  chatHistory.splice(1, 1);
+  countApiResponseTokens(currentChatHistory.splice(1, 1));
 };
 
-const countTokens = async (text) => {
+const countTokens = (text) => {
   const modelEncoder = new Tiktoken(model.bpe_ranks, model.special_tokens, model.pat_str);
   const tokens = modelEncoder.encode(text);
   modelEncoder.free();
