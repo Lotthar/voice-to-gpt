@@ -35,6 +35,7 @@ const addVoiceConnectionReadyEvent = (connection) => {
 const addSpeakingEvents = (connection) => {
   const receiver = connection.receiver;
   receiver.speaking.on("start", async (userId) => {
+    console.log(`User ${userId} started speaking, waiting for finish...`);
     if (opusStream === null) opusStream = getOpusStream(receiver, userId);
   });
 
