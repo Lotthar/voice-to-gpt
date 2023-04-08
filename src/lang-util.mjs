@@ -6,11 +6,15 @@ const VoiceLanguages = [
     name: "English",
     sttCode: "en-US",
     ttsCode: "en",
+    defaultAnswer:
+      "https://storage.googleapis.com/vocodes-public/tts_inference_output/b/5/0/vocodes_b507e91f-f83d-4f50-b5ed-5e3d45acfcc2.wav",
   },
   {
     name: "Serbian",
     sttCode: "sr-RS",
     ttsCode: "sr",
+    defaultAnswer:
+      "https://storage.googleapis.com/vocodes-public/tts_inference_output/b/5/0/vocodes_b507e91f-f83d-4f50-b5ed-5e3d45acfcc2.wav",
   },
 ];
 
@@ -18,6 +22,7 @@ export let currentVoiceLanguage = {
   name: null,
   sttCode: null,
   ttsCode: null,
+  defaultAnswer: null,
 };
 
 export const loadCurrentVoiceLangugageIfNone = async (channelId) => {
@@ -58,3 +63,6 @@ const getLanguageFromName = (langName) => {
 };
 
 const getLangugagePath = (channelId) => `languages/${channelId}-lang`;
+
+export const isCurrentVoiceLanguage = (langName) =>
+  !!currentVoiceLanguage && currentVoiceLanguage.name === langName;
