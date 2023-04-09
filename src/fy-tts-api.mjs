@@ -10,11 +10,10 @@ const fyClient = new FakeYou.Client({
   password: process.env.FY_PASSWORD,
 });
 await fyClient.start();
-const ttsModel = fyClient.searchModel("Morgan Freeman").first();
 
 export const createTTSAudioURL = async (text) => {
   try {
-    if (!ttsModel) fyClient.searchModel("Morgan Freeman").first();
+    const ttsModel = fyClient.searchModel("Morgan Free").first();
     const result = await ttsModel.request(text);
     return result.audioURL();
   } catch (error) {
