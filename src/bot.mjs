@@ -44,7 +44,7 @@ discordClient.on(Events.MessageCreate, async (message) => {
       const systemMsgChanged = await botSystemMessageChanged(messageContent, currentChannelId);
       if (systemMsgChanged) return;
       const answer = await generateOpenAIAnswer(messageContent);
-      sendMessageToProperChannel(answer);
+      await sendMessageToProperChannel(answer);
     }
   } catch (error) {
     console.error("Error in MessageCreate event: ", error);
