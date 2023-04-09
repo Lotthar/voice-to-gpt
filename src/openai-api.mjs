@@ -54,7 +54,7 @@ export const botSystemMessageChanged = async (message, channelId) => {
   if (message.startsWith(command)) {
     let currentSystemMessage = message.replace(command, "");
     await resetHistoryIfNewSystemMessage(currentSystemMessage, channelId);
-    sendMessageToProperChannel(`You changed system message to: ${currentSystemMessage}`);
+    await sendMessageToProperChannel(`You changed system message to: ${currentSystemMessage}`);
     return true;
   }
   return false;

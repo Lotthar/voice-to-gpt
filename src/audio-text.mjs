@@ -24,7 +24,7 @@ const processAudioFromTextMultiLang = async (connection, text) => {
     audioResource = getAudioResourceFromTextOtherLang(text);
   }
   player.play(createAudioResource(audioResource));
-  sendMessageToProperChannel(text);
+  await sendMessageToProperChannel(text);
 };
 
 const getAudioResourceFromTextEngLang = async (text) => {
