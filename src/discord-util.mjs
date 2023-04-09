@@ -47,7 +47,7 @@ const addSpeakingEvents = (connection) => {
       opusStream = null;
     } catch (error) {
       console.error("Error playing answer on voice channel: ", error);
-      sendMessageToProperChannel("There was problem with the answer");
+      await sendMessageToProperChannel("There was problem with the answer");
     }
   });
 };
