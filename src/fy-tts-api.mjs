@@ -22,3 +22,10 @@ export const createTTSAudioURL = async (text) => {
     return null;
   }
 };
+
+// (async () => {
+//   let url = await createTTSAudioURL(
+//     "The answer is being generated, please wait before making next question."
+//   );
+//   console.log(url);
+// })();

@@ -10,14 +10,26 @@ let player = null;
 let currentAnswerAudioURIs = [];
 
 export const playOpenAiAnswerAfterSpeech = async (connection, audioContent) => {
+  initPlayerAndPlayWaitingMessage(connection);
   const transcript = await processAudioContentIntoText(audioContent);
   const openAiAnswer = await generateOpenAIAnswer(transcript);
   await processAudioFromTextMultiLang(connection, openAiAnswer);
 };
 
+const initPlayerAndPlayWaitingMessage = (connection) => {
+  if (player === null) initAndSubscribeAudioPlayerToVoiceChannel(connection);
+  player.play(createAudioResource(currentVoiceLanguage.waitingAnswer));
+};
+
+const initAndSubscribeAudioPlayerToVoiceChannel = (connection) => {
+  player = createAudioPlayer();
+  addOnIdlePlayerEvent();
+  addOnErrorPlayerEvent();
+  connection.subscribe(player);
+};
+
 const processAudioFromTextMultiLang = async (connection, text) => {
   let audioResource = null;
-  if (player === null) initAndSubscribeAudioPlayerToVoiceChannel(connection, text);
   if (isCurrentVoiceLanguage("English")) {
     audioResource = await getAudioResourceFromTextEngLang(text);
   } else {
@@ -46,13 +58,6 @@ const getAudioResourceFromTextOtherLang = (text) => {
   return currentAnswerAudioURIs.shift();
 };
 
-const initAndSubscribeAudioPlayerToVoiceChannel = (connection) => {
-  player = createAudioPlayer();
-  addOnIdlePlayerEvent();
-  addOnErrorPlayerEvent();
-  connection.subscribe(player);
-};
-
 const addOnIdlePlayerEvent = () => {
   player.on(AudioPlayerStatus.Idle, async () => {
     if (currentAnswerAudioURIs.length > 0) {
@@ -67,7 +72,7 @@ const addOnErrorPlayerEvent = () => {
   });
 };
 
-const splitText = (text, maxLength = 1000) => {
+const splitText = (text, maxLength = 550) => {
   const chunks = [];
   let startIndex = 0;
 

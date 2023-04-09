@@ -8,6 +8,8 @@ const VoiceLanguages = [
     ttsCode: "en",
     defaultAnswer:
       "https://storage.googleapis.com/vocodes-public/tts_inference_output/b/5/0/vocodes_b507e91f-f83d-4f50-b5ed-5e3d45acfcc2.wav",
+    waitingAnswer:
+      "https://storage.googleapis.com/vocodes-public/tts_inference_output/7/7/6/vocodes_776e6e18-f09f-410d-b359-66373ff1c906.wav",
   },
   {
     name: "Serbian",
@@ -15,6 +17,8 @@ const VoiceLanguages = [
     ttsCode: "sr",
     defaultAnswer:
       "https://storage.googleapis.com/vocodes-public/tts_inference_output/b/5/0/vocodes_b507e91f-f83d-4f50-b5ed-5e3d45acfcc2.wav",
+    waitingAnswer:
+      "https://storage.googleapis.com/vocodes-public/tts_inference_output/7/7/6/vocodes_776e6e18-f09f-410d-b359-66373ff1c906.wav",
   },
 ];
 
@@ -23,6 +27,7 @@ export let currentVoiceLanguage = {
   sttCode: null,
   ttsCode: null,
   defaultAnswer: null,
+  waitingAnswer: null,
 };
 
 export const loadCurrentVoiceLangugageIfNone = async (channelId) => {
