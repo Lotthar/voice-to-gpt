@@ -66,8 +66,8 @@ const countApiResponseTokens = (currentChatHistory) => {
     .reduce((total, tokenValue) => total + tokenValue);
   const responseTokens = 4096 - totalTokens - 100;
   if (responseTokens > 2000) return responseTokens;
-  chatHistory.splice(1, 1);
-  countApiResponseTokens(currentChatHistory.splice(1, 1));
+  chatHistory.splice(1, 2);
+  countApiResponseTokens(currentChatHistory.splice(1, 2));
 };
 
 const countTokens = (text) => {

@@ -14,7 +14,7 @@ const ttsModel = fyClient.searchModel("Morgan Freeman").first();
 
 export const createTTSAudioURL = async (text) => {
   try {
-    if (!ttsModel) return null;
+    if (!ttsModel) fyClient.searchModel("Morgan Freeman").first();
     const result = await ttsModel.request(text);
     return result.audioURL();
   } catch (error) {
