@@ -28,8 +28,15 @@ const processAudioFromTextMultiLang = async (connection, text) => {
 };
 
 const getAudioResourceFromTextEngLang = async (text) => {
-  let audioUrl = await createTTSAudioURL(text);
-  return audioUrl !== null ? audioUrl : currentVoiceLanguage.defaultAnswer;
+  let audioUrl = null;
+  const textParts = splitText(text);
+  for (let txtPart of textParts) {
+    audioUrl = await createTTSAudioURL(txtPart);
+    if (audioUrl !== null) currentAnswerAudioURIs.push(audioUrl);
+  }
+  const noAudioURIs = currentAnswerAudioURIs.length === 0;
+  if (noAudioURIs) currentAnswerAudioURIs.push(currentVoiceLanguage.defaultAnswer);
+  return currentAnswerAudioURIs.shift();
 };
 
 const getAudioResourceFromTextOtherLang = (text) => {
@@ -58,4 +65,17 @@ const addOnErrorPlayerEvent = () => {
   player.on("error", (error) => {
     console.error("Error:", error.message, "with audio", error.resource.metadata.title);
   });
+};
+
+const splitText = (text, maxLength = 1000) => {
+  const chunks = [];
+  let startIndex = 0;
+
+  while (startIndex < text.length) {
+    const endIndex = Math.min(startIndex + maxLength, text.length);
+    chunks.push(text.slice(startIndex, endIndex));
+    startIndex = endIndex;
+  }
+
+  return chunks;
 };
