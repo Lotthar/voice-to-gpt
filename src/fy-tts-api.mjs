@@ -10,14 +10,15 @@ const fyClient = new FakeYou.Client({
   password: process.env.FY_PASSWORD,
 });
 await fyClient.start();
+const ttsModel = fyClient.searchModel("Morgan Freeman").first();
 
 export const createTTSAudioURL = async (text) => {
   try {
-    const ttsModel = fyClient.searchModel("Morgan Free").first();
+    if (!ttsModel) return null;
     const result = await ttsModel.request(text);
     return result.audioURL();
   } catch (error) {
-    console.error(`Error creating tts with voice of ${model.title}`);
+    console.error("Error creating TTS with FakeYou API: ", error);
     return null;
   }
 };
