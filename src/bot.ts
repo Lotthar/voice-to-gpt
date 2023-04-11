@@ -1,6 +1,6 @@
-import { Client, Events, GatewayIntentBits } from "discord.js";
-import { generateOpenAIAnswer } from "./openai-api.mjs";
-import { botSystemMessageChanged } from "./openai-util.mjs";
+import { Client, Events, GatewayIntentBits } from ".+";
+import { generateOpenAIAnswer } from ".+";
+import { botSystemMessageChanged } from ".+";
 import {
   joinVoiceChannelAndGetConnection,
   checkIfInvalidVoiceChannel,
@@ -8,9 +8,12 @@ import {
   getConnection,
   botIsMentioned,
   getMessageContentWithoutMention,
-} from "./discord-util.mjs";
-import { loadCurrentVoiceLangugageIfNone, botSpeakingLanguageChanged } from "./lang-util.mjs";
-import { botTTSVoiceChanged, loadVoiceAndModelIfNone } from "./fy-tts-api.mjs";
+} from ".+";
+import {
+  loadCurrentVoiceLangugageIfNone,
+  botSpeakingLanguageChanged,
+} from ".+";
+import { botTTSVoiceChanged, loadVoiceAndModelIfNone } from ".+";
 import dotenv from "dotenv";
 
 dotenv.config();

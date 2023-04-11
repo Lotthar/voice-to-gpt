@@ -1,6 +1,6 @@
 import { SpeechClient } from "@google-cloud/speech";
 import * as googleTTS from "google-tts-api";
-import { currentVoiceLanguage } from "./lang-util.mjs";
+import { currentVoiceLanguage } from ".+";
 import dotenv from "dotenv";
 
 dotenv.config();

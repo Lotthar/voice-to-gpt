@@ -1,11 +1,11 @@
-import { generateOpenAIAnswer } from "./openai-api.mjs";
-import { sendMessageToProperChannel } from "./discord-util.mjs";
-import { processAudioContentIntoText } from "./google-api.mjs";
+import { generateOpenAIAnswer } from ".+";
+import { sendMessageToProperChannel } from ".+";
+import { processAudioContentIntoText } from ".+";
 import { createAudioResource, createAudioPlayer, AudioPlayerStatus } from "@discordjs/voice";
-import { createTTSAudioURL } from "./fy-tts-api.mjs";
-import { isCurrentVoiceLanguage } from "./lang-util.mjs";
-import { currentVoice } from "./fy-tts-api.mjs";
-import { generateTTSResourceURIArray } from "./google-api.mjs";
+import { createTTSAudioURL } from ".+";
+import { isCurrentVoiceLanguage } from ".+";
+import { currentVoice } from ".+";
+import { generateTTSResourceURIArray } from ".+";
 
 let player = null;
 let currentAnswerAudioURIs = [];

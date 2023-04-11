@@ -1,6 +1,6 @@
 import { StreamEncoder } from "flac-bindings";
 import opus from "@discordjs/opus";
-import { opusStreamToFlacBase64 } from "./stream-util.mjs";
+import { opusStreamToFlacBase64 } from "./stream-util.ts/bot.js";
 
 export const createFlacAudioContentFromOpus = async (opusStream) => {
   const opusEncoder = new opus.OpusEncoder(48000, 2);

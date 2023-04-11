@@ -1,7 +1,7 @@
-import { downloadFileFromS3, uploadFileToS3 } from "./aws-s3-util.mjs";
-import { readJsonStream, readTextStream } from "./stream-util.mjs";
-import { sendMessageToProperChannel } from "./discord-util.mjs";
-import { currentChannelId } from "./bot.mjs";
+import { downloadFileFromS3, uploadFileToS3 } from ".+";
+import { readJsonStream, readTextStream } from ".+";
+import { sendMessageToProperChannel } from ".+";
+import { currentChannelId } from ".+";
 import { createRequire } from "module";
 const requireModule = createRequire(import.meta.url);
 const { Tiktoken } = requireModule("@dqbd/tiktoken/lite");

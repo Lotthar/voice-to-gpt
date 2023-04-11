@@ -4,10 +4,10 @@ import {
   chatHistory,
   countApiResponseTokens,
   modelName,
-} from "./openai-util.mjs";
-import { pushQAtoHistory } from "./openai-util.mjs";
+} from "./openai-util.ts";
+import { pushQAtoHistory } from "./openai-util.ts";
 import dotenv from "dotenv";
-import { currentVoice } from "./fy-tts-api.mjs";
+import { currentVoice } from ".+";
 
 dotenv.config();
 

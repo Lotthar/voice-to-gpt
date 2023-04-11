@@ -1,13 +1,13 @@
-import { ChannelType } from "discord.js";
+import { ChannelType } from ".+";
 import {
   VoiceConnectionStatus,
   joinVoiceChannel,
   EndBehaviorType,
   getVoiceConnection,
 } from "@discordjs/voice";
-import { createFlacAudioContentFromOpus } from "./audio-util.mjs";
-import { playOpenAiAnswerAfterSpeech } from "./audio-text.mjs";
-import { currentChannelId, discordClient } from "./bot.mjs";
+import { createFlacAudioContentFromOpus } from ".+";
+import { playOpenAiAnswerAfterSpeech } from ".+";
+import { currentChannelId, discordClient } from ".+";
 
 const BOT_NAME = "VoiceToGPT";
 

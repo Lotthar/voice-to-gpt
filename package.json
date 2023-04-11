@@ -2,9 +2,11 @@
   "name": "voice-message-chat-bot",
   "version": "1.0.0",
   "description": "Discord bot that converts reponds to voice messages",
-  "main": "src/index.mjs",
+  "main": "dist/bot.js",
   "scripts": {
-    "start": "npx babel-node src/bot.mjs"
+    "build": "tsc",
+    "start": "node dist/bot.js",
+    "dev": "tsc-watch --onSuccess \"node dist/bot.js\""
   },
   "author": "branko.rovcanin",
   "license": "ISC",
@@ -37,5 +39,9 @@
     "presets": [
       "@babel/preset-env"
     ]
+  },
+  "devDependencies": {
+    "@types/node": "^18.15.11",
+    "tsc-watch": "^6.0.0"
   }
 }

@@ -1,13 +1,16 @@
-import { Transform, PassThrough } from "node:stream";
+import { TransformOptions } from "node:stream";
+import { Transform, PassThrough, TransformCallback } from "node:stream";
 
 export class OpusDecodingStream extends Transform {
-  constructor(options, encoder) {
+  private _encoder: any;
+
+  constructor(options: TransformOptions, encoder: any) {
     super(options);
-    this.encoder = encoder;
+    this._encoder = encoder;
   }
 
-  _transform(data, encoding, callback) {
-    this.push(this.encoder.decode(data));
+  _transform(data, encoding, callback: TransformCallback) {
+    this.push(this._encoder.decode(data));
     callback();
   }
 }
@@ -20,7 +23,7 @@ export const opusStreamToFlacBase64 = async (opusStream, opusEncoder, flacEncode
       .pipe(flacEncoder) // encoded packets are then encoded to .flac format
       .pipe(finalAudioDataStream); // encoded .flac data is piped into the output stream
 
-    const audioDataChunks = [];
+    const audioDataChunks: Uint8Array[] = [];
     finalAudioDataStream
       .on("data", (chunk) => audioDataChunks.push(chunk))
       .on("error", (err) => reject(err))
@@ -38,12 +41,12 @@ export const readJsonStream = async (stream) => {
   });
 };
 
-export const readTextStream = async (stream) => {
+export const readTextStream = async (stream: any): Promise<string> => {
   return new Promise((resolve, reject) => {
     let message = "";
     stream
-      .on("data", (chunk) => (message += chunk.toString()))
-      .on("error", (err) => reject(err))
+      .on("data", (chunk: string) => (message += chunk.toString()))
+      .on("error", (err: Error) => reject(err))
       .on("end", () => resolve(message));
   });
 };

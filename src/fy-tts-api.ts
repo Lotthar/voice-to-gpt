@@ -2,12 +2,12 @@ import { createRequire } from "module";
 const requireModule = createRequire(import.meta.url);
 const FakeYou = requireModule("fakeyou.js");
 import dotenv from "dotenv";
-import { sendMessageToProperChannel } from "./discord-util.mjs";
-import { currentChannelId } from "./bot.mjs";
-import { uploadFileToS3, downloadFileFromS3 } from "./aws-s3-util.mjs";
-import { readJsonStream } from "./stream-util.mjs";
-import { isCurrentVoiceLanguage } from "./lang-util.mjs";
-import { generateTTSResourceURL } from "./google-api.mjs";
+import { sendMessageToProperChannel } from ".+";
+import { currentChannelId } from ".+";
+import { uploadFileToS3, downloadFileFromS3 } from ".+";
+import { readJsonStream } from ".+";
+import { isCurrentVoiceLanguage } from ".+";
+import { generateTTSResourceURL } from ".+";
 
 dotenv.config();
 const voices = [
