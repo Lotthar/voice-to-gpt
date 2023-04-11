@@ -42,13 +42,21 @@ const callGoogleSpeechApi = async (request) => {
 };
 
 export const generateTTSResourceURIArray = (text) => {
-  const ttsResourceLink = googleTTS.getAllAudioUrls(text, {
+  const ttsResourceLink = googleTTS.getAllAudioUrls(text, getTTSRequestOpts());
+  return ttsResourceLink.map((resource) => resource.url);
+};
+
+export const generateTTSResourceURL = (text) => {
+  return googleTTS.getAudioUrl(text, getTTSRequestOpts());
+};
+
+const getTTSRequestOpts = () => {
+  return {
     lang: currentVoiceLanguage.ttsCode,
     slow: false,
     host: "https://translate.google.com",
     splitPunct: ",.?",
-  });
-  return ttsResourceLink.map((resource) => resource.url);
+  };
 };
 
 const extractTranscriptionFromResponse = (apiResponse) => {

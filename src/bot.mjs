@@ -1,5 +1,6 @@
 import { Client, Events, GatewayIntentBits } from "discord.js";
-import { generateOpenAIAnswer, botSystemMessageChanged } from "./openai-api.mjs";
+import { generateOpenAIAnswer } from "./openai-api.mjs";
+import { botSystemMessageChanged } from "./openai-util.mjs";
 import {
   joinVoiceChannelAndGetConnection,
   checkIfInvalidVoiceChannel,
@@ -7,9 +8,9 @@ import {
   getConnection,
   botIsMentioned,
   getMessageContentWithoutMention,
-  botSpeakingLanguageChanged,
 } from "./discord-util.mjs";
-import { loadCurrentVoiceLangugageIfNone } from "./lang-util.mjs";
+import { loadCurrentVoiceLangugageIfNone, botSpeakingLanguageChanged } from "./lang-util.mjs";
+import { botTTSVoiceChanged, loadVoiceAndModelIfNone } from "./fy-tts-api.mjs";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -39,10 +40,8 @@ discordClient.on(Events.MessageCreate, async (message) => {
       currentChannelId = message.channelId;
       let messageContent = getMessageContentWithoutMention(message);
       message.channel.sendTyping();
-      const botSpeakingLangChanged = await botSpeakingLanguageChanged(messageContent);
-      if (botSpeakingLangChanged) return;
-      const systemMsgChanged = await botSystemMessageChanged(messageContent, currentChannelId);
-      if (systemMsgChanged) return;
+      const botSettingsChanged = await configuringBotSettings(messageContent);
+      if (botSettingsChanged) return;
       const answer = await generateOpenAIAnswer(messageContent);
       await sendMessageToProperChannel(answer);
     }
@@ -56,12 +55,23 @@ discordClient.on(Events.VoiceStateUpdate, async (oldState, newState) => {
     currentChannelId = newState.channelId ? newState.channelId : oldState.channelId;
     if (await checkIfInvalidVoiceChannel(oldState, newState)) return;
     voiceChannelConnection = getConnection(newState.guild.id);
-    await loadCurrentVoiceLangugageIfNone(currentChannelId);
+    await loadCurrentVoiceLangugageIfNone();
+    await loadVoiceAndModelIfNone();
     if (!voiceChannelConnection)
       voiceChannelConnection = joinVoiceChannelAndGetConnection(newState);
   } catch (error) {
     console.error("Error in VoiceStateUpdate event: ", error);
   }
 });
+
+const configuringBotSettings = async (settingCommand) => {
+  const botSpeakingLangChanged = await botSpeakingLanguageChanged(settingCommand);
+  if (botSpeakingLangChanged) return true;
+  const systemMsgChanged = await botSystemMessageChanged(settingCommand);
+  if (systemMsgChanged) return true;
+  const botVoiceChanged = await botTTSVoiceChanged(settingCommand);
+  if (botVoiceChanged) return true;
+  return false;
+};
 
 discordClient.login(process.env.DISCORD_API_KEY);

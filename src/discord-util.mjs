@@ -8,7 +8,6 @@ import {
 import { createFlacAudioContentFromOpus } from "./audio-util.mjs";
 import { playOpenAiAnswerAfterSpeech } from "./audio-text.mjs";
 import { currentChannelId, discordClient } from "./bot.mjs";
-import { resetLangugageIfChanged } from "./lang-util.mjs";
 
 const BOT_NAME = "VoiceToGPT";
 
@@ -47,7 +46,7 @@ const addSpeakingEvents = (connection) => {
       opusStream = null;
     } catch (error) {
       console.error("Error playing answer on voice channel: ", error);
-      await sendMessageToProperChannel("There was problem with the answer");
+      await sendMessageToProperChannel("**There was problem with the answer**");
     }
   });
 };
@@ -80,19 +79,6 @@ export const botIsMentioned = (message) =>
 export const getMessageContentWithoutMention = (message) => {
   const mentioned = message.mentions.members.first(); // get first mentioned member
   return message.content.replace(`<@${mentioned.id}> `, ""); // remove mention
-};
-
-export const botSpeakingLanguageChanged = async (message) => {
-  const command = "!lang !";
-  if (message.startsWith(command)) {
-    const langName = message.replace(command, "");
-    await resetLangugageIfChanged(langName, currentChannelId);
-    sendMessageToProperChannel(
-      `You successfully changed voice communication language to ${langName}`
-    );
-    return true;
-  }
-  return false;
 };
 
 export const sendMessageToProperChannel = async (message, maxLength = 2000) => {
