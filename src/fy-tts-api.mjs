@@ -16,6 +16,11 @@ const voices = [
   "Rick Sanchez",
   "Optimus Prime (Peter Cullen)",
   "Morty Smith",
+  "The Joker (Heath Ledger, Version 2.0)",
+  "Eminem (Slim Shady era - 1997 - 2001)",
+  "James Earl Jones",
+  "Sean Connery",
+  "2Pac (Tupac Amaru Shakur) (ARPAbet supported)",
 ];
 
 const fyClient = new FakeYou.Client({
