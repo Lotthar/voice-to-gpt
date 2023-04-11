@@ -31,6 +31,7 @@ const initAndSubscribeAudioPlayerToVoiceChannel = (connection) => {
 
 const processAudioFromTextMultiLang = async (text) => {
   let audioResource = null;
+  if (text === null) text = currentVoice.defaultAnswer;
   if (isCurrentVoiceLanguage("English")) {
     audioResource = await getAudioResourceFromTextEngLang(text);
   } else {
@@ -42,7 +43,6 @@ const processAudioFromTextMultiLang = async (text) => {
 
 const getAudioResourceFromTextEngLang = async (text) => {
   let audioUrl = null;
-  if (text === null) return currentVoice.defaultAnswer;
   const textParts = splitText(text);
   for (let txtPart of textParts) {
     audioUrl = await createTTSAudioURL(txtPart);
@@ -52,7 +52,6 @@ const getAudioResourceFromTextEngLang = async (text) => {
 };
 
 const getAudioResourceFromTextOtherLang = (text) => {
-  if (text === null) return currentVoice.defaultAnswer;
   currentAnswerAudioURIs = generateTTSResourceURIArray(text);
   return getFirstAudioFromCurrent();
 };
