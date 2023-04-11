@@ -31,14 +31,17 @@ const initAndSubscribeAudioPlayerToVoiceChannel = (connection) => {
 
 const processAudioFromTextMultiLang = async (text) => {
   let audioResource = null;
-  if (text === null) text = currentVoice.defaultAnswer;
-  if (isCurrentVoiceLanguage("English")) {
-    audioResource = await getAudioResourceFromTextEngLang(text);
+  if (text !== null) {
+    if (isCurrentVoiceLanguage("English")) {
+      audioResource = await getAudioResourceFromTextEngLang(text);
+    } else {
+      audioResource = getAudioResourceFromTextOtherLang(text);
+    }
+    await sendMessageToProperChannel(text);
   } else {
-    audioResource = getAudioResourceFromTextOtherLang(text);
+    audioResource = currentVoice.defaultAnswer;
   }
   player.play(createAudioResource(audioResource));
-  await sendMessageToProperChannel(text);
 };
 
 const getAudioResourceFromTextEngLang = async (text) => {
