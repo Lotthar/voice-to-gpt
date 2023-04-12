@@ -16,6 +16,11 @@ const voices = [
   "Rick Sanchez",
   "Optimus Prime (Peter Cullen)",
   "Morty Smith",
+  "The Joker (Heath Ledger, Version 2.0)",
+  "Eminem (Slim Shady era - 1997 - 2001)",
+  "James Earl Jones",
+  "Sean Connery",
+  "2Pac (Tupac Amaru Shakur) (ARPAbet supported)",
 ];
 
 const fyClient = new FakeYou.Client({
@@ -39,7 +44,9 @@ export const loadVoiceAndModelIfNone = async () => {
     const savedVoice = await readJsonStream(voiceS3Stream);
     Object.assign(currentVoice, savedVoice);
     ttsModel = fyClient.searchModel(currentVoice.name).first();
-    await setWaitingAndDefaultAnswer();
+    if (!currentVoice.defaultAnswer || !currentVoice.waitingAnswer) {
+      await setWaitingAndDefaultAnswer();
+    }
     console.log(`Current TTS voice is: ${currentVoice.name}`);
   } catch (error) {
     console.error("No current TTS voice from s3, setting default...");
