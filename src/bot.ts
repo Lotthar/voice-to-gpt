@@ -1,6 +1,6 @@
 import { Client, Events, GatewayIntentBits, Message, VoiceState } from "discord.js";
 import { generateOpenAIAnswer } from "./openai-api.js";
-import { botSystemMessageChanged } from "./openai-util.js";
+import { botSystemMessageChanged, genericResponse } from "./openai-util.js";
 import {
   joinVoiceChannelAndGetConnection,
   checkIfInvalidVoiceChannel,
@@ -36,9 +36,10 @@ discordClient.on(Events.MessageCreate, async (message: Message) => {
       currentChannelId = message.channelId;
       let messageContent = getMessageContentWithoutMention(message);
       message.channel.sendTyping();
-      const botSettingsChanged = await configuringBotSettings(messageContent);
+      const botSettingsChanged: boolean = await configuringBotSettings(messageContent);
       if (botSettingsChanged) return;
-      const answer = await generateOpenAIAnswer(messageContent);
+      let answer: string | null = await generateOpenAIAnswer(messageContent);
+      if (answer === null) answer = genericResponse;
       await sendMessageToProperChannel(answer);
     }
   } catch (error) {

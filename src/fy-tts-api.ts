@@ -2,12 +2,13 @@ import { createRequire } from "module";
 const requireModule = createRequire(import.meta.url);
 const FakeYou = requireModule("fakeyou.js");
 import dotenv from "dotenv";
-import { sendMessageToProperChannel } from ".+";
-import { currentChannelId } from ".+";
-import { uploadFileToS3, downloadFileFromS3 } from ".+";
-import { readJsonStream } from ".+";
-import { isCurrentVoiceLanguage } from ".+";
-import { generateTTSResourceURL } from ".+";
+import { sendMessageToProperChannel } from "./discord-util.js";
+import { currentChannelId } from "./bot.js";
+import { uploadFileToS3, downloadFileFromS3 } from "./aws-s3-util.js";
+import { readJsonStreamToString } from "./stream-util.js";
+import { isCurrentVoiceLanguage } from "./lang-util.js";
+import { generateTTSResourceURL } from "./google-api.js";
+import { SpeechVoice } from "./interfaces/voice.js";
 
 dotenv.config();
 const voices = [
@@ -29,20 +30,20 @@ const fyClient = new FakeYou.Client({
 });
 await fyClient.start();
 
-let ttsModel = null;
-export let currentVoice = {
+let ttsModel: any = null;
+export let currentVoice: SpeechVoice = {
   name: null,
   waitingAnswer: null,
   defaultAnswer: null,
 };
 
-export const loadVoiceAndModelIfNone = async () => {
+export const loadVoiceAndModelIfNone = async (): Promise<void> => {
   try {
     if (currentVoice.name !== null) return;
     const voicePath = getVoicePath();
     const voiceS3Stream = await downloadFileFromS3(voicePath);
-    const savedVoice = await readJsonStream(voiceS3Stream);
-    Object.assign(currentVoice, savedVoice);
+    const savedVoice: string = await readJsonStreamToString(voiceS3Stream);
+    Object.assign(currentVoice, JSON.parse(savedVoice));
     ttsModel = fyClient.searchModel(currentVoice.name).first();
     if (!currentVoice.defaultAnswer || !currentVoice.waitingAnswer) {
       await setWaitingAndDefaultAnswer();
@@ -54,7 +55,7 @@ export const loadVoiceAndModelIfNone = async () => {
   }
 };
 
-export const createTTSAudioURL = async (text) => {
+export const createTTSAudioURL = async (text: string): Promise<string | null> => {
   try {
     if (!ttsModel) return null;
     const result = await ttsModel.request(text);
@@ -65,14 +66,14 @@ export const createTTSAudioURL = async (text) => {
   }
 };
 
-export const resetVoiceModelIfChanged = async (voiceName) => {
+export const resetVoiceModelIfChanged = async (voiceName: string): Promise<void> => {
   if (currentVoice.name !== getVoiceByName(voiceName)) {
     await setCurrentVoice(voiceName);
     console.log(`TTS Voice has been changed. New voice: ${currentVoice.name}`);
   }
 };
 
-const setCurrentVoice = async (voiceName) => {
+const setCurrentVoice = async (voiceName: string): Promise<void> => {
   try {
     await assingModelAndVoice(voiceName);
     const voicePath = getVoicePath();
@@ -80,31 +81,26 @@ const setCurrentVoice = async (voiceName) => {
     await uploadFileToS3(voicePath, currentVoiceJson);
   } catch (error) {
     console.error("Error setting current TTS voice:", error);
-    return null;
   }
 };
 
-const assingModelAndVoice = async (voiceName) => {
+const assingModelAndVoice = async (voiceName: string) => {
   currentVoice.name = getVoiceByName(voiceName);
   ttsModel = fyClient.searchModel(currentVoice.name).first();
   await setWaitingAndDefaultAnswer();
 };
 
-const setWaitingAndDefaultAnswer = async () => {
+const setWaitingAndDefaultAnswer = async (): Promise<void> => {
   if (isCurrentVoiceLanguage("English")) {
-    currentVoice.defaultAnswer = await createTTSAudioURL(
-      "Your question was not understood or heard properly, please repeat."
-    );
+    currentVoice.defaultAnswer = await createTTSAudioURL("Your question was not understood or heard properly, please repeat.");
     currentVoice.waitingAnswer = await createTTSAudioURL("Answer is prepared, please wait.");
   } else {
-    currentVoice.defaultAnswer = generateTTSResourceURL(
-      "Vase pitanje nije razumljivo ili se ne cuje, molimo vas ponovite."
-    );
+    currentVoice.defaultAnswer = generateTTSResourceURL("Vase pitanje nije razumljivo ili se ne cuje, molimo vas ponovite.");
     currentVoice.waitingAnswer = generateTTSResourceURL("Odgovor se generise, molimo sacekajte.");
   }
 };
 
-export const botTTSVoiceChanged = async (message) => {
+export const botTTSVoiceChanged = async (message: string): Promise<boolean> => {
   const command = "!voice ";
   if (!message.startsWith(command)) return false;
   let voiceName = message.replace(command, "");
@@ -113,9 +109,9 @@ export const botTTSVoiceChanged = async (message) => {
   return true;
 };
 
-const getVoiceByName = (voiceName) => {
+const getVoiceByName = (voiceName: string): string => {
   let voice = voices.find((voice) => voice.toLowerCase().startsWith(voiceName.toLowerCase()));
   return voice ? voice : voices[0];
 };
 
-const getVoicePath = () => `voices/${currentChannelId}-voice`;
+const getVoicePath = (): string => `voices/${currentChannelId}-voice`;
