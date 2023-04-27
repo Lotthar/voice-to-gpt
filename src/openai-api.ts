@@ -19,11 +19,11 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
-export const generateOpenAIAnswer = async (question: string) => {
-  if (question === null) return null;
+export const generateOpenAIAnswer = async (question: string): Promise<string> => {
+  if (question === null) return genericResponse;
   await loadChatHistoryOrCreateNew();
   const answer = await getOpenAiResponse(question);
-  if (answer === null) return null;
+  if (answer === null) return genericResponse;
   pushQAtoHistory(question, answer);
   return answer;
 };

@@ -1,6 +1,6 @@
-import { Client, Events, GatewayIntentBits } from ".+";
-import { generateOpenAIAnswer } from ".+";
-import { botSystemMessageChanged } from ".+";
+import { Client, Events, GatewayIntentBits, Message, VoiceState } from "discord.js";
+import { generateOpenAIAnswer } from "./openai-api.js";
+import { botSystemMessageChanged } from "./openai-util.js";
 import {
   joinVoiceChannelAndGetConnection,
   checkIfInvalidVoiceChannel,
@@ -8,34 +8,27 @@ import {
   getConnection,
   botIsMentioned,
   getMessageContentWithoutMention,
-} from ".+";
-import {
-  loadCurrentVoiceLangugageIfNone,
-  botSpeakingLanguageChanged,
-} from ".+";
-import { botTTSVoiceChanged, loadVoiceAndModelIfNone } from ".+";
+} from "./discord-util.js";
+import { loadCurrentVoiceLangugageIfNone, botSpeakingLanguageChanged } from "./lang-util.js";
+import { botTTSVoiceChanged, loadVoiceAndModelIfNone } from "./fy-tts-api.js";
 import dotenv from "dotenv";
+import { VoiceConnection } from "@discordjs/voice";
 
 dotenv.config();
 
-let voiceChannelConnection;
-export let currentChannelId = null;
+let voiceChannelConnection: VoiceConnection | undefined;
+export let currentChannelId: string | null = null;
 
 // Set up Discord client for bot
 export const discordClient = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildVoiceStates,
-  ],
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildVoiceStates],
 });
 
-discordClient.once(Events.ClientReady, (client) => {
+discordClient.once(Events.ClientReady, (client: Client<true>) => {
   console.log(`Ready! Logged in as ${client.user.tag}`);
 });
 
-discordClient.on(Events.MessageCreate, async (message) => {
+discordClient.on(Events.MessageCreate, async (message: Message) => {
   try {
     if (message.author.bot) return;
     // Only answer to messages in the channel when the bot is specifically mentioned!
@@ -53,21 +46,20 @@ discordClient.on(Events.MessageCreate, async (message) => {
   }
 });
 
-discordClient.on(Events.VoiceStateUpdate, async (oldState, newState) => {
+discordClient.on(Events.VoiceStateUpdate, async (oldState: VoiceState, newState: VoiceState) => {
   try {
     currentChannelId = newState.channelId ? newState.channelId : oldState.channelId;
     if (await checkIfInvalidVoiceChannel(oldState, newState)) return;
     voiceChannelConnection = getConnection(newState.guild.id);
     await loadCurrentVoiceLangugageIfNone();
     await loadVoiceAndModelIfNone();
-    if (!voiceChannelConnection)
-      voiceChannelConnection = joinVoiceChannelAndGetConnection(newState);
+    if (!voiceChannelConnection) voiceChannelConnection = joinVoiceChannelAndGetConnection(newState);
   } catch (error) {
     console.error("Error in VoiceStateUpdate event: ", error);
   }
 });
 
-const configuringBotSettings = async (settingCommand) => {
+const configuringBotSettings = async (settingCommand: string): Promise<boolean> => {
   const botSpeakingLangChanged = await botSpeakingLanguageChanged(settingCommand);
   if (botSpeakingLangChanged) return true;
   const systemMsgChanged = await botSystemMessageChanged(settingCommand);

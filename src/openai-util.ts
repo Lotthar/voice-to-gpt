@@ -1,5 +1,5 @@
 import { downloadFileFromS3, uploadFileToS3 } from "./aws-s3-util.js";
-import { readJsonStream, readTextStream } from "./stream-util.js";
+import { readJsonStreamToString, readTextStreamToString } from "./stream-util.js";
 import { sendMessageToProperChannel } from "./discord-util.js";
 import { currentChannelId } from "./bot.js";
 import { Tiktoken, load, registry, models, ChatCompletionRequestMessageRoleEnum } from "./interfaces/openai.js";
@@ -22,7 +22,7 @@ export const resetHistoryIfNewSystemMessage = async (systemMessage: string) => {
 
 export const loadChatHistoryOrCreateNew = async (): Promise<void> => {
   if (chatHistory.length > 0) return;
-  chatHistory = await readHistoryFromFile();
+  chatHistory = await readHistoryFromStorage();
   if (chatHistory !== null) return;
   const currentSysMessage = await getCurrentSystemMessage();
   if (currentSysMessage === null) chatHistory = [];
@@ -45,11 +45,12 @@ export const saveChatHistory = async (): Promise<void> => {
   }
 };
 
-export const readHistoryFromFile = async (): Promise<ChatCompletionRequestMessage[]> => {
+export const readHistoryFromStorage = async (): Promise<ChatCompletionRequestMessage[]> => {
   try {
-    const filePath = getHistoryPath();
-    const jsonStream = await downloadFileFromS3(filePath);
-    return await readJsonStream(jsonStream);
+    const historyFilePath = getHistoryPath();
+    const historyJsonStream = await downloadFileFromS3(historyFilePath);
+    const historyJsonString = await readJsonStreamToString(historyJsonStream);
+    return JSON.parse(historyJsonString);
   } catch (error) {
     console.error("Error reading array from JSON file:", error);
     return [];
@@ -70,7 +71,7 @@ const getCurrentSystemMessage = async (): Promise<string | null> => {
   try {
     const systemMsgPath = getSystemMessagePath();
     const systemMsgS3Stream = await downloadFileFromS3(systemMsgPath);
-    return await readTextStream(systemMsgS3Stream);
+    return await readTextStreamToString(systemMsgS3Stream);
   } catch (error) {
     console.error("Error getting current system message:", error);
     return null;
@@ -101,7 +102,7 @@ const countTokens = (text: string): number => {
   return tokens.length;
 };
 
-export const checkAndReturnValidResponseData = (response: CreateChatCompletionResponse) => {
+export const checkAndReturnValidResponseData = (response: CreateChatCompletionResponse): string => {
   if (response && response.choices && response.choices[0] && response.choices[0].message && response.choices[0].message.content)
     return response.choices[0].message.content.trim();
   return genericResponse;

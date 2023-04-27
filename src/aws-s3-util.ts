@@ -1,7 +1,8 @@
 // Upload a file to S3
-import { S3, PutObjectCommand, GetObjectCommand, PutObjectCommandOutput, GetObjectCommandInput } from "@aws-sdk/client-s3";
+import { S3, PutObjectCommand, GetObjectCommand, PutObjectCommandOutput } from "@aws-sdk/client-s3";
 import { S3BucketContentParams, S3BucketGetParams, S3BucketResponseParams } from "./types/s3bucket.js";
 import dotenv from "dotenv";
+import { Readable } from "stream";
 
 dotenv.config();
 
@@ -32,7 +33,7 @@ export const uploadFileToS3 = async (key: string, content: string): Promise<PutO
 };
 
 // Download a file from S3
-export const downloadFileFromS3 = async (key: string) => {
+export const downloadFileFromS3 = async (key: string): Promise<Readable> => {
   const params: S3BucketGetParams = {
     Bucket: BUCKET,
     Key: key,
@@ -40,11 +41,15 @@ export const downloadFileFromS3 = async (key: string) => {
 
   try {
     const parameters = new GetObjectCommand(params);
-    const response = await s3.send(parameters);
-    const result: S3BucketResponseParams = {
-      Body: response.Body,
+    const s3result = await s3.send(parameters);
+    const response: S3BucketResponseParams = {
+      Body: s3result.Body,
     };
-    return result;
+    if (response && response instanceof Readable) {
+      const resultStream: Readable = response;
+      return resultStream;
+    }
+    throw new Error("Error downloading data from AWS S3 bucket!");
   } catch (error) {
     console.error("Error downloading data from AWS S3 bucket:", error);
     throw error;
