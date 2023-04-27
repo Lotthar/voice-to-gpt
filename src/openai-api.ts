@@ -1,13 +1,16 @@
-import { Configuration, OpenAIApi } from "openai";
 import {
-  retrieveChatHistoryOrCreateNew,
+  loadChatHistoryOrCreateNew,
   chatHistory,
   countApiResponseTokens,
   modelName,
-} from "./openai-util.ts";
-import { pushQAtoHistory } from "./openai-util.ts";
+  pushQAtoHistory,
+  checkAndReturnValidResponseData,
+  genericResponse,
+  Configuration,
+  OpenAIApi,
+  ChatCompletionRequestMessage,
+} from "./openai-util.js";
 import dotenv from "dotenv";
-import { currentVoice } from ".+";
 
 dotenv.config();
 
@@ -16,27 +19,28 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
-export const generateOpenAIAnswer = async (question) => {
+export const generateOpenAIAnswer = async (question: string) => {
   if (question === null) return null;
-  await retrieveChatHistoryOrCreateNew();
+  await loadChatHistoryOrCreateNew();
   const answer = await getOpenAiResponse(question);
   if (answer === null) return null;
   pushQAtoHistory(question, answer);
   return answer;
 };
 
-const getOpenAiResponse = async (question) => {
+const getOpenAiResponse = async (question: string): Promise<string> => {
   try {
-    let currentChatHistory = [...chatHistory, { role: "user", content: question }];
+    const currentChatHistory: ChatCompletionRequestMessage[] = [...chatHistory, { role: "user", content: question }];
     let numResponseTokens = countApiResponseTokens(currentChatHistory);
     const response = await openai.createChatCompletion({
       model: modelName,
       messages: currentChatHistory,
       max_tokens: numResponseTokens,
     });
-    return response.data.choices[0].message.content.trim();
+    if (!response || response.status !== 200) return genericResponse;
+    return checkAndReturnValidResponseData(response.data);
   } catch (error) {
     console.error("Error calling Open AI API: ", error);
-    return null;
+    return genericResponse;
   }
 };
