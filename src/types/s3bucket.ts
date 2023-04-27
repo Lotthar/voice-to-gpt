@@ -11,6 +11,6 @@ export type S3BucketGetParams = Omit<GetObjectCommandOutput, "Key" | "Bucket" | 
   $metadata?: GetObjectCommandOutput["$metadata"];
 };
 
-export type S3BucketResponseParams = Omit<GetObjectCommandOutput, "Body"> & {
-  Body: ReadableStream;
+export type S3BucketResponseParams = {
+  Body: GetObjectCommandOutput["Body"];
 };

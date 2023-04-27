@@ -40,8 +40,11 @@ export const downloadFileFromS3 = async (key: string) => {
 
   try {
     const parameters = new GetObjectCommand(params);
-    const response: S3BucketResponseParams = await s3.send(parameters);
-    return response.Body;
+    const response = await s3.send(parameters);
+    const result: S3BucketResponseParams = {
+      Body: response.Body,
+    };
+    return result;
   } catch (error) {
     console.error("Error downloading data from AWS S3 bucket:", error);
     throw error;
