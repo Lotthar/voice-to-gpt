@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/bot.js",
-    "dev": "tsc-watch --onSuccess \"node dist/bot.js\""
+    "dev": "tsc-watch --onSuccess \"node dist/bot.js\"",
+    "heroku-postbuild": "tsc"
   },
   "author": "branko.rovcanin",
   "license": "ISC",
@@ -42,6 +43,7 @@
   },
   "devDependencies": {
     "@types/node": "^18.15.11",
-    "tsc-watch": "^6.0.0"
+    "tsc-watch": "^6.0.0",
+    "typescript": "^5.0.4"
   }
 }

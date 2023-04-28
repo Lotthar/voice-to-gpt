@@ -81,14 +81,14 @@ const getCurrentSystemMessage = async (): Promise<string | null> => {
 export const botSystemMessageChanged = async (message: string): Promise<boolean> => {
   const command = "!system ";
   if (!message.startsWith(command)) return false;
-  let currentSystemMessage = message.replace(command, "");
+  const currentSystemMessage = message.replace(command, "");
   await resetHistoryIfNewSystemMessage(currentSystemMessage);
   await sendMessageToProperChannel(`You changed system message to: **${currentSystemMessage}**`);
   return true;
 };
 
 export const countApiResponseTokens = (currentChatHistory: ChatCompletionRequestMessage[]): number => {
-  let totalTokens: number = currentChatHistory.map((message) => countTokens(message.content)).reduce((total, tokenValue) => total + tokenValue);
+  const totalTokens = currentChatHistory.map((message) => countTokens(message.content)).reduce((total, tokenValue) => total + tokenValue);
   const responseTokens = 4096 - totalTokens - 200;
   if (responseTokens > 2000) return responseTokens;
   chatHistory.splice(1, 2);
