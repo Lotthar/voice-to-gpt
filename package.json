@@ -4,7 +4,7 @@
   "description": "Discord bot that converts reponds to voice messages",
   "main": "dist/bot.js",
   "scripts": {
-    "build": "./node_modules/.bin/tsc",
+    "build": "tsc",
     "start": "node dist/bot.js",
     "dev": "tsc-watch --onSuccess \"node dist/bot.js\""
   },

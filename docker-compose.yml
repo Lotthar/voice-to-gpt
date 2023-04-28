@@ -3,5 +3,3 @@ services:
   voice-to-gpt:
     build: .
     image: registry.heroku.com/discord-voice-to-gpt/worker
-    volumes:
-      - ./history:/app/history
