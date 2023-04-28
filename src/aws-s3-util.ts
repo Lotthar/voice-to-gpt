@@ -41,15 +41,9 @@ export const downloadFileFromS3 = async (key: string): Promise<Readable> => {
 
   try {
     const parameters = new GetObjectCommand(params);
-    const s3result = await s3.send(parameters);
-    const response: S3BucketResponseParams = {
-      Body: s3result.Body,
-    };
-    if (response && response instanceof Readable) {
-      const resultStream: Readable = response;
-      return resultStream;
-    }
-    throw new Error("Error downloading data from AWS S3 bucket!");
+    const s3result: S3BucketResponseParams = await s3.send(parameters);
+    if (!s3result.Body || !(s3result.Body instanceof Readable)) throw new Error("No readable body in AWS s3 response!");
+    return s3result.Body;
   } catch (error) {
     console.error("Error downloading data from AWS S3 bucket:", error);
     throw error;

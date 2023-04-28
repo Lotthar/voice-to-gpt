@@ -13,5 +13,5 @@ export type S3BucketGetParams = Omit<GetObjectCommandOutput, "Key" | "Bucket" | 
 };
 
 export type S3BucketResponseParams = {
-  Body: Readable | ReadableStream<any> | Blob | undefined;
+  Body?: Readable | ReadableStream<any> | Blob | undefined;
 };
