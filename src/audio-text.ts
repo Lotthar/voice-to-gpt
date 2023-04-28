@@ -18,13 +18,13 @@ export const playOpenAiAnswerAfterSpeech = async (connection: VoiceConnection, a
 const initPlayerAndPlayWaitingMessage = (connection: VoiceConnection): void => {
   if (player === null) initAndSubscribeAudioPlayerToVoiceChannel(connection);
   if (currentVoice.waitingAnswer === null) return;
-  player!.stop();
   player!.play(createAudioResource(currentVoice.waitingAnswer));
 };
 
 const initAndSubscribeAudioPlayerToVoiceChannel = (connection: VoiceConnection): void => {
   player = createAudioPlayer();
   addOnIdlePlayerEvent();
+  addOnAutoPausePlayerEvent();
   addOnErrorPlayerEvent();
   connection.subscribe(player);
 };
@@ -74,6 +74,12 @@ const addOnIdlePlayerEvent = (): void => {
       const firstQueuedAudio = currentAnswerAudioURIs.shift();
       player!.play(createAudioResource(firstQueuedAudio ? firstQueuedAudio : currentVoice.defaultAnswer!));
     }
+  });
+};
+
+const addOnAutoPausePlayerEvent = (): void => {
+  player!.on(AudioPlayerStatus.AutoPaused, () => {
+    player!.stop();
   });
 };
 
