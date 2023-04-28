@@ -4,10 +4,9 @@
   "description": "Discord bot that converts reponds to voice messages",
   "main": "dist/bot.js",
   "scripts": {
-    "build": "tsc",
+    "build": "npx tsc",
     "start": "node dist/bot.js",
-    "dev": "tsc-watch --onSuccess \"node dist/bot.js\"",
-    "heroku-postbuild": "tsc"
+    "dev": "tsc-watch --onSuccess \"node dist/bot.js\""
   },
   "author": "branko.rovcanin",
   "license": "ISC",
