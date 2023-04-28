@@ -97,8 +97,8 @@ const setWaitingAndDefaultAnswer = async (): Promise<void> => {
     currentVoice.defaultAnswer = await createTTSAudioURL("Your question was not understood or heard properly, please repeat.");
     currentVoice.waitingAnswer = await createTTSAudioURL("Answer is prepared, please wait.");
   } else {
-    currentVoice.defaultAnswer = generateTTSResourceURL("Vase pitanje nije razumljivo ili se ne cuje, molimo vas ponovite.");
-    currentVoice.waitingAnswer = generateTTSResourceURL("Odgovor se generise, molimo sacekajte.");
+    currentVoice.defaultAnswer = generateTTSResourceURL("Vaše pitanje nije razumljivo ili se ne čuje, molimo vas ponovite.");
+    currentVoice.waitingAnswer = generateTTSResourceURL("Vaš odgovor se generiše, molimo vas sačekajte.");
   }
 };
 
