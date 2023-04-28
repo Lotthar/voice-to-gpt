@@ -18,6 +18,7 @@ export const playOpenAiAnswerAfterSpeech = async (connection: VoiceConnection, a
 const initPlayerAndPlayWaitingMessage = (connection: VoiceConnection): void => {
   if (player === null) initAndSubscribeAudioPlayerToVoiceChannel(connection);
   if (currentVoice.waitingAnswer === null) return;
+  player!.stop();
   player!.play(createAudioResource(currentVoice.waitingAnswer));
 };
 

@@ -10,8 +10,8 @@ export const loadCurrentVoiceLangugageIfNone = async (): Promise<void> => {
     if (currentVoiceLanguage.name !== null) return;
     const langPath: string = getLangugagePath();
     const langS3Stream = await downloadFileFromS3(langPath);
-    const langNameJson: string = await readTextStreamToString(langS3Stream);
-    Object.assign(currentVoiceLanguage, getLanguageFromName(JSON.parse(langNameJson)));
+    const langName: string = await readTextStreamToString(langS3Stream);
+    Object.assign(currentVoiceLanguage, getLanguageFromName(langName));
     console.log(`Current voice channel language is ${currentVoiceLanguage.name}`);
   } catch (error) {
     console.error("No current voice language from s3, setting default...");

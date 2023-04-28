@@ -27,6 +27,7 @@ export const loadChatHistoryOrCreateNew = async (): Promise<void> => {
   const currentSysMessage = await getCurrentSystemMessage();
   if (currentSysMessage === null) chatHistory = [];
   else chatHistory = [{ role: ChatCompletionRequestMessageRoleEnum.System, content: currentSysMessage }];
+  await saveChatHistory();
 };
 
 export const pushQAtoHistory = async (question: string, answer: string): Promise<void> => {
@@ -71,7 +72,8 @@ const getCurrentSystemMessage = async (): Promise<string | null> => {
   try {
     const systemMsgPath = getSystemMessagePath();
     const systemMsgS3Stream = await downloadFileFromS3(systemMsgPath);
-    return await readTextStreamToString(systemMsgS3Stream);
+    const systemMsg = await readTextStreamToString(systemMsgS3Stream);
+    return systemMsg;
   } catch (error) {
     console.error("Error getting current system message:", error);
     return null;
