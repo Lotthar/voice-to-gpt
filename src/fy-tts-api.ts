@@ -73,20 +73,22 @@ export const resetVoiceModelIfChanged = async (voiceName: string): Promise<void>
   }
 };
 
-const setCurrentVoice = async (voiceName: string): Promise<void> => {
+export const setCurrentVoice = async (voiceName: string | null): Promise<void> => {
   try {
     await assingModelAndVoice(voiceName);
     const voicePath = getVoicePath();
-    const currentVoiceJson = JSON.stringify(currentVoice, null, 2);
+    const currentVoiceJson = JSON.stringify(currentVoice);
     await uploadFileToS3(voicePath, currentVoiceJson);
   } catch (error) {
     console.error("Error setting current TTS voice:", error);
   }
 };
 
-const assingModelAndVoice = async (voiceName: string) => {
-  currentVoice.name = getVoiceByName(voiceName);
-  ttsModel = fyClient.searchModel(currentVoice.name).first();
+const assingModelAndVoice = async (voiceName: string | null) => {
+  if (voiceName !== null) {
+    currentVoice.name = getVoiceByName(voiceName);
+    ttsModel = fyClient.searchModel(currentVoice.name).first();
+  }
   await setWaitingAndDefaultAnswer();
 };
 

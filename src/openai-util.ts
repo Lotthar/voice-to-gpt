@@ -38,7 +38,7 @@ export const pushQAtoHistory = async (question: string, answer: string): Promise
 export const saveChatHistory = async (): Promise<void> => {
   try {
     const filePath = getHistoryPath();
-    const jsonString = JSON.stringify(chatHistory, null, 2);
+    const jsonString = JSON.stringify(chatHistory);
     await uploadFileToS3(filePath, jsonString);
   } catch (error) {
     console.error("Error saving array to JSON file:", error);

@@ -3,6 +3,7 @@ import { readTextStreamToString } from "./stream-util.js";
 import { getLanguageFromName, voiceLanguages, currentVoiceLanguage } from "./interfaces/language.js";
 import { currentChannelId } from "./bot.js";
 import { sendMessageToProperChannel } from "./discord-util.js";
+import { setCurrentVoice } from "./fy-tts-api.js";
 
 export const loadCurrentVoiceLangugageIfNone = async (): Promise<void> => {
   try {
@@ -30,6 +31,7 @@ const setCurrentLanguage = async (langName: string): Promise<void> => {
     const langPath = getLangugagePath();
     await uploadFileToS3(langPath, langName);
     Object.assign(currentVoiceLanguage, getLanguageFromName(langName));
+    await setCurrentVoice(null);
   } catch (error) {
     console.error("Error setting current voice language:", error);
   }
