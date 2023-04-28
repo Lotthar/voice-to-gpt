@@ -6,6 +6,8 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 # Install application dependencies
 RUN npm install
+# Build typescript to plain javascript compiled dist
+RUN npm run build
 # Copy the application code into the container
 COPY . .
 
