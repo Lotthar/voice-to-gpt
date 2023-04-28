@@ -116,4 +116,4 @@ const getVoiceByName = (voiceName: string): string => {
   return voice ? voice : voices[0];
 };
 
-const getVoicePath = (): string => `voices/${currentChannelId}-voice`;
+const getVoicePath = (): string => `voices/${currentChannelId}-voice.json`;
