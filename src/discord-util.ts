@@ -39,14 +39,16 @@ const addVoiceConnectionReadyEvent = (connection: VoiceConnection): void => {
 const addSpeakingEvents = (connection: VoiceConnection): void => {
   const receiver = connection.receiver;
   receiver.speaking.on("start", async (userId: string) => {
-    console.log(`User ${userId} started speaking, waiting for finish...`);
-    if (opusStream === null) opusStream = getOpusStream(receiver, userId);
+    if (opusStream === null) {
+      console.log(`User ${userId} started speaking, waiting for finish...`);
+      opusStream = getOpusStream(receiver, userId);
+    }
   });
 
   receiver.speaking.on("end", async (userId: string) => {
-    console.log(`User ${userId} finished speaking, creating an answer...`);
     try {
       if (opusStream === null) return;
+      console.log(`User ${userId} finished speaking, creating an answer...`);
       const voiceAudioBase64 = await createFlacAudioContentFromOpus(opusStream);
       await playOpenAiAnswerAfterSpeech(connection, voiceAudioBase64);
       opusStream = null;

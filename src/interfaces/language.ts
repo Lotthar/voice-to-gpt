@@ -20,7 +20,7 @@ export const voiceLanguages: Language[] = [English, Serbian];
 
 export let currentVoiceLanguage: Language = English;
 
-export const getLanguageFromName = (langName : String) : Language => {
+export const getLanguageFromName = (langName: String): Language => {
   const language = voiceLanguages.find((lang) => lang.name.toLowerCase() === langName.toLowerCase());
-  return language ? language : voiceLanguages[0];
+  return !!language ? language : voiceLanguages[0];
 };

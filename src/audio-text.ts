@@ -1,7 +1,7 @@
 import { generateOpenAIAnswer } from "./openai-api.js";
 import { sendMessageToProperChannel } from "./discord-util.js";
 import { processAudioContentIntoText, generateTTSResourceURIArray } from "./google-api.js";
-import { createAudioResource, createAudioPlayer, AudioPlayerStatus, AudioPlayer, VoiceConnection, AudioPlayerError } from "@discordjs/voice";
+import { createAudioResource, createAudioPlayer, AudioPlayerStatus, AudioPlayer, VoiceConnection } from "@discordjs/voice";
 import { createTTSAudioURL, currentVoice } from "./fy-tts-api.js";
 import { isCurrentVoiceLanguage } from "./lang-util.js";
 
@@ -79,6 +79,7 @@ const addOnIdlePlayerEvent = (): void => {
 
 const addOnAutoPausePlayerEvent = (): void => {
   player!.on(AudioPlayerStatus.AutoPaused, () => {
+    console.log("VoiceGPT audio stoped playing!");
     player!.stop();
   });
 };
