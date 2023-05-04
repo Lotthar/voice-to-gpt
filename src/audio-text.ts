@@ -32,11 +32,7 @@ const initAndSubscribeAudioPlayerToVoiceChannel = (connection: VoiceConnection):
 const processAudioFromTextMultiLang = async (text: string | null): Promise<void> => {
   let audioResource: string | null | undefined;
   if (text !== null) {
-    if (isCurrentVoiceLanguage("English")) {
-      audioResource = await getAudioResourceFromTextEngLang(text);
-    } else {
-      audioResource = getAudioResourceFromTextOtherLang(text);
-    }
+    audioResource = getAudioResourceFromTextOtherLang(text);
     await sendMessageToProperChannel(text);
   } else {
     audioResource = currentVoice.defaultAnswer;

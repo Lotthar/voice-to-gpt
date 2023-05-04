@@ -31,6 +31,7 @@ const setCurrentLanguage = async (langName: string): Promise<void> => {
     const langPath = getLangugagePath();
     await uploadFileToS3(langPath, langName);
     Object.assign(currentVoiceLanguage, getLanguageFromName(langName));
+    console.log(`Current language has been set to: ${currentVoiceLanguage.name}`);
     await setCurrentVoice(null);
   } catch (error) {
     console.error("Error setting current voice language:", error);

@@ -5,7 +5,7 @@ import { currentChannelId } from "./bot.js";
 import { Tiktoken, load, registry, models, ChatCompletionRequestMessageRoleEnum } from "./interfaces/openai.js";
 import { Configuration, OpenAIApi, ChatCompletionRequestMessage, CreateChatCompletionResponse } from "openai";
 
-export const modelName: string = "gpt-3.5-turbo";
+export const modelName: string = "gpt-4";
 export const model = await load(registry[models[modelName]]);
 export let chatHistory: ChatCompletionRequestMessage[] = [];
 export const genericResponse = "The answer is not generated properly!";
@@ -91,7 +91,7 @@ export const botSystemMessageChanged = async (message: string): Promise<boolean>
 
 export const countApiResponseTokens = (currentChatHistory: ChatCompletionRequestMessage[]): number => {
   const totalTokens = currentChatHistory.map((message) => countTokens(message.content)).reduce((total, tokenValue) => total + tokenValue);
-  const responseTokens = 4096 - totalTokens - 200;
+  const responseTokens = 8192 - totalTokens - 200;
   if (responseTokens > 2000) return responseTokens;
   chatHistory.splice(1, 2);
   return countApiResponseTokens(currentChatHistory.splice(1, 2));
