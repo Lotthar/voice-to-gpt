@@ -1,9 +1,10 @@
 import { uploadFileToS3, downloadFileFromS3 } from "./aws-s3-util.js";
 import { readTextStreamToString } from "./stream-util.js";
-import { getLanguageFromName, voiceLanguages, currentVoiceLanguage, currentVoice } from "./interfaces/language.js";
+import { getLanguageFromName, voiceLanguages, currentVoiceLanguage } from "./interfaces/language.js";
 import { currentChannelId } from "./bot.js";
 import { sendMessageToProperChannel } from "./discord-util.js";
 import { setCurrentVoice } from "./voice-util.js";
+import { currentVoice } from "./interfaces/voice.js";
 
 export const loadCurrentVoiceLangugageIfNone = async (): Promise<void> => {
   try {

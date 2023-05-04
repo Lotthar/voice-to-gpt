@@ -3,7 +3,7 @@ import { sendMessageToProperChannel } from "./discord-util.js";
 import { processAudioContentIntoText, generateTTSResourceURIArray } from "./google-api.js";
 import { createAudioResource, createAudioPlayer, AudioPlayerStatus, AudioPlayer, VoiceConnection } from "@discordjs/voice";
 import { createTTSAudioURL } from "./fy-tts-api.js";
-import { currentVoice } from "./interfaces/language.js";
+import { currentVoice } from "./interfaces/voice.js";
 import { isCurrentVoiceLanguage } from "./lang-util.js";
 import { checkIfGoogleAPIisUsed } from "./voice-util.js";
 

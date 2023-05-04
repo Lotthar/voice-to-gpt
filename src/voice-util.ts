@@ -5,7 +5,7 @@ import { readJsonStreamToString } from "./stream-util.js";
 import { isCurrentVoiceLanguage } from "./lang-util.js";
 import { generateTTSResourceURL } from "./google-api.js";
 import { loadFakeYouVoice } from "./fy-tts-api.js";
-import { currentVoice, voices, DEFAULT_ENGLISH_VOICE } from "./interfaces/language.js";
+import { currentVoice, voices, DEFAULT_ENGLISH_VOICE } from "./interfaces/voice.js";
 
 export const loadVoiceIfNone = async (): Promise<void> => {
   try {
