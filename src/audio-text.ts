@@ -5,7 +5,7 @@ import { createAudioResource, createAudioPlayer, AudioPlayerStatus, AudioPlayer,
 import { createTTSAudioURL } from "./fy-tts-api.js";
 import { currentVoice } from "./interfaces/language.js";
 import { isCurrentVoiceLanguage } from "./lang-util.js";
-import { checkIfGoogleAPIisUsed } from "./voice.js";
+import { checkIfGoogleAPIisUsed } from "./voice-util.js";
 
 let player: AudioPlayer | null = null;
 let currentAnswerAudioURIs: string[] = [];

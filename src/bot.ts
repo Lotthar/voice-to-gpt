@@ -11,7 +11,7 @@ import {
   addVoiceConnectionReadyEvent,
 } from "./discord-util.js";
 import { loadCurrentVoiceLangugageIfNone, botSpeakingLanguageChanged } from "./lang-util.js";
-import { botTTSVoiceChanged, loadVoiceIfNone } from "./voice.js";
+import { botTTSVoiceChanged, loadVoiceIfNone } from "./voice-util.js";
 import dotenv from "dotenv";
 import { VoiceConnection } from "@discordjs/voice";
 

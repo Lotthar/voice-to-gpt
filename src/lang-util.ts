@@ -3,7 +3,7 @@ import { readTextStreamToString } from "./stream-util.js";
 import { getLanguageFromName, voiceLanguages, currentVoiceLanguage, currentVoice } from "./interfaces/language.js";
 import { currentChannelId } from "./bot.js";
 import { sendMessageToProperChannel } from "./discord-util.js";
-import { setCurrentVoice } from "./voice.js";
+import { setCurrentVoice } from "./voice-util.js";
 
 export const loadCurrentVoiceLangugageIfNone = async (): Promise<void> => {
   try {
