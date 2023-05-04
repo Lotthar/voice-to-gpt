@@ -19,6 +19,7 @@ export const playOpenAiAnswerAfterSpeech = async (connection: VoiceConnection, a
 
 const initPlayerAndPlayWaitingMessage = (connection: VoiceConnection): void => {
   if (player === null) initAndSubscribeAudioPlayerToVoiceChannel(connection);
+  connection.subscribe(player!);
   if (currentVoice.waitingAnswer === null) return;
   player!.play(createAudioResource(currentVoice.waitingAnswer));
 };
@@ -28,7 +29,6 @@ const initAndSubscribeAudioPlayerToVoiceChannel = (connection: VoiceConnection):
   addOnIdlePlayerEvent();
   addOnAutoPausePlayerEvent();
   addOnErrorPlayerEvent();
-  connection.subscribe(player);
 };
 
 const processAudioFromTextMultiLang = async (text: string | null): Promise<void> => {
