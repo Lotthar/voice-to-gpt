@@ -36,8 +36,8 @@ const processAudioFromTextMultiLang = async (text: string | null): Promise<void>
     if (isCurrentVoiceLanguage("English")) await getAudioResourceFromTextEngLang(text);
     else currentAnswerAudioURIs = generateTTSResourceURIArray(text);
     await sendMessageToProperChannel(text);
+    player!.play(createAudioResource(getFirstAudioFromCurrent()));
   }
-  player!.play(createAudioResource(getFirstAudioFromCurrent()));
 };
 
 const getAudioResourceFromTextEngLang = async (text: string) => {
@@ -62,7 +62,7 @@ const getFirstAudioFromCurrent = (): string => {
   const noAudioURIs = currentAnswerAudioURIs.length === 0;
   if (noAudioURIs) currentAnswerAudioURIs.push(currentVoice.defaultAnswer!);
   const firstQueuedAudio = currentAnswerAudioURIs.shift();
-  return firstQueuedAudio ? firstQueuedAudio : currentVoice.defaultAnswer!;
+  return !!firstQueuedAudio ? firstQueuedAudio : currentVoice.defaultAnswer!;
 };
 
 const addOnIdlePlayerEvent = (): void => {
@@ -76,7 +76,7 @@ const addOnIdlePlayerEvent = (): void => {
 
 const addOnAutoPausePlayerEvent = (connection: VoiceConnection): void => {
   player!.on(AudioPlayerStatus.AutoPaused, () => {
-    console.log("VoiceGPT audio stoped playing!");
+    console.log("VoiceGPT audio stoped playing, recreating the player...");
     initAndSubscribeAudioPlayerToVoiceChannel(connection);
   });
 };
