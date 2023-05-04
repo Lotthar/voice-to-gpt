@@ -25,11 +25,10 @@ export const joinVoiceChannelAndGetConnection = (newState: VoiceState): VoiceCon
     selfMute: true,
     selfDeaf: false,
   });
-  addVoiceConnectionReadyEvent(connection);
   return connection;
 };
 
-const addVoiceConnectionReadyEvent = (connection: VoiceConnection): void => {
+export const addVoiceConnectionReadyEvent = (connection: VoiceConnection): void => {
   connection.on(VoiceConnectionStatus.Ready, () => {
     console.log("Bot is connected and ready to answer users questions!");
     addSpeakingEvents(connection);

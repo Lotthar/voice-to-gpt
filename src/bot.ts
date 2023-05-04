@@ -8,6 +8,7 @@ import {
   getConnection,
   botIsMentioned,
   getMessageContentWithoutMention,
+  addVoiceConnectionReadyEvent,
 } from "./discord-util.js";
 import { loadCurrentVoiceLangugageIfNone, botSpeakingLanguageChanged } from "./lang-util.js";
 import { botTTSVoiceChanged, loadVoiceIfNone } from "./voice.js";
@@ -55,6 +56,7 @@ discordClient.on(Events.VoiceStateUpdate, async (oldState: VoiceState, newState:
     await loadCurrentVoiceLangugageIfNone();
     await loadVoiceIfNone();
     if (!voiceChannelConnection) voiceChannelConnection = joinVoiceChannelAndGetConnection(newState);
+    addVoiceConnectionReadyEvent(voiceChannelConnection);
   } catch (error) {
     console.error("Error in VoiceStateUpdate event: ", error);
   }

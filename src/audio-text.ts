@@ -26,7 +26,7 @@ const initPlayerAndPlayWaitingMessage = (connection: VoiceConnection): void => {
 const initAndSubscribeAudioPlayerToVoiceChannel = (connection: VoiceConnection): void => {
   player = createAudioPlayer();
   addOnIdlePlayerEvent();
-  addOnAutoPausePlayerEvent(connection);
+  addOnAutoPausePlayerEvent();
   addOnErrorPlayerEvent();
   connection.subscribe(player);
 };
@@ -74,10 +74,10 @@ const addOnIdlePlayerEvent = (): void => {
   });
 };
 
-const addOnAutoPausePlayerEvent = (connection: VoiceConnection): void => {
+const addOnAutoPausePlayerEvent = (): void => {
   player!.on(AudioPlayerStatus.AutoPaused, () => {
-    console.log("VoiceGPT audio stoped playing, recreating the player...");
-    initAndSubscribeAudioPlayerToVoiceChannel(connection);
+    console.log("Discord voice player AutoPaused event is triggered, looks like connections is missing.");
+    sendMessageToProperChannel("Voice response is blocked for now, please try reconnecting to the voice channel!");
   });
 };
 
