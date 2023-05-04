@@ -2,8 +2,10 @@ import { generateOpenAIAnswer } from "./openai-api.js";
 import { sendMessageToProperChannel } from "./discord-util.js";
 import { processAudioContentIntoText, generateTTSResourceURIArray } from "./google-api.js";
 import { createAudioResource, createAudioPlayer, AudioPlayerStatus, AudioPlayer, VoiceConnection } from "@discordjs/voice";
-import { createTTSAudioURL, currentVoice } from "./fy-tts-api.js";
+import { createTTSAudioURL } from "./fy-tts-api.js";
+import { currentVoice } from "./interfaces/language.js";
 import { isCurrentVoiceLanguage } from "./lang-util.js";
+import { checkIfGoogleAPIisUsed } from "./voice.js";
 
 let player: AudioPlayer | null = null;
 let currentAnswerAudioURIs: string[] = [];
@@ -24,37 +26,36 @@ const initPlayerAndPlayWaitingMessage = (connection: VoiceConnection): void => {
 const initAndSubscribeAudioPlayerToVoiceChannel = (connection: VoiceConnection): void => {
   player = createAudioPlayer();
   addOnIdlePlayerEvent();
-  addOnAutoPausePlayerEvent();
+  addOnAutoPausePlayerEvent(connection);
   addOnErrorPlayerEvent();
   connection.subscribe(player);
 };
 
 const processAudioFromTextMultiLang = async (text: string | null): Promise<void> => {
-  let audioResource: string | null | undefined;
   if (text !== null) {
-    audioResource = getAudioResourceFromTextOtherLang(text);
+    if (isCurrentVoiceLanguage("English")) await getAudioResourceFromTextEngLang(text);
+    else currentAnswerAudioURIs = generateTTSResourceURIArray(text);
     await sendMessageToProperChannel(text);
-  } else {
-    audioResource = currentVoice.defaultAnswer;
   }
-  if (!audioResource) return;
-  player!.play(createAudioResource(audioResource));
+  player!.play(createAudioResource(getFirstAudioFromCurrent()));
 };
 
 const getAudioResourceFromTextEngLang = async (text: string) => {
+  if (checkIfGoogleAPIisUsed()) {
+    currentAnswerAudioURIs = generateTTSResourceURIArray(text);
+  } else {
+    await loadAnswersFromFakeYouAPI(text);
+  }
+};
+
+const loadAnswersFromFakeYouAPI = async (text: string) => {
   let audioUrl: string | null = null;
   const textParts = splitText(text);
   for (let txtPart of textParts) {
     audioUrl = await createTTSAudioURL(txtPart);
     if (audioUrl !== null) currentAnswerAudioURIs.push(audioUrl);
-    else return currentVoice.defaultAnswer;
+    else return currentAnswerAudioURIs.push(currentVoice.defaultAnswer!);
   }
-  return getFirstAudioFromCurrent();
-};
-
-const getAudioResourceFromTextOtherLang = (text: string) => {
-  currentAnswerAudioURIs = generateTTSResourceURIArray(text);
-  return getFirstAudioFromCurrent();
 };
 
 const getFirstAudioFromCurrent = (): string => {
@@ -73,10 +74,10 @@ const addOnIdlePlayerEvent = (): void => {
   });
 };
 
-const addOnAutoPausePlayerEvent = (): void => {
+const addOnAutoPausePlayerEvent = (connection: VoiceConnection): void => {
   player!.on(AudioPlayerStatus.AutoPaused, () => {
     console.log("VoiceGPT audio stoped playing!");
-    player!.stop();
+    initAndSubscribeAudioPlayerToVoiceChannel(connection);
   });
 };
 

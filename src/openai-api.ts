@@ -2,7 +2,7 @@ import {
   loadChatHistoryOrCreateNew,
   chatHistory,
   countApiResponseTokens,
-  modelName,
+  MODEL_NAME,
   pushQAtoHistory,
   checkAndReturnValidResponseData,
   genericResponse,
@@ -33,7 +33,7 @@ const getOpenAiResponse = async (question: string): Promise<string> => {
     const currentChatHistory: ChatCompletionRequestMessage[] = [...chatHistory, { role: "user", content: question }];
     let numResponseTokens = countApiResponseTokens(currentChatHistory);
     const response = await openai.createChatCompletion({
-      model: modelName,
+      model: MODEL_NAME,
       messages: currentChatHistory,
       max_tokens: numResponseTokens,
     });
