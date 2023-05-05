@@ -1,6 +1,5 @@
 import {
   loadChatHistoryOrCreateNew,
-  chatHistory,
   countApiResponseTokens,
   MODEL_NAME,
   pushQAtoHistory,
@@ -21,14 +20,14 @@ const openai = new OpenAIApi(configuration);
 
 export const generateOpenAIAnswer = async (question: string, channelId: string): Promise<string | null> => {
   if (question === null) return null;
-  await loadChatHistoryOrCreateNew(channelId);
-  const answer = await getOpenAiResponse(question);
+  const chatHistory = await loadChatHistoryOrCreateNew(channelId);
+  const answer = await getOpenAiResponse(question, chatHistory);
   if (answer === null) return null;
-  pushQAtoHistory(question, answer, channelId);
+  pushQAtoHistory(question, answer, channelId, chatHistory);
   return answer;
 };
 
-const getOpenAiResponse = async (question: string): Promise<string> => {
+const getOpenAiResponse = async (question: string, chatHistory: Array<ChatCompletionRequestMessage>): Promise<string> => {
   try {
     const currentChatHistory: ChatCompletionRequestMessage[] = [...chatHistory, { role: "user", content: question }];
     let numResponseTokens = countApiResponseTokens(currentChatHistory);

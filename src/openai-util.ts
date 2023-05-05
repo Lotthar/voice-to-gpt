@@ -7,35 +7,41 @@ import { Configuration, OpenAIApi, ChatCompletionRequestMessage, CreateChatCompl
 export const MODEL_NAME: string = "gpt-4";
 export const MODEL_MAX_TOKENS: number = 8192;
 export const model = await load(registry[models[MODEL_NAME]]);
-export let chatHistory: ChatCompletionRequestMessage[] = [];
 export const genericResponse = "The answer is not generated properly!";
 
 export const resetHistoryIfNewSystemMessage = async (systemMessage: string, channelId: string) => {
+  let chatHistory = await readHistoryFromStorage(channelId);
   const currentSystemMessage = await getCurrentSystemMessage(channelId);
   if (currentSystemMessage === null || chatHistory?.length === 0 || chatHistory[0].content !== systemMessage) {
     chatHistory = [{ role: ChatCompletionRequestMessageRoleEnum.System, content: systemMessage }];
     await setCurrentSystemMessage(systemMessage, channelId);
-    await saveChatHistory(channelId);
+    await saveChatHistory(chatHistory, channelId);
     console.log(`Chat history has been reset for channel: ${channelId}. New system message: ${systemMessage}`);
   }
 };
 
-export const loadChatHistoryOrCreateNew = async (channelId: string): Promise<void> => {
-  chatHistory = await readHistoryFromStorage(channelId);
-  if (chatHistory !== null) return;
+export const loadChatHistoryOrCreateNew = async (channelId: string): Promise<Array<ChatCompletionRequestMessage>> => {
+  let chatHistory = await readHistoryFromStorage(channelId);
+  if (chatHistory !== null) return chatHistory;
   const currentSysMessage = await getCurrentSystemMessage(channelId);
   if (currentSysMessage === null) chatHistory = [];
   else chatHistory = [{ role: ChatCompletionRequestMessageRoleEnum.System, content: currentSysMessage }];
-  await saveChatHistory(channelId);
+  await saveChatHistory(chatHistory, channelId);
+  return chatHistory;
 };
 
-export const pushQAtoHistory = async (question: string, answer: string, channelId: string): Promise<void> => {
+export const pushQAtoHistory = async (
+  question: string,
+  answer: string,
+  channelId: string,
+  chatHistory: Array<ChatCompletionRequestMessage>
+): Promise<void> => {
   chatHistory.push({ role: ChatCompletionRequestMessageRoleEnum.User, content: question });
   chatHistory.push({ role: ChatCompletionRequestMessageRoleEnum.Assistant, content: answer });
-  await saveChatHistory(channelId);
+  await saveChatHistory(chatHistory, channelId);
 };
 
-export const saveChatHistory = async (channelId: string): Promise<void> => {
+export const saveChatHistory = async (chatHistory: Array<ChatCompletionRequestMessage>, channelId: string): Promise<void> => {
   try {
     const filePath = getHistoryPath(channelId);
     const jsonString = JSON.stringify(chatHistory);
@@ -94,7 +100,6 @@ export const countApiResponseTokens = (currentChatHistory: ChatCompletionRequest
   const totalTokens = currentChatHistory.map((message) => countTokens(message.content)).reduce((total, tokenValue) => total + tokenValue);
   const responseTokens = MODEL_MAX_TOKENS - totalTokens - 200;
   if (responseTokens > 2000) return responseTokens;
-  chatHistory.splice(1, 2);
   return countApiResponseTokens(currentChatHistory.splice(1, 2));
 };
 
