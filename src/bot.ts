@@ -19,7 +19,6 @@ import { VoiceConnection } from "@discordjs/voice";
 dotenv.config();
 
 let voiceChannelConnection: VoiceConnection | undefined;
-export let currentChannelId: string | null = null;
 
 // Set up Discord client for bot
 export const discordClient = new Client({
@@ -35,45 +34,47 @@ discordClient.on(Events.MessageCreate, async (message: Message) => {
     if (message.author.bot) return;
     // Only answer to messages in the channel when the bot is specifically mentioned!
     if (botIsMentioned(message)) {
-      currentChannelId = message.channelId;
       let messageContent = getMessageContentWithoutMention(message);
+
+      const botSettingsChanged: boolean = await configuringBotSettings(messageContent, message.channelId);
+      if (botSettingsChanged) return;
       let messageSent = false;
       const stopTyping = () => messageSent;
       const typingPromise = sendTyping(message, stopTyping);
-      const botSettingsChanged: boolean = await configuringBotSettings(messageContent);
-      if (botSettingsChanged) return;
-      let answer: string | null = await generateOpenAIAnswer(messageContent);
+      let answer = await generateOpenAIAnswer(messageContent, message.channelId);
       if (answer === null) answer = genericResponse;
-      const messagePromise = sendMessageToProperChannel(answer).then(() => {
+      const messagePromise = sendMessageToProperChannel(answer, message.channelId).then(() => {
         messageSent = true;
       });
       await Promise.all([typingPromise, messagePromise]);
     }
   } catch (error) {
-    console.error(`Error in MessageCreate event in channel: ${currentChannelId}`, error);
+    console.error(`Error in MessageCreate event in channel: ${message.channelId}`, error);
   }
 });
 
 discordClient.on(Events.VoiceStateUpdate, async (oldState: VoiceState, newState: VoiceState) => {
+  let currentChannelId = null;
   try {
     currentChannelId = newState.channelId ? newState.channelId : oldState.channelId;
-    if (await checkIfInvalidVoiceChannel(oldState, newState)) return;
+    const invalidChannel = await checkIfInvalidVoiceChannel(oldState, newState);
+    if (invalidChannel || invalidChannel === null) return;
     voiceChannelConnection = getConnection(newState.guild.id);
-    await loadCurrentVoiceLangugageIfNone();
-    await loadVoiceIfNone();
+    await loadCurrentVoiceLangugageIfNone(currentChannelId!);
+    await loadVoiceIfNone(currentChannelId!);
     if (!voiceChannelConnection) voiceChannelConnection = joinVoiceChannelAndGetConnection(newState);
-    addVoiceConnectionReadyEvent(voiceChannelConnection);
+    addVoiceConnectionReadyEvent(voiceChannelConnection, currentChannelId!);
   } catch (error) {
     console.error(`Error in VoiceStateUpdate event in channel: ${currentChannelId}`, error);
   }
 });
 
-const configuringBotSettings = async (settingCommand: string): Promise<boolean> => {
-  const botSpeakingLangChanged = await botSpeakingLanguageChanged(settingCommand);
+const configuringBotSettings = async (settingCommand: string, channelId: string): Promise<boolean> => {
+  const botSpeakingLangChanged = await botSpeakingLanguageChanged(settingCommand, channelId);
   if (botSpeakingLangChanged) return true;
-  const systemMsgChanged = await botSystemMessageChanged(settingCommand);
+  const systemMsgChanged = await botSystemMessageChanged(settingCommand, channelId);
   if (systemMsgChanged) return true;
-  const botVoiceChanged = await botTTSVoiceChanged(settingCommand);
+  const botVoiceChanged = await botTTSVoiceChanged(settingCommand, channelId);
   if (botVoiceChanged) return true;
   return false;
 };

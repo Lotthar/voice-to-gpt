@@ -1,5 +1,4 @@
 import { sendMessageToProperChannel } from "./discord-util.js";
-import { currentChannelId } from "./bot.js";
 import { uploadFileToS3, downloadFileFromS3 } from "./aws-s3-util.js";
 import { readJsonStreamToString } from "./stream-util.js";
 import { isCurrentVoiceLanguage } from "./lang-util.js";
@@ -7,58 +6,58 @@ import { generateTTSResourceURL } from "./google-api.js";
 import { loadFakeYouVoice } from "./fy-tts-api.js";
 import { currentVoice, voices, DEFAULT_ENGLISH_VOICE } from "./interfaces/voice.js";
 
-export const loadVoiceIfNone = async (): Promise<void> => {
+export const loadVoiceIfNone = async (channelId: string): Promise<void> => {
   try {
     if (currentVoice.name !== null) return;
-    await loadAndAssignVoiceFromStorage();
+    await loadAndAssignVoiceFromStorage(channelId);
   } catch (error) {
-    console.error(`No current TTS voice from s3 for channel: ${currentChannelId}, setting default...`);
-    await setCurrentVoice(null);
+    console.error(`No current TTS voice from s3 for channel: ${channelId}, setting default...`);
+    await setCurrentVoice(null, channelId);
   }
 };
 
-const loadAndAssignVoiceFromStorage = async () => {
+const loadAndAssignVoiceFromStorage = async (channelId: string) => {
   try {
-    const voicePath = getVoicePath();
+    const voicePath = getVoicePath(channelId);
     const voiceS3Stream = await downloadFileFromS3(voicePath);
     const savedVoiceJsonString: string = await readJsonStreamToString(voiceS3Stream);
     Object.assign(currentVoice, JSON.parse(savedVoiceJsonString));
-    console.log(`Current TTS voice for channel: ${currentChannelId} is: ${currentVoice.name}`);
+    console.log(`Current TTS voice for channel: ${channelId} is: ${currentVoice.name}`);
   } catch (error) {
     console.error("Error loading voice from storage: ", error);
   }
 };
 
-export const botTTSVoiceChanged = async (message: string): Promise<boolean> => {
+export const botTTSVoiceChanged = async (message: string, channelId: string): Promise<boolean> => {
   const command = "!voice ";
   if (!message.startsWith(command)) return false;
   let voiceName = message.replace(command, "");
   if (currentVoice.name !== getVoiceByName(voiceName)) {
-    await setCurrentVoice(voiceName);
-    await sendMessageToProperChannel(`You changed TTS voice to: **${currentVoice.name}**`);
+    await setCurrentVoice(voiceName, channelId);
+    await sendMessageToProperChannel(`You changed TTS voice to: **${currentVoice.name}**`, channelId);
   } else {
-    await sendMessageToProperChannel(`You already use TTS voice: **${currentVoice.name}**`);
+    await sendMessageToProperChannel(`You already use TTS voice: **${currentVoice.name}**`, channelId);
   }
   return true;
 };
 
-export const setCurrentVoice = async (voiceName: string | null): Promise<void> => {
+export const setCurrentVoice = async (voiceName: string | null, channelId: string): Promise<void> => {
   try {
-    await assignVoiceNameAndDefaults(voiceName);
-    const voicePath = getVoicePath();
+    await assignVoiceNameAndDefaults(voiceName, channelId);
+    const voicePath = getVoicePath(channelId);
     const currentVoiceJson = JSON.stringify(currentVoice);
     await uploadFileToS3(voicePath, currentVoiceJson);
-    console.log(`Successfully saved current TTS voice for channel: ${currentChannelId} to: ${currentVoice.name}`);
+    console.log(`Successfully saved current TTS voice for channel: ${channelId} to: ${currentVoice.name}`);
   } catch (error) {
-    console.error(`Error setting current TTS voice or channel: ${currentChannelId}:`, error);
+    console.error(`Error setting current TTS voice or channel: ${channelId}:`, error);
   }
 };
 
-const assignVoiceNameAndDefaults = async (voiceName: string | null): Promise<void> => {
+const assignVoiceNameAndDefaults = async (voiceName: string | null, channelId: string): Promise<void> => {
   if (isCurrentVoiceLanguage("English")) {
     if (voiceName === null) voiceName = DEFAULT_ENGLISH_VOICE;
     currentVoice.name = getVoiceByName(voiceName);
-    await setWaitingAndDefaultEnglishAnswer();
+    await setWaitingAndDefaultEnglishAnswer(channelId);
   } else {
     setWaitingAndDefaultSerbianAnswer();
   }
@@ -69,7 +68,7 @@ const setWaitingAndDefaultSerbianAnswer = (): void => {
   currentVoice.waitingAnswer = generateTTSResourceURL("Vaš odgovor se generiše, molimo vas sačekajte.");
 };
 
-const setWaitingAndDefaultEnglishAnswer = async (): Promise<void> => {
+const setWaitingAndDefaultEnglishAnswer = async (channelId: string): Promise<void> => {
   const defaultAnswer = "Your question was not understood or heard properly, please repeat.";
   const waitingAnswer = "Please wait while the answer is being prepared.";
   if (checkIfGoogleAPIisUsed()) {
@@ -77,7 +76,7 @@ const setWaitingAndDefaultEnglishAnswer = async (): Promise<void> => {
     currentVoice.waitingAnswer = generateTTSResourceURL(waitingAnswer);
   } else {
     // Loading one of the DeepFake voices to use instead of Google TTS API
-    const fakeYouVoice = await loadFakeYouVoice(currentVoice.name!, defaultAnswer, waitingAnswer);
+    const fakeYouVoice = await loadFakeYouVoice(currentVoice.name!, defaultAnswer, waitingAnswer, channelId);
     currentVoice.defaultAnswer = fakeYouVoice.defaultAnswer;
     currentVoice.waitingAnswer = fakeYouVoice.waitingAnswer;
   }
@@ -90,4 +89,4 @@ export const getVoiceByName = (voiceName: string): string => {
 
 export const checkIfGoogleAPIisUsed = () => currentVoice.name!.toLocaleLowerCase().startsWith(DEFAULT_ENGLISH_VOICE.toLocaleLowerCase());
 
-const getVoicePath = (): string => `voices/${currentChannelId}-voice.json`;
+const getVoicePath = (channelId: string): string => `voices/${channelId}-voice.json`;

@@ -9,7 +9,7 @@ import {
   AudioReceiveStream,
 } from "@discordjs/voice";
 import { playOpenAiAnswerAfterSpeech } from "./audio-text.js";
-import { currentChannelId, discordClient } from "./bot.js";
+import { discordClient } from "./bot.js";
 import { createFlacAudioContentFromOpus } from "./audio-util.js";
 import { ChannelCommonType } from "./types/discord.js";
 
@@ -28,14 +28,14 @@ export const joinVoiceChannelAndGetConnection = (newState: VoiceState): VoiceCon
   return connection;
 };
 
-export const addVoiceConnectionReadyEvent = (connection: VoiceConnection): void => {
+export const addVoiceConnectionReadyEvent = (connection: VoiceConnection, channelId: string): void => {
   connection.on(VoiceConnectionStatus.Ready, () => {
     console.log("Bot is connected and ready to answer users questions!");
-    addSpeakingEvents(connection);
+    addSpeakingEvents(connection, channelId);
   });
 };
 
-const addSpeakingEvents = (connection: VoiceConnection): void => {
+const addSpeakingEvents = (connection: VoiceConnection, channelId: string): void => {
   const receiver = connection.receiver;
   receiver.speaking.on("start", async (userId: string) => {
     if (opusStream === null) {
@@ -48,12 +48,12 @@ const addSpeakingEvents = (connection: VoiceConnection): void => {
     try {
       if (opusStream === null) return;
       console.log(`User ${userId} finished speaking, creating an answer...`);
-      const voiceAudioBase64 = await createFlacAudioContentFromOpus(opusStream);
-      await playOpenAiAnswerAfterSpeech(connection, voiceAudioBase64);
+      const voiceAudioBase64 = await createFlacAudioContentFromOpus(opusStream, channelId);
+      await playOpenAiAnswerAfterSpeech(voiceAudioBase64, connection, channelId);
       opusStream = null;
     } catch (error) {
       console.error("Error playing answer on voice channel: ", error);
-      await sendMessageToProperChannel("**There was problem with the answer**");
+      await sendMessageToProperChannel("**There was problem with the answer**", channelId);
     }
   });
 };
@@ -64,16 +64,16 @@ export const checkIfInvalidVoiceChannel = async (oldState: VoiceState, newState:
   if (newState.channel && newState.channel.type === ChannelType.GuildVoice) return false;
   if (oldState.channelId && !newState.channelId) {
     // User has left voice channel
-    await destroyConnectionIfOnlyBotRemains(getConnection(oldState.guild.id));
+    await destroyConnectionIfOnlyBotRemains(getConnection(oldState.guild.id), oldState.channelId);
     return true;
   }
 
   return true;
 };
 
-const destroyConnectionIfOnlyBotRemains = async (connection: VoiceConnection | undefined): Promise<void> => {
+const destroyConnectionIfOnlyBotRemains = async (connection: VoiceConnection | undefined, channelId: string): Promise<void> => {
   if (!connection) return;
-  const channel = await getCurrentChannel();
+  const channel = await getCurrentChannel(channelId);
   if (channel === null) return;
   const member = isUserChannelMember(BOT_NAME, channel);
   if (member && channel.members.size === 1) {
@@ -94,12 +94,12 @@ export const getMessageContentWithoutMention = (message: Message): string => {
 export const sendTyping = async (message: Message, stopTyping: Function) => {
   while (!stopTyping()) {
     message.channel.sendTyping();
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
   }
 };
 
-export const sendMessageToProperChannel = async (message: string, maxLength = 2000): Promise<void> => {
-  const channel = await getCurrentChannel();
+export const sendMessageToProperChannel = async (message: string, channelId: string, maxLength = 2000): Promise<void> => {
+  const channel = await getCurrentChannel(channelId);
   if (channel === null) return;
   if (message.length <= maxLength) {
     await channel.send(message);
@@ -131,9 +131,9 @@ const getOpusStream = (receiver: VoiceReceiver, userId: string): AudioReceiveStr
   });
 };
 
-const getCurrentChannel = async (): Promise<ChannelCommonType> => {
-  if (!currentChannelId) return null;
-  const channel = await discordClient.channels.fetch(currentChannelId);
+const getCurrentChannel = async (channelId: string): Promise<ChannelCommonType> => {
+  if (!channelId) return null;
+  const channel = await discordClient.channels.fetch(channelId);
   if (channel instanceof TextChannel || channel instanceof VoiceChannel) {
     return channel;
   }

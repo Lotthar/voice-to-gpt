@@ -6,54 +6,52 @@ import { createTTSAudioURL } from "./fy-tts-api.js";
 import { currentVoice } from "./interfaces/voice.js";
 import { isCurrentVoiceLanguage } from "./lang-util.js";
 import { checkIfGoogleAPIisUsed } from "./voice-util.js";
-import { currentChannelId } from "./bot.js";
 
 let player: AudioPlayer | null = null;
 let currentAnswerAudioURIs: string[] = [];
 
-export const playOpenAiAnswerAfterSpeech = async (connection: VoiceConnection, audioContent: string) => {
+export const playOpenAiAnswerAfterSpeech = async (audioContent: string, connection: VoiceConnection, channelId: string) => {
   initPlayerAndPlayWaitingMessage(connection);
   const transcript = await processAudioContentIntoText(audioContent);
-  const openAiAnswer = await generateOpenAIAnswer(transcript!);
-  await processAudioFromTextMultiLang(openAiAnswer);
+  const openAiAnswer = await generateOpenAIAnswer(transcript!, channelId);
+  await processAudioFromTextMultiLang(openAiAnswer, channelId);
 };
 
 const initPlayerAndPlayWaitingMessage = (connection: VoiceConnection): void => {
-  if (player === null) initAndSubscribeAudioPlayerToVoiceChannel(connection);
+  if (player === null) initAndSubscribeAudioPlayerToVoiceChannel();
   connection.subscribe(player!);
   if (currentVoice.waitingAnswer === null) return;
   player!.play(createAudioResource(currentVoice.waitingAnswer));
 };
 
-const initAndSubscribeAudioPlayerToVoiceChannel = (connection: VoiceConnection): void => {
+const initAndSubscribeAudioPlayerToVoiceChannel = (): void => {
   player = createAudioPlayer();
   addOnIdlePlayerEvent();
-  addOnAutoPausePlayerEvent();
   addOnErrorPlayerEvent();
 };
 
-const processAudioFromTextMultiLang = async (text: string | null): Promise<void> => {
+const processAudioFromTextMultiLang = async (text: string | null, channelId: string): Promise<void> => {
   if (text !== null) {
-    if (isCurrentVoiceLanguage("English")) await getAudioResourceFromTextEngLang(text);
+    if (isCurrentVoiceLanguage("English")) await getAudioResourceFromTextEngLang(text, channelId);
     else currentAnswerAudioURIs = generateTTSResourceURIArray(text);
-    await sendMessageToProperChannel(text);
+    await sendMessageToProperChannel(text, channelId);
     player!.play(createAudioResource(getFirstAudioFromCurrent()));
   }
 };
 
-const getAudioResourceFromTextEngLang = async (text: string) => {
+const getAudioResourceFromTextEngLang = async (text: string, channelId: string) => {
   if (checkIfGoogleAPIisUsed()) {
     currentAnswerAudioURIs = generateTTSResourceURIArray(text);
   } else {
-    await loadAnswersFromFakeYouAPI(text);
+    await loadAnswersFromFakeYouAPI(text, channelId);
   }
 };
 
-const loadAnswersFromFakeYouAPI = async (text: string) => {
+const loadAnswersFromFakeYouAPI = async (text: string, channelId: string) => {
   let audioUrl: string | null = null;
   const textParts = splitText(text);
   for (let txtPart of textParts) {
-    audioUrl = await createTTSAudioURL(txtPart);
+    audioUrl = await createTTSAudioURL(txtPart, channelId);
     if (audioUrl !== null) currentAnswerAudioURIs.push(audioUrl);
   }
 };
@@ -71,12 +69,6 @@ const addOnIdlePlayerEvent = (): void => {
       const firstQueuedAudio = currentAnswerAudioURIs.shift();
       player!.play(createAudioResource(firstQueuedAudio ? firstQueuedAudio : currentVoice.defaultAnswer!));
     }
-  });
-};
-
-const addOnAutoPausePlayerEvent = (): void => {
-  player!.on(AudioPlayerStatus.AutoPaused, () => {
-    console.log(`Discord voice player AutoPaused for channel ${currentChannelId}`);
   });
 };
 

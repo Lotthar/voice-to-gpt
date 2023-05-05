@@ -2,9 +2,8 @@ import { StreamEncoder } from "flac-bindings";
 import opus from "@discordjs/opus";
 import { opusStreamToFlacBase64 } from "./stream-util.js";
 import { AudioReceiveStream } from "@discordjs/voice";
-import { currentChannelId } from "./bot.js";
 
-export const createFlacAudioContentFromOpus = async (opusStream: AudioReceiveStream): Promise<string> => {
+export const createFlacAudioContentFromOpus = async (opusStream: AudioReceiveStream, channelId: string): Promise<string> => {
   const opusEncoder = new opus.OpusEncoder(48000, 2);
   const flacEncoder = new StreamEncoder({
     compressionLevel: 5,
@@ -15,7 +14,7 @@ export const createFlacAudioContentFromOpus = async (opusStream: AudioReceiveStr
   try {
     return await opusStreamToFlacBase64(opusStream, opusEncoder, flacEncoder);
   } catch (error) {
-    console.error(`Error converting to .flac audio stream for channel: ${currentChannelId}: `, error);
+    console.error(`Error converting to .flac audio stream for channel: ${channelId}: `, error);
     throw error;
   }
 };

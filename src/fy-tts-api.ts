@@ -3,7 +3,6 @@ const requireModule = createRequire(import.meta.url);
 const FakeYou = requireModule("fakeyou.js");
 import dotenv from "dotenv";
 import { DEFAULT_ENGLISH_VOICE, SpeechVoice } from "./interfaces/voice.js";
-import { currentChannelId } from "./bot.js";
 
 dotenv.config();
 
@@ -15,20 +14,25 @@ await fyClient.start();
 
 let ttsModel: any = null;
 
-export const loadFakeYouVoice = async (voiceName: string, defaultAnswer: string, waitingAnswer: string) => {
+export const loadFakeYouVoice = async (voiceName: string, defaultAnswer: string, waitingAnswer: string, channelId: string) => {
   await loadTTSModel(voiceName);
-  let fakeYouVoice = await createDefaultAndWaitingAnswers(voiceName, defaultAnswer, waitingAnswer);
+  let fakeYouVoice = await createDefaultAndWaitingAnswers(voiceName, defaultAnswer, waitingAnswer, channelId);
   if (fakeYouVoice === null) fakeYouVoice = { name: DEFAULT_ENGLISH_VOICE, defaultAnswer: "", waitingAnswer: "" };
-  console.log(`Using FakeYou voice: ${fakeYouVoice.name}, for English language in channel: ${currentChannelId}`);
+  console.log(`Using FakeYou voice: ${fakeYouVoice.name}, for English language in channel: ${channelId}`);
   return fakeYouVoice;
 };
 
-const createDefaultAndWaitingAnswers = async (voiceName: string, defaultAnswer: string, waitingAnswer: string): Promise<SpeechVoice | null> => {
+const createDefaultAndWaitingAnswers = async (
+  voiceName: string,
+  defaultAnswer: string,
+  waitingAnswer: string,
+  channelId: string
+): Promise<SpeechVoice | null> => {
   try {
-    const result = await Promise.all([createTTSAudioURL(defaultAnswer), createTTSAudioURL(waitingAnswer)]);
+    const result = await Promise.all([createTTSAudioURL(defaultAnswer, channelId), createTTSAudioURL(waitingAnswer, channelId)]);
     return { name: voiceName, defaultAnswer: result[0], waitingAnswer: result[1] };
   } catch (error) {
-    console.error(`Error loading default and waiting answer for FakeYou voice in channel: ${currentChannelId}: `, error);
+    console.error(`Error loading default and waiting answer for FakeYou voice in channel: ${channelId}: `, error);
     return null;
   }
 };
@@ -37,13 +41,13 @@ const loadTTSModel = async (voiceName: string) => {
   ttsModel = fyClient.searchModel(voiceName).first();
 };
 
-export const createTTSAudioURL = async (text: string): Promise<string | null> => {
+export const createTTSAudioURL = async (text: string, channelId: string): Promise<string | null> => {
   try {
     if (!ttsModel) return null;
     const result = await ttsModel.request(text);
     return result.audioURL();
   } catch (error) {
-    console.error(`Error creating TTS with FakeYou API in channel: ${currentChannelId}: `, error);
+    console.error(`Error creating TTS with FakeYou API in channel: ${channelId}: `, error);
     return null;
   }
 };
