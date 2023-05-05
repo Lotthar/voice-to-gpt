@@ -12,7 +12,7 @@ export const loadVoiceIfNone = async (): Promise<void> => {
     if (currentVoice.name !== null) return;
     await loadAndAssignVoiceFromStorage();
   } catch (error) {
-    console.error("No current TTS voice from s3, setting default...");
+    console.error(`No current TTS voice from s3 for channel: ${currentChannelId}, setting default...`);
     await setCurrentVoice(null);
   }
 };
@@ -23,7 +23,7 @@ const loadAndAssignVoiceFromStorage = async () => {
     const voiceS3Stream = await downloadFileFromS3(voicePath);
     const savedVoiceJsonString: string = await readJsonStreamToString(voiceS3Stream);
     Object.assign(currentVoice, JSON.parse(savedVoiceJsonString));
-    console.log(`Current TTS voice is: ${currentVoice.name}`);
+    console.log(`Current TTS voice for channel: ${currentChannelId} is: ${currentVoice.name}`);
   } catch (error) {
     console.error("Error loading voice from storage: ", error);
   }
@@ -36,7 +36,6 @@ export const botTTSVoiceChanged = async (message: string): Promise<boolean> => {
   if (currentVoice.name !== getVoiceByName(voiceName)) {
     await setCurrentVoice(voiceName);
     await sendMessageToProperChannel(`You changed TTS voice to: **${currentVoice.name}**`);
-    console.log(`TTS Voice has been changed. New voice: ${currentVoice.name}`);
   } else {
     await sendMessageToProperChannel(`You already use TTS voice: **${currentVoice.name}**`);
   }
@@ -49,9 +48,9 @@ export const setCurrentVoice = async (voiceName: string | null): Promise<void> =
     const voicePath = getVoicePath();
     const currentVoiceJson = JSON.stringify(currentVoice);
     await uploadFileToS3(voicePath, currentVoiceJson);
-    console.log(`Successfully saved current TTS voice json: ${currentVoiceJson}`);
+    console.log(`Successfully saved current TTS voice for channel: ${currentChannelId} to: ${currentVoice.name}`);
   } catch (error) {
-    console.error("Error setting current TTS voice:", error);
+    console.error(`Error setting current TTS voice or channel: ${currentChannelId}:`, error);
   }
 };
 

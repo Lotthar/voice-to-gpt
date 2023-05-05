@@ -77,7 +77,8 @@ const destroyConnectionIfOnlyBotRemains = async (connection: VoiceConnection | u
   if (channel === null) return;
   const member = isUserChannelMember(BOT_NAME, channel);
   if (member && channel.members.size === 1) {
-    console.log("Destroying current voice connection!");
+    console.log("Destroying current voice connection and it's listeners!");
+    connection.removeAllListeners();
     connection.destroy();
   }
 };
@@ -86,8 +87,8 @@ export const botIsMentioned = (message: Message): boolean =>
   discordClient.user !== null && message.mentions.has(discordClient.user.id) && message.mentions.users.size === 1;
 
 export const getMessageContentWithoutMention = (message: Message): string => {
-  const mentioned = message.mentions.members!.first(); // get first mentioned member
-  return message.content.replace(`<@${mentioned!.id}> `, ""); // remove mention
+  const mentioned = message.mentions.members!.first();
+  return message.content.replace(`<@${mentioned!.id}> `, "");
 };
 
 export const sendMessageToProperChannel = async (message: string, maxLength = 2000): Promise<void> => {

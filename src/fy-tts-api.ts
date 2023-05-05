@@ -3,6 +3,7 @@ const requireModule = createRequire(import.meta.url);
 const FakeYou = requireModule("fakeyou.js");
 import dotenv from "dotenv";
 import { DEFAULT_ENGLISH_VOICE, SpeechVoice } from "./interfaces/voice.js";
+import { currentChannelId } from "./bot.js";
 
 dotenv.config();
 
@@ -18,7 +19,7 @@ export const loadFakeYouVoice = async (voiceName: string, defaultAnswer: string,
   await loadTTSModel(voiceName);
   let fakeYouVoice = await createDefaultAndWaitingAnswers(voiceName, defaultAnswer, waitingAnswer);
   if (fakeYouVoice === null) fakeYouVoice = { name: DEFAULT_ENGLISH_VOICE, defaultAnswer: "", waitingAnswer: "" };
-  console.log(`Using FakeYou voice: ${fakeYouVoice.name}`);
+  console.log(`Using FakeYou voice: ${fakeYouVoice.name}, for English language in channel: ${currentChannelId}`);
   return fakeYouVoice;
 };
 
@@ -27,7 +28,7 @@ const createDefaultAndWaitingAnswers = async (voiceName: string, defaultAnswer: 
     const result = await Promise.all([createTTSAudioURL(defaultAnswer), createTTSAudioURL(waitingAnswer)]);
     return { name: voiceName, defaultAnswer: result[0], waitingAnswer: result[1] };
   } catch (error) {
-    console.error("Error loading default and waiting answer for FakeYou voice: ", error);
+    console.error(`Error loading default and waiting answer for FakeYou voice in channel: ${currentChannelId}: `, error);
     return null;
   }
 };
@@ -42,7 +43,7 @@ export const createTTSAudioURL = async (text: string): Promise<string | null> =>
     const result = await ttsModel.request(text);
     return result.audioURL();
   } catch (error) {
-    console.error("Error creating TTS with FakeYou API: ", error);
+    console.error(`Error creating TTS with FakeYou API in channel: ${currentChannelId}: `, error);
     return null;
   }
 };

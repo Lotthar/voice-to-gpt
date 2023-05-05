@@ -17,7 +17,7 @@ export const resetHistoryIfNewSystemMessage = async (systemMessage: string) => {
     chatHistory = [{ role: ChatCompletionRequestMessageRoleEnum.System, content: systemMessage }];
     await setCurrentSystemMessage(systemMessage);
     await saveChatHistory();
-    console.log(`Chat history has been reset. New system message: ${systemMessage}`);
+    console.log(`Chat history has been reset for channel: ${currentChannelId}. New system message: ${systemMessage}`);
   }
 };
 
@@ -42,8 +42,9 @@ export const saveChatHistory = async (): Promise<void> => {
     const filePath = getHistoryPath();
     const jsonString = JSON.stringify(chatHistory);
     await uploadFileToS3(filePath, jsonString);
+    console.log(`Chat history has been saved for channel: ${currentChannelId}`);
   } catch (error) {
-    console.error("Error saving array to JSON file:", error);
+    console.error(`Error saving history to JSON file for channel: ${currentChannelId}:`, error);
   }
 };
 
@@ -54,7 +55,7 @@ export const readHistoryFromStorage = async (): Promise<ChatCompletionRequestMes
     const historyJsonString = await readJsonStreamToString(historyJsonStream);
     return JSON.parse(historyJsonString);
   } catch (error) {
-    console.error("Error reading array from JSON file:", error);
+    console.error(`Error reading history from JSON file for channel: ${currentChannelId}:`, error);
     return [];
   }
 };
@@ -63,8 +64,9 @@ const setCurrentSystemMessage = async (message: string): Promise<void | null> =>
   try {
     const sysMessagePath = getSystemMessagePath();
     await uploadFileToS3(sysMessagePath, message);
+    console.log(`System message is successfully saved for channel: ${currentChannelId}`);
   } catch (error) {
-    console.error("Error setting current system message:", error);
+    console.error(`Error setting current system message for channel: ${currentChannelId}:`, error);
     return null;
   }
 };
@@ -76,7 +78,7 @@ const getCurrentSystemMessage = async (): Promise<string | null> => {
     const systemMsg = await readTextStreamToString(systemMsgS3Stream);
     return systemMsg;
   } catch (error) {
-    console.error("Error getting current system message:", error);
+    console.error(`Error getting current system message for channel: ${currentChannelId}:`, error);
     return null;
   }
 };

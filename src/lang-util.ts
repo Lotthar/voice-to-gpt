@@ -11,7 +11,7 @@ export const loadCurrentVoiceLangugageIfNone = async (): Promise<void> => {
     if (currentVoiceLanguage.name !== null) return;
     await loadAndAssignFromStorage();
   } catch (error) {
-    console.error("No current voice language from s3, setting default...");
+    console.error(`No current voice language from s3 for channel: ${currentChannelId}, setting default...`);
     await resetLangugageWithVoice(voiceLanguages[0].name!);
   }
 };
@@ -22,16 +22,16 @@ const loadAndAssignFromStorage = async () => {
     const langS3Stream = await downloadFileFromS3(langPath);
     const langName: string = await readTextStreamToString(langS3Stream);
     Object.assign(currentVoiceLanguage!, getLanguageFromName(langName));
-    console.log(`Current bot voice langugage is: ${currentVoiceLanguage.name}`);
+    console.log(`Current bot voice langugage for channel: ${currentChannelId} is: ${currentVoiceLanguage.name}`);
   } catch (error) {
-    console.error("Error loading language from storage: ", error);
+    console.error(`Error loading language from storage for channel: ${currentChannelId}: `, error);
   }
 };
 
 export const resetLangugageWithVoice = async (langName: string): Promise<void> => {
   await setCurrentLanguage(langName);
   await setCurrentVoice(currentVoice.name);
-  console.log(`Voice and language have been successfully changed!`);
+  console.log(`Voice and language have been successfully changed for channel: ${currentChannelId}`);
 };
 
 const setCurrentLanguage = async (langName: string): Promise<void> => {
@@ -39,9 +39,9 @@ const setCurrentLanguage = async (langName: string): Promise<void> => {
     const langPath = getLangugagePath();
     await uploadFileToS3(langPath, langName);
     Object.assign(currentVoiceLanguage, getLanguageFromName(langName));
-    console.log(`Current language has been set to: ${currentVoiceLanguage.name}`);
+    console.log(`Current language for channel: ${currentChannelId} has been set to: ${currentVoiceLanguage.name}`);
   } catch (error) {
-    console.error("Error setting current voice language:", error);
+    console.error(`Error setting current voice language for channel: ${currentChannelId}`, error);
   }
 };
 

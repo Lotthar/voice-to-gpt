@@ -44,7 +44,7 @@ discordClient.on(Events.MessageCreate, async (message: Message) => {
       await sendMessageToProperChannel(answer);
     }
   } catch (error) {
-    console.error("Error in MessageCreate event: ", error);
+    console.error(`Error in MessageCreate event in channel: ${currentChannelId}`, error);
   }
 });
 
@@ -58,7 +58,7 @@ discordClient.on(Events.VoiceStateUpdate, async (oldState: VoiceState, newState:
     if (!voiceChannelConnection) voiceChannelConnection = joinVoiceChannelAndGetConnection(newState);
     addVoiceConnectionReadyEvent(voiceChannelConnection);
   } catch (error) {
-    console.error("Error in VoiceStateUpdate event: ", error);
+    console.error(`Error in VoiceStateUpdate event in channel: ${currentChannelId}`, error);
   }
 });
 

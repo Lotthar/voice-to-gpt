@@ -6,6 +6,7 @@ import { createTTSAudioURL } from "./fy-tts-api.js";
 import { currentVoice } from "./interfaces/voice.js";
 import { isCurrentVoiceLanguage } from "./lang-util.js";
 import { checkIfGoogleAPIisUsed } from "./voice-util.js";
+import { currentChannelId } from "./bot.js";
 
 let player: AudioPlayer | null = null;
 let currentAnswerAudioURIs: string[] = [];
@@ -75,8 +76,7 @@ const addOnIdlePlayerEvent = (): void => {
 
 const addOnAutoPausePlayerEvent = (): void => {
   player!.on(AudioPlayerStatus.AutoPaused, () => {
-    console.log("Discord voice player AutoPaused event is triggered, looks like connections is missing.");
-    sendMessageToProperChannel("Voice response is blocked for now, please try reconnecting to the voice channel!");
+    console.log(`Discord voice player AutoPaused for channel ${currentChannelId}`);
   });
 };
 
