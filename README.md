@@ -13,6 +13,7 @@ A Discord bot that listens to questions from voice channels and responds using t
 ## Prerequisites
 
 - Node.js v18.x
+- TypeScript (`npm install -g typescript`)
 - An account with Discord, OpenAI, Google Cloud, AWS, and FakeYou
 - API keys and credentials for the services mentioned above
 
@@ -50,19 +51,40 @@ GCLOUD_PRIVATE_KEY=your_gcloud_private_key
 FY_USERNAME=your_fakeyou_username
 FY_PASSWORD=your_fakeyou_password
 ```
-4. Start the bot:
+4. Build/compile TypeScript sources
+```bash
+npm run build
+```
+
+5. Start Discord bot application:
 ```bash
 npm run start
 ```
 
 ## Usage
 
-Join a voice channel in your Discord server and ask the bot a question. It will transcribe your question, generate a response using the OpenAI API, and speak the answer using the FakeYou TTS API.
+- Join a voice channel in your Discord server and ask the bot a question. It will transcribe your question, generate a response using the OpenAI API, and speak the answer using the FakeYou TTS API or Google TTS API based on possible choice.
+
+- You can send message/question to the bot by sending a message to the channel with
+  specific mention to the bot, for ex. `@botname Who are you?`
+
+- You can also(only in voice channel) ask bot questions with voice. There are certain commands for voice channel to modify the bot's langugage,system message and
+   voice:
+
+   1. `@botname !lang langName` - changing the bot's voice language of understanding and responding, `langName` can have values of `english` or `serbian`
+   2. `@botname !voice voiceName` - changing the sounding voice of the bot to some the available voices from provided list, you can use prefix of the full name if easier 
+   !(only for english language otherwise default is Google TTS voice) 
+   3. `@botname !system sysMsg` - changing OpenAI system message with which you align bot's answers to your preferences
+
+List of possible `voiceName` values from 2. point: 
+`Morgan Freeman`,`Snoop Dogg (V2)`,`Rick Sanchez`,`Optimus Prime (Peter Cullen)`,`Morty Smith`,`The Joker (Heath Ledger, Version 2.0)`,
+`Eminem (Slim Shady era - 1997 - 2001)`,`James Earl Jones`,`Sean Connery`,`2Pac (Tupac Amaru Shakur) (ARPAbet supported)`
 
 ## Limitations
 
 - Currently supports only English and Serbian languages
-- There may be a slight delay when using English due to slower responses from the FakeYou API
+- There may be a slight delay when using English, with any other voice besides `Google`, due to slower responses from the FakeYou API. If you need fast responses 
+  use command by sending a message `@botname !voice Google`
 
 ## Deployment
 
