@@ -1,4 +1,3 @@
-// Upload a file to S3
 import { S3, PutObjectCommand, GetObjectCommand, PutObjectCommandOutput } from "@aws-sdk/client-s3";
 import { S3BucketContentParams, S3BucketGetParams, S3BucketResponseParams } from "./types/s3bucket.js";
 import dotenv from "dotenv";
@@ -16,6 +15,7 @@ const s3 = new S3({
   },
 });
 
+// Upload file to S3 Bucket
 export const uploadFileToS3 = async (key: string, content: string): Promise<PutObjectCommandOutput> => {
   const params: S3BucketContentParams = {
     Bucket: BUCKET,
@@ -32,7 +32,7 @@ export const uploadFileToS3 = async (key: string, content: string): Promise<PutO
   }
 };
 
-// Download a file from S3
+// Download a file from S3 Bucket
 export const downloadFileFromS3 = async (key: string): Promise<Readable> => {
   const params: S3BucketGetParams = {
     Bucket: BUCKET,

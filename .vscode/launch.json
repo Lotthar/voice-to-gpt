@@ -3,13 +3,27 @@
   "configurations": [
     {
       "type": "node",
-      "request": "launch",
-      "name": "Launch Program",
-      "runtimeExecutable": "nodemon",
-      "runtimeArgs": ["--inspect=9229", "-r", "dotenv/config", "src/bot.mjs"],
+      "request": "attach",
+      "name": "Debug TypeScript with Nodemon",
       "restart": true,
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "TypeScript Watch",
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "args": ["--onsSuccess"],
+      "program": "tsc-watch",
       "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen"
+      "internalConsoleOptions": "neverOpen",
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Debug TypeScript with Watch",
+      "configurations": ["TypeScript Watch", "Debug TypeScript with Nodemon"]
     }
   ]
 }

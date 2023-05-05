@@ -54,7 +54,6 @@ const loadAnswersFromFakeYouAPI = async (text: string) => {
   for (let txtPart of textParts) {
     audioUrl = await createTTSAudioURL(txtPart);
     if (audioUrl !== null) currentAnswerAudioURIs.push(audioUrl);
-    else return currentAnswerAudioURIs.push(currentVoice.defaultAnswer!);
   }
 };
 
