@@ -9,6 +9,7 @@ import {
   botIsMentioned,
   getMessageContentWithoutMention,
   addVoiceConnectionReadyEvent,
+  sendTyping,
 } from "./discord-util.js";
 import { loadCurrentVoiceLangugageIfNone, botSpeakingLanguageChanged } from "./lang-util.js";
 import { botTTSVoiceChanged, loadVoiceIfNone } from "./voice-util.js";
@@ -36,12 +37,17 @@ discordClient.on(Events.MessageCreate, async (message: Message) => {
     if (botIsMentioned(message)) {
       currentChannelId = message.channelId;
       let messageContent = getMessageContentWithoutMention(message);
-      message.channel.sendTyping();
+      let messageSent = false;
+      const stopTyping = () => messageSent;
+      const typingPromise = sendTyping(message, stopTyping);
       const botSettingsChanged: boolean = await configuringBotSettings(messageContent);
       if (botSettingsChanged) return;
       let answer: string | null = await generateOpenAIAnswer(messageContent);
       if (answer === null) answer = genericResponse;
-      await sendMessageToProperChannel(answer);
+      const messagePromise = sendMessageToProperChannel(answer).then(() => {
+        messageSent = true;
+      });
+      await Promise.all([typingPromise, messagePromise]);
     }
   } catch (error) {
     console.error(`Error in MessageCreate event in channel: ${currentChannelId}`, error);

@@ -22,7 +22,6 @@ export const resetHistoryIfNewSystemMessage = async (systemMessage: string) => {
 };
 
 export const loadChatHistoryOrCreateNew = async (): Promise<void> => {
-  if (chatHistory.length > 0) return;
   chatHistory = await readHistoryFromStorage();
   if (chatHistory !== null) return;
   const currentSysMessage = await getCurrentSystemMessage();

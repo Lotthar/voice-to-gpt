@@ -91,6 +91,13 @@ export const getMessageContentWithoutMention = (message: Message): string => {
   return message.content.replace(`<@${mentioned!.id}> `, "");
 };
 
+export const sendTyping = async (message: Message, stopTyping: Function) => {
+  while (!stopTyping()) {
+    message.channel.sendTyping();
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+  }
+};
+
 export const sendMessageToProperChannel = async (message: string, maxLength = 2000): Promise<void> => {
   const channel = await getCurrentChannel();
   if (channel === null) return;
