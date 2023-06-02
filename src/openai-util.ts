@@ -97,17 +97,17 @@ export const botSystemMessageChanged = async (message: string, channelId: string
 };
 
 export const countApiResponseTokens = (currentChatHistory: ChatCompletionRequestMessage[]): number => {
-  const totalTokens = currentChatHistory.map((message) => countTokens(message.content)).reduce((total, tokenValue) => total + tokenValue);
-  const responseTokens = MODEL_MAX_TOKENS - totalTokens - 200;
+  const totalTokens = currentChatHistory.map((message) => countTokens(message)).reduce((total, tokenValue) => total + tokenValue);
+  const responseTokens = MODEL_MAX_TOKENS - (totalTokens + 2)- 50;
   if (responseTokens > 2000) return responseTokens;
   return countApiResponseTokens(currentChatHistory.splice(1, 2));
 };
 
-const countTokens = (text: string): number => {
+const countTokens = (message: ChatCompletionRequestMessage): number => {
   const modelEncoder = new Tiktoken(model.bpe_ranks, model.special_tokens, model.pat_str);
-  const tokens = modelEncoder.encode(text);
+  const tokens = modelEncoder.encode(message.content);
   modelEncoder.free();
-  return tokens.length;
+  return 4 + tokens.length;
 };
 
 export const checkAndReturnValidResponseData = (response: CreateChatCompletionResponse): string => {
