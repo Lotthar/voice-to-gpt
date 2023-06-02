@@ -10,6 +10,7 @@ dotenv.config();
 export const getChatGptAPI = (model: string) => {
   return new ChatGPTAPI({
     apiKey: process.env.OPEN_API_KEY,
+    maxModelTokens: 8192,
     completionParams: {
       model: model,
       temperature: 0.3,
