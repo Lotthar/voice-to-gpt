@@ -1,4 +1,4 @@
-import { generateOpenAIAnswer } from "./openai-api.js";
+import { generateOpenAIAnswer } from "./chatgpt-api.js";
 import { sendMessageToProperChannel } from "./discord-util.js";
 import { processAudioContentIntoText, generateTTSResourceURIArray } from "./google-api.js";
 import { createAudioResource, createAudioPlayer, AudioPlayerStatus, AudioPlayer, VoiceConnection } from "@discordjs/voice";

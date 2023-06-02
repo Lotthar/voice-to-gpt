@@ -1,15 +1,26 @@
-import { createRequire } from "module";
-import { ChatCompletionRequestMessage, ChatCompletionRequestMessageRoleEnum } from "openai";
+export interface ChatGptApiParamOptional {
+  parentMessageId?: string;
+  systemMessage?: string;
+  timeoutMs?: number;
+}
+// `${systemMessage} Current date: ${new Date().toISOString()}\n\n`
 
-export interface OpenAiMessage {
-  role: "system" | "assistant" | "user";
-  content: string;
+export interface ChatHistory {
+  parentMessageId?: string;
+  conversationId?: string;
 }
 
-const requireModule = createRequire(import.meta.url);
-const { Tiktoken } = requireModule("@dqbd/tiktoken/lite");
-const { load } = requireModule("@dqbd/tiktoken/load");
-const registry = requireModule("@dqbd/tiktoken/registry.json");
-const models = requireModule("@dqbd/tiktoken/model_to_encoding.json");
+export interface ChatGptApiParams {
+  chatHistory: ChatHistory | null;
+  systemMessage: string | null;
+  gptModel: string;
+}
 
-export { Tiktoken, load, registry, models, ChatCompletionRequestMessage, ChatCompletionRequestMessageRoleEnum };
+export interface ChatGptResponse {
+  answer: string;
+  chatHistory: ChatHistory;
+}
+
+export const GPTModels = ["gpt-3.5-turbo", "gpt-4"];
+
+export const genericResponse = "The answer is not generated properly!";
