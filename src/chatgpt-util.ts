@@ -2,7 +2,7 @@ import { downloadFileFromS3, uploadFileToS3 } from "./aws-s3-util.js";
 import { readJsonStreamToString, readTextStreamToString } from "./stream-util.js";
 import { sendMessageToProperChannel } from "./discord-util.js";
 import { ChatGptApiParams, ChatHistory, GPTModels } from "./interfaces/openai.js";
-import { ChatGPTAPI } from "chatgpt";
+import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from "chatgpt";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -10,12 +10,20 @@ dotenv.config();
 export const getChatGptAPI = (model: string) => {
   return new ChatGPTAPI({
     apiKey: process.env.OPEN_API_KEY,
-    maxModelTokens: 8192,
+    maxResponseTokens: model === "gpt-4" ? 8192 : 4096,
+    debug: false,
     completionParams: {
       model: model,
-      temperature: 0.3,
-      top_p: 0.8,
+      temperature: 0.4,
     },
+  });
+};
+
+export const getChatGptUnofficalAPI = async (model: string) => {
+  return new ChatGPTUnofficialProxyAPI({
+    accessToken: process.env.OPENAI_TOKEN,
+    model: model,
+    debug: false,
   });
 };
 
@@ -23,7 +31,8 @@ export const loadChatGPTRequestParameters = async (channelId: string): Promise<C
   const chatHistoryPromise = getChatHistory(channelId);
   const sysMessagePromise = getSystemMessage(channelId);
   const gptModelPromise = getChatGptModel(channelId);
-  const [chatHistory, systemMessage, gptModel] = await Promise.all([chatHistoryPromise, sysMessagePromise, gptModelPromise]);
+  let [chatHistory, systemMessage, gptModel] = await Promise.all([chatHistoryPromise, sysMessagePromise, gptModelPromise]);
+  if (chatHistory !== null) chatHistory.name = channelId;
   return { chatHistory, systemMessage, gptModel };
 };
 

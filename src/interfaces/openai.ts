@@ -5,6 +5,7 @@ export interface ChatGptApiParamOptional {
 }
 
 export interface ChatHistory {
+  name?: string;
   parentMessageId?: string;
   conversationId?: string;
 }
