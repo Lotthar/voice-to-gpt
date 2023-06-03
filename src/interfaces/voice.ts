@@ -2,6 +2,7 @@ export interface SpeechVoice {
   name: string | null;
   waitingAnswer: string | null;
   defaultAnswer: string | null;
+  ttsModel?: any;
 }
 export const DEFAULT_ENGLISH_VOICE = "Google";
 
@@ -23,4 +24,5 @@ export let currentVoice: SpeechVoice = {
   name: null,
   waitingAnswer: null,
   defaultAnswer: null,
+  ttsModel: null,
 };

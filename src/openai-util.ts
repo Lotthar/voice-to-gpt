@@ -1,23 +1,23 @@
 import { downloadFileFromS3, uploadFileToS3 } from "./aws-s3-util.js";
 import { readJsonStreamToString, readTextStreamToString } from "./stream-util.js";
 import { sendMessageToProperChannel } from "./discord-util.js";
-import { Tiktoken, load, registry, models, ChatCompletionRequestMessageRoleEnum } from "./interfaces/openai.js";
+import {
+  Tiktoken,
+  load,
+  registry,
+  models,
+  ChatCompletionRequestMessageRoleEnum,
+  genericResponse,
+  GPTModels,
+  GptModelData,
+} from "./interfaces/openai.js";
 import { Configuration, OpenAIApi, ChatCompletionRequestMessage, CreateChatCompletionResponse } from "openai";
 
-export const MODEL_NAME: string = "gpt-4";
-export const MODEL_MAX_TOKENS: number = 8192;
-export const model = await load(registry[models[MODEL_NAME]]);
-export const genericResponse = "The answer is not generated properly!";
-
 export const resetHistoryIfNewSystemMessage = async (systemMessage: string, channelId: string) => {
-  let chatHistory = await readHistoryFromStorage(channelId);
-  const currentSystemMessage = await getCurrentSystemMessage(channelId);
-  if (currentSystemMessage === null || chatHistory?.length === 0 || chatHistory[0].content !== systemMessage) {
-    chatHistory = [{ role: ChatCompletionRequestMessageRoleEnum.System, content: systemMessage }];
-    await setCurrentSystemMessage(systemMessage, channelId);
-    await saveChatHistory(chatHistory, channelId);
-    console.log(`Chat history has been reset for channel: ${channelId}. New system message: ${systemMessage}`);
-  }
+  const chatHistory = [{ role: ChatCompletionRequestMessageRoleEnum.System, content: systemMessage }];
+  await setCurrentSystemMessage(systemMessage, channelId);
+  await saveChatHistory(chatHistory, channelId);
+  console.log(`Chat history has been reset for channel: ${channelId}. New system message: ${systemMessage}`);
 };
 
 export const loadChatHistoryOrCreateNew = async (channelId: string): Promise<Array<ChatCompletionRequestMessage>> => {
@@ -87,6 +87,33 @@ const getCurrentSystemMessage = async (channelId: string): Promise<string | null
   }
 };
 
+const setChatGptModel = async (model: string, channelId: string): Promise<void> => {
+  try {
+    const gptModelPath = getChatGptModelPath(channelId);
+    await uploadFileToS3(gptModelPath, model);
+    console.log(`ChatGPT model is successfully saved for channel: ${channelId}`);
+  } catch (error) {
+    console.error(`Error setting current ChatGPT model for channel: ${channelId}:`, error);
+  }
+};
+
+export const getChatGptModel = async (channelId: string): Promise<GptModelData> => {
+  let gptModel, model;
+  try {
+    const gptModelPath = getChatGptModelPath(channelId);
+    const gptModelStream = await downloadFileFromS3(gptModelPath);
+    gptModel = await readTextStreamToString(gptModelStream);
+    model = await load(registry[models[gptModel]]);
+    return { modelName: gptModel, model };
+  } catch (error) {
+    console.error(`Error getting current ChatGPT model for channel: ${channelId}:`, error);
+    gptModel = GPTModels[0];
+    model = await load(registry[models[gptModel]]);
+    await setChatGptModel(gptModel, channelId);
+    return { modelName: gptModel, model };
+  }
+};
+
 export const botSystemMessageChanged = async (message: string, channelId: string): Promise<boolean> => {
   const command = "!system ";
   if (!message.startsWith(command)) return false;
@@ -96,14 +123,31 @@ export const botSystemMessageChanged = async (message: string, channelId: string
   return true;
 };
 
-export const countApiResponseTokens = (currentChatHistory: ChatCompletionRequestMessage[]): number => {
-  const totalTokens = currentChatHistory.map((message) => countTokens(message)).reduce((total, tokenValue) => total + tokenValue);
-  const responseTokens = MODEL_MAX_TOKENS - (totalTokens + 2)- 50;
-  if (responseTokens > 2000) return responseTokens;
-  return countApiResponseTokens(currentChatHistory.splice(1, 2));
+export const botChatGptModelChanged = async (message: string, channelId: string): Promise<boolean> => {
+  const command = "!model ";
+  if (!message.startsWith(command)) return false;
+  const currentModelId = message.replace(command, "");
+  await determineAndSetModel(currentModelId, channelId);
+  return true;
 };
 
-const countTokens = (message: ChatCompletionRequestMessage): number => {
+const determineAndSetModel = async (modelId: string, channelId: string): Promise<void> => {
+  let model = GPTModels.find((model) => model.indexOf(modelId) > -1);
+  model = !!model ? model : GPTModels[0];
+  setChatGptModel(model, channelId);
+  await sendMessageToProperChannel(`You changed current GPT model to: **${model}**`, channelId);
+};
+
+export const countApiResponseTokens = async (currentChatHistory: ChatCompletionRequestMessage[], model: any, modelName: string): Promise<number> => {
+  const totalTokens = currentChatHistory.map((message) => countTokens(message, model)).reduce((total, tokenValue) => total + tokenValue);
+  const maxTokens = modelName === "gpt-4" ? 8192 : 4096;
+  const responseTokens = maxTokens - (totalTokens + 2) - 50;
+  if (responseTokens >= 2000) return responseTokens;
+  currentChatHistory.splice(1, 2);
+  return countApiResponseTokens(currentChatHistory, model, modelName);
+};
+
+const countTokens = (message: ChatCompletionRequestMessage, model: any): number => {
   const modelEncoder = new Tiktoken(model.bpe_ranks, model.special_tokens, model.pat_str);
   const tokens = modelEncoder.encode(message.content);
   modelEncoder.free();
@@ -119,5 +163,7 @@ export const checkAndReturnValidResponseData = (response: CreateChatCompletionRe
 const getHistoryPath = (channelId: string): string => `history/${channelId}-history.json`;
 
 const getSystemMessagePath = (channelId: string): string => `history/${channelId}-systemmsg`;
+
+const getChatGptModelPath = (channelId: string): string => `models/${channelId}-model`;
 
 export { Configuration, OpenAIApi, ChatCompletionRequestMessage };

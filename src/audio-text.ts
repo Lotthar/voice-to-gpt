@@ -19,6 +19,7 @@ export const playOpenAiAnswerAfterSpeech = async (audioContent: string, connecti
 
 const initPlayerAndPlayWaitingMessage = (connection: VoiceConnection): void => {
   if (player === null) initAndSubscribeAudioPlayerToVoiceChannel();
+  currentAnswerAudioURIs = [];
   connection.subscribe(player!);
   if (currentVoice.waitingAnswer === null) return;
   player!.play(createAudioResource(currentVoice.waitingAnswer));
@@ -35,7 +36,8 @@ const processAudioFromTextMultiLang = async (text: string | null, channelId: str
     if (isCurrentVoiceLanguage("English")) await getAudioResourceFromTextEngLang(text, channelId);
     else currentAnswerAudioURIs = generateTTSResourceURIArray(text);
     await sendMessageToProperChannel(text, channelId);
-    player!.play(createAudioResource(getFirstAudioFromCurrent()));
+    const audio = getFirstAudioFromCurrent();
+    player!.play(createAudioResource(audio));
   }
 };
 

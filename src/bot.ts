@@ -1,6 +1,6 @@
 import { Client, Events, GatewayIntentBits, Message, VoiceState } from "discord.js";
 import { generateOpenAIAnswer } from "./openai-api.js";
-import { botSystemMessageChanged, genericResponse } from "./openai-util.js";
+import { botChatGptModelChanged, botSystemMessageChanged } from "./openai-util.js";
 import {
   joinVoiceChannelAndGetConnection,
   checkIfInvalidVoiceChannel,
@@ -42,7 +42,6 @@ discordClient.on(Events.MessageCreate, async (message: Message) => {
       const stopTyping = () => messageSent;
       const typingPromise = sendTyping(message, stopTyping);
       let answer = await generateOpenAIAnswer(messageContent, message.channelId);
-      if (answer === null) answer = genericResponse;
       const messagePromise = sendMessageToProperChannel(answer, message.channelId).then(() => {
         messageSent = true;
       });
@@ -76,6 +75,8 @@ const configuringBotSettings = async (settingCommand: string, channelId: string)
   if (systemMsgChanged) return true;
   const botVoiceChanged = await botTTSVoiceChanged(settingCommand, channelId);
   if (botVoiceChanged) return true;
+  const botModelChanged = await botChatGptModelChanged(settingCommand, channelId);
+  if (botModelChanged) return true;
   return false;
 };
 

@@ -8,14 +8,14 @@ import { currentVoice } from "./interfaces/voice.js";
 export const loadCurrentVoiceLangugageIfNone = async (channelId: string): Promise<void> => {
   try {
     if (currentVoiceLanguage.name !== null) return;
-    await loadAndAssignFromStorage(channelId);
+    await getCurrentVoiceLanguage(channelId);
   } catch (error) {
     console.error(`No current voice language from s3 for channel: ${channelId}, setting default...`);
     await resetLangugageWithVoice(voiceLanguages[0].name!, channelId);
   }
 };
 
-const loadAndAssignFromStorage = async (channelId: string) => {
+const getCurrentVoiceLanguage = async (channelId: string) => {
   try {
     const langPath: string = getLangugagePath(channelId);
     const langS3Stream = await downloadFileFromS3(langPath);
@@ -23,6 +23,7 @@ const loadAndAssignFromStorage = async (channelId: string) => {
     Object.assign(currentVoiceLanguage!, getLanguageFromName(langName));
     console.log(`Current bot voice langugage for channel: ${channelId} is: ${currentVoiceLanguage.name}`);
   } catch (error) {
+    setCurrentLanguage(voiceLanguages[0].name!, channelId);
     console.error(`Error loading language from storage for channel: ${channelId}: `, error);
   }
 };
