@@ -3,7 +3,6 @@ export interface ChatGptApiParamOptional {
   systemMessage?: string;
   timeoutMs?: number;
 }
-// `${systemMessage} Current date: ${new Date().toISOString()}\n\n`
 
 export interface ChatHistory {
   parentMessageId?: string;

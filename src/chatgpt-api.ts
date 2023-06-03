@@ -15,7 +15,6 @@ export const generateOpenAIAnswer = async (question: string, channelId: string):
 const getOpenAiResponse = async (question: string, model: string, gptParameters: ChatGptApiParamOptional): Promise<ChatGptResponse> => {
   let gptResult;
   const api = getChatGptAPI(model);
-  console.log(gptParameters);
   const paramsAreEmpty = Object.keys(gptParameters).length === 0;
   if (paramsAreEmpty) gptResult = await api.sendMessage(question);
   else gptResult = await api.sendMessage(question, gptParameters);
