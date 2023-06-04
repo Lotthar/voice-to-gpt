@@ -28,8 +28,8 @@ const getCurrentVoice = async (channelId: string) => {
     await loadFakeYouTTSModelIfRequired();
     console.log(`Current TTS voice for channel: ${channelId} is: ${currentVoice.name}`);
   } catch (error) {
-    setCurrentVoice(voices[0], channelId);
-    console.error("Error loading voice from storage: ", error);
+    console.error("Error loading voice from storage, will load default: ", error);
+    await setCurrentVoice(voices[0], channelId);
   }
 };
 

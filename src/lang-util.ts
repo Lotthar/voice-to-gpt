@@ -23,8 +23,8 @@ const getCurrentVoiceLanguage = async (channelId: string) => {
     Object.assign(currentVoiceLanguage!, getLanguageFromName(langName));
     console.log(`Current bot voice langugage for channel: ${channelId} is: ${currentVoiceLanguage.name}`);
   } catch (error) {
-    setCurrentLanguage(voiceLanguages[0].name!, channelId);
     console.error(`Error loading language from storage for channel: ${channelId}: `, error);
+    await setCurrentLanguage(voiceLanguages[0].name!, channelId);
   }
 };
 
