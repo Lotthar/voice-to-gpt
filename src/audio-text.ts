@@ -42,11 +42,11 @@ const processAudioFromTextMultiLang = async (text: string | null, channelId: str
 };
 
 const getAudioResourceFromTextEngLang = async (text: string, channelId: string) => {
-  if (checkIfGoogleAPIisUsed()) {
+  // if (checkIfGoogleAPIisUsed()) {
     currentAnswerAudioURIs = generateTTSResourceURIArray(text);
-  } else {
-    await loadAnswersFromFakeYouAPI(text, channelId);
-  }
+  // } else {
+  //   await loadAnswersFromFakeYouAPI(text, channelId);
+  // }
 };
 
 const loadAnswersFromFakeYouAPI = async (text: string, channelId: string) => {
