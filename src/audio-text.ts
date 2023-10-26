@@ -2,7 +2,7 @@ import { generateOpenAIAnswer } from "./openai-api.js";
 import { sendMessageToProperChannel } from "./discord-util.js";
 import { processAudioContentIntoText, generateTTSResourceURIArray } from "./google-api.js";
 import { createAudioResource, createAudioPlayer, AudioPlayerStatus, AudioPlayer, VoiceConnection } from "@discordjs/voice";
-import { createTTSAudioURL } from "./fy-tts-api.js";
+// import { createTTSAudioURL } from "./fy-tts-api.js";
 import { currentVoice } from "./interfaces/voice.js";
 import { isCurrentVoiceLanguage } from "./lang-util.js";
 import { checkIfGoogleAPIisUsed } from "./voice-util.js";
@@ -49,14 +49,14 @@ const getAudioResourceFromTextEngLang = async (text: string, channelId: string) 
   // }
 };
 
-const loadAnswersFromFakeYouAPI = async (text: string, channelId: string) => {
-  let audioUrl: string | null = null;
-  const textParts = splitText(text);
-  for (let txtPart of textParts) {
-    audioUrl = await createTTSAudioURL(txtPart, channelId);
-    if (audioUrl !== null) currentAnswerAudioURIs.push(audioUrl);
-  }
-};
+// const loadAnswersFromFakeYouAPI = async (text: string, channelId: string) => {
+//   let audioUrl: string | null = null;
+//   const textParts = splitText(text);
+//   for (let txtPart of textParts) {
+//     audioUrl = await createTTSAudioURL(txtPart, channelId);
+//     if (audioUrl !== null) currentAnswerAudioURIs.push(audioUrl);
+//   }
+// };
 
 const getFirstAudioFromCurrent = (): string => {
   const noAudioURIs = currentAnswerAudioURIs.length === 0;

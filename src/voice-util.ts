@@ -3,7 +3,7 @@ import { uploadFileToS3, downloadFileFromS3 } from "./aws-s3-util.js";
 import { readJsonStreamToString } from "./stream-util.js";
 import { isCurrentVoiceLanguage } from "./lang-util.js";
 import { generateTTSResourceURL } from "./google-api.js";
-import { loadFakeYouVoice, loadTTSModel } from "./fy-tts-api.js";
+// import { loadFakeYouVoice, loadTTSModel } from "./fy-tts-api.js";
 import { currentVoice, voices, DEFAULT_ENGLISH_VOICE } from "./interfaces/voice.js";
 
 const defaultAnswer = "Your question was not understood or heard properly, please repeat.";
@@ -25,7 +25,7 @@ const getCurrentVoice = async (channelId: string) => {
     const voiceS3Stream = await downloadFileFromS3(voicePath);
     const savedVoiceJsonString: string = await readJsonStreamToString(voiceS3Stream);
     Object.assign(currentVoice, JSON.parse(savedVoiceJsonString));
-    await loadFakeYouTTSModelIfRequired();
+    // await loadFakeYouTTSModelIfRequired();
     console.log(`Current TTS voice for channel: ${channelId} is: ${currentVoice.name}`);
   } catch (error) {
     console.error("Error loading voice from storage, will load default: ", error);
@@ -33,11 +33,11 @@ const getCurrentVoice = async (channelId: string) => {
   }
 };
 
-const loadFakeYouTTSModelIfRequired = async () => {
-  if (isCurrentVoiceLanguage("English") && !checkIfGoogleAPIisUsed()) {
-    currentVoice.ttsModel = await loadTTSModel(currentVoice.name!);
-  }
-};
+// const loadFakeYouTTSModelIfRequired = async () => {
+//   if (isCurrentVoiceLanguage("English") && !checkIfGoogleAPIisUsed()) {
+//     currentVoice.ttsModel = await loadTTSModel(currentVoice.name!);
+//   }
+// };
 
 export const botTTSVoiceChanged = async (message: string, channelId: string): Promise<boolean> => {
   const command = "!voice ";
@@ -90,9 +90,9 @@ const setWaitingAndDefaultEnglishAnswer = async (channelId: string): Promise<voi
     currentVoice.waitingAnswer = generateTTSResourceURL(waitingAnswer);
   } else {
     // Loading one of the DeepFake voices to use instead of Google TTS API
-    const fakeYouVoice = await loadFakeYouVoice(currentVoice.name!, defaultAnswer, waitingAnswer, channelId);
-    currentVoice.defaultAnswer = fakeYouVoice.defaultAnswer;
-    currentVoice.waitingAnswer = fakeYouVoice.waitingAnswer;
+    // const fakeYouVoice = await loadFakeYouVoice(currentVoice.name!, defaultAnswer, waitingAnswer, channelId);
+    // currentVoice.defaultAnswer = fakeYouVoice.defaultAnswer;
+    // currentVoice.waitingAnswer = fakeYouVoice.waitingAnswer;
   }
 };
 
