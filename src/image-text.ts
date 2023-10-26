@@ -18,7 +18,6 @@ export const modifyMessageWithImageInput = async (message: Message, messageConte
     }
     messageContent = `${imageContent}\n${messageContent}`;
   }
-  console.log(messageContent);
   return messageContent;
 };
 
