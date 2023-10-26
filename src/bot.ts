@@ -15,6 +15,7 @@ import { loadCurrentVoiceLangugageIfNone, botSpeakingLanguageChanged } from "./l
 import { botTTSVoiceChanged, loadVoiceIfNone } from "./voice-util.js";
 import dotenv from "dotenv";
 import { VoiceConnection } from "@discordjs/voice";
+import { modifyMessageWithImageInput } from "./image-text.js";
 
 dotenv.config();
 
@@ -35,12 +36,12 @@ discordClient.on(Events.MessageCreate, async (message: Message) => {
     // Only answer to messages in the channel when the bot is specifically mentioned!
     if (botIsMentioned(message)) {
       let messageContent = getMessageContentWithoutMention(message);
-
       const botSettingsChanged: boolean = await configuringBotSettings(messageContent, message.channelId);
       if (botSettingsChanged) return;
       let messageSent = false;
       const stopTyping = () => messageSent;
       const typingPromise = sendTyping(message, stopTyping);
+      messageContent = await modifyMessageWithImageInput(message, messageContent);
       let answer = await generateOpenAIAnswer(messageContent, message.channelId);
       const messagePromise = sendMessageToProperChannel(answer, message.channelId).then(() => {
         messageSent = true;

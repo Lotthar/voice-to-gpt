@@ -11,5 +11,6 @@ declare namespace NodeJS {
     GCLOUD_PRIVATE_KEY: string;
     FY_USERNAME: string;
     FY_PASSWORD: string;
+    REPLICATE_API_TOKEN: string
   }
 }
