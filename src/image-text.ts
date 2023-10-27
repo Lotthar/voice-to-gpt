@@ -27,7 +27,6 @@ const convertImageToTextDescription = async (imageUrl: string) => {
   };
   try {
     const output = await replicate.run(model, { input });
-    console.log(output);
     return output;
   } catch {
     console.error("Error retrieving text from image");
