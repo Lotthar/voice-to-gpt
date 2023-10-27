@@ -85,15 +85,15 @@ const setWaitingAndDefaultSerbianAnswer = (): void => {
 };
 
 const setWaitingAndDefaultEnglishAnswer = async (channelId: string): Promise<void> => {
-  if (checkIfGoogleAPIisUsed()) {
-    currentVoice.defaultAnswer = generateTTSResourceURL(defaultAnswer);
-    currentVoice.waitingAnswer = generateTTSResourceURL(waitingAnswer);
-  } else {
+  // if (checkIfGoogleAPIisUsed()) {
+  currentVoice.defaultAnswer = generateTTSResourceURL(defaultAnswer);
+  currentVoice.waitingAnswer = generateTTSResourceURL(waitingAnswer);
+  // } else {
     // Loading one of the DeepFake voices to use instead of Google TTS API
     // const fakeYouVoice = await loadFakeYouVoice(currentVoice.name!, defaultAnswer, waitingAnswer, channelId);
     // currentVoice.defaultAnswer = fakeYouVoice.defaultAnswer;
     // currentVoice.waitingAnswer = fakeYouVoice.waitingAnswer;
-  }
+  // }
 };
 
 export const getVoiceByName = (voiceName: string): string => {
