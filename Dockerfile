@@ -1,5 +1,5 @@
 # Use the official Node.js image as a base
-FROM node:18
+FROM node:21-bullseye
 # Set the working directory in the container
 WORKDIR /usr/src/app
 # Copy package.json and package-lock.json into the container
