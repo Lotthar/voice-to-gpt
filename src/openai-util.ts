@@ -6,26 +6,33 @@ import {
   load,
   registry,
   models,
-  ChatCompletionRequestMessageRoleEnum,
   genericResponse,
   GPTModels,
   GptModelData,
 } from "./interfaces/openai.js";
-import { Configuration, OpenAIApi, ChatCompletionRequestMessage, CreateChatCompletionResponse } from "openai";
+import OpenAI from "openai";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+export const openai = new OpenAI({
+  apiKey: process.env.OPEN_API_KEY,
+});
+
 
 export const resetHistoryIfNewSystemMessage = async (systemMessage: string, channelId: string) => {
-  const chatHistory = [{ role: ChatCompletionRequestMessageRoleEnum.System, content: systemMessage }];
+  const chatHistory: Array<OpenAI.Chat.ChatCompletionMessageParam> = [{ role: "system", content: systemMessage }];
   await setCurrentSystemMessage(systemMessage, channelId);
   await saveChatHistory(chatHistory, channelId);
   console.log(`Chat history has been reset for channel: ${channelId}. New system message: ${systemMessage}`);
 };
 
-export const loadChatHistoryOrCreateNew = async (channelId: string): Promise<Array<ChatCompletionRequestMessage>> => {
+export const loadChatHistoryOrCreateNew = async (channelId: string): Promise<Array<OpenAI.Chat.ChatCompletionMessageParam>> => {
   let chatHistory = await readHistoryFromStorage(channelId);
   if (chatHistory !== null) return chatHistory;
   const currentSysMessage = await getCurrentSystemMessage(channelId);
   if (currentSysMessage === null) chatHistory = [];
-  else chatHistory = [{ role: ChatCompletionRequestMessageRoleEnum.System, content: currentSysMessage }];
+  else chatHistory = [{ role: "system", content: currentSysMessage }];
   await saveChatHistory(chatHistory, channelId);
   return chatHistory;
 };
@@ -34,14 +41,15 @@ export const pushQAtoHistory = async (
   question: string,
   answer: string,
   channelId: string,
-  chatHistory: Array<ChatCompletionRequestMessage>
+  chatHistory: Array<OpenAI.Chat.ChatCompletionMessageParam>
 ): Promise<void> => {
-  chatHistory.push({ role: ChatCompletionRequestMessageRoleEnum.User, content: question });
-  chatHistory.push({ role: ChatCompletionRequestMessageRoleEnum.Assistant, content: answer });
+
+  chatHistory.push({ role: "user", content: question });
+  chatHistory.push({ role: "assistant", content: answer });
   await saveChatHistory(chatHistory, channelId);
 };
 
-export const saveChatHistory = async (chatHistory: Array<ChatCompletionRequestMessage>, channelId: string): Promise<void> => {
+export const saveChatHistory = async (chatHistory: Array<OpenAI.Chat.ChatCompletionMessageParam>, channelId: string): Promise<void> => {
   try {
     const filePath = getHistoryPath(channelId);
     const jsonString = JSON.stringify(chatHistory);
@@ -52,7 +60,7 @@ export const saveChatHistory = async (chatHistory: Array<ChatCompletionRequestMe
   }
 };
 
-export const readHistoryFromStorage = async (channelId: string): Promise<ChatCompletionRequestMessage[]> => {
+export const readHistoryFromStorage = async (channelId: string): Promise<Array<OpenAI.Chat.ChatCompletionMessageParam>> => {
   try {
     const historyFilePath = getHistoryPath(channelId);
     const historyJsonStream = await downloadFileFromS3(historyFilePath);
@@ -132,29 +140,29 @@ export const botChatGptModelChanged = async (message: string, channelId: string)
 };
 
 const determineAndSetModel = async (modelId: string, channelId: string): Promise<void> => {
-  let model = GPTModels.find((model) => model.indexOf(modelId) > -1);
+  let model = GPTModels.find((model) => model.startsWith(modelId));
   model = !!model ? model : GPTModels[0];
   setChatGptModel(model, channelId);
   await sendMessageToProperChannel(`You changed current GPT model to: **${model}**`, channelId);
 };
 
-export const countApiResponseTokens = async (currentChatHistory: ChatCompletionRequestMessage[], model: any, modelName: string): Promise<number> => {
+export const countApiResponseTokens = async (currentChatHistory: Array<OpenAI.Chat.ChatCompletionMessageParam>, model: any, modelName: string): Promise<number> => {
   const totalTokens = currentChatHistory.map((message) => countTokens(message, model)).reduce((total, tokenValue) => total + tokenValue);
-  const maxTokens = modelName === "gpt-4" ? 8192 : 4096;
+  const maxTokens = modelName.startsWith("gpt-4") ? 8192 : 4096;
   const responseTokens = maxTokens - (totalTokens + 2) - 50;
   if (responseTokens >= 2000) return responseTokens;
   currentChatHistory.splice(1, 2);
   return countApiResponseTokens(currentChatHistory, model, modelName);
 };
 
-const countTokens = (message: ChatCompletionRequestMessage, model: any): number => {
+const countTokens = (message: OpenAI.Chat.ChatCompletionMessageParam, model: any): number => {
   const modelEncoder = new Tiktoken(model.bpe_ranks, model.special_tokens, model.pat_str);
   const tokens = modelEncoder.encode(message.content);
   modelEncoder.free();
   return 4 + tokens.length;
 };
 
-export const checkAndReturnValidResponseData = (response: CreateChatCompletionResponse): string => {
+export const checkAndReturnValidResponseData = (response: OpenAI.Chat.ChatCompletion): string => {
   if (response && response.choices && response.choices[0] && response.choices[0].message && response.choices[0].message.content)
     return response.choices[0].message.content.trim();
   return genericResponse;
@@ -165,5 +173,3 @@ const getHistoryPath = (channelId: string): string => `history/${channelId}-hist
 const getSystemMessagePath = (channelId: string): string => `history/${channelId}-systemmsg`;
 
 const getChatGptModelPath = (channelId: string): string => `models/${channelId}-model`;
-
-export { Configuration, OpenAIApi, ChatCompletionRequestMessage };

@@ -1,5 +1,4 @@
 import { createRequire } from "module";
-import { ChatCompletionRequestMessage, ChatCompletionRequestMessageRoleEnum } from "openai";
 
 export interface OpenAiMessage {
   role: "system" | "assistant" | "user";
@@ -12,6 +11,8 @@ export interface GptModelData {
 }
 
 export const GPTModels = ["gpt-3.5-turbo", "gpt-4"];
+export const GPTAssistantModels = ["gpt-3.5-turbo-1106", "gpt-4-1106-preview"];
+
 
 export const genericResponse = "The answer is not generated properly!";
 
@@ -21,4 +22,4 @@ const { load } = requireModule("@dqbd/tiktoken/load");
 const registry = requireModule("@dqbd/tiktoken/registry.json");
 const models = requireModule("@dqbd/tiktoken/model_to_encoding.json");
 
-export { Tiktoken, load, registry, models, ChatCompletionRequestMessage, ChatCompletionRequestMessageRoleEnum };
+export { Tiktoken, load, registry, models };
