@@ -1,6 +1,5 @@
 import { Client, Events, GatewayIntentBits, Message, VoiceState } from "discord.js";
-import { generateOpenAIAnswer } from "./openai-api.js";
-import { botChatGptModelChanged, botSystemMessageChanged } from "./openai-util.js";
+
 import {
   joinVoiceChannelAndGetConnection,
   checkIfInvalidVoiceChannel,
@@ -15,7 +14,8 @@ import { loadCurrentVoiceLangugageIfNone, botSpeakingLanguageChanged } from "./l
 import { botTTSVoiceChanged, loadVoiceIfNone } from "./voice-util.js";
 import dotenv from "dotenv";
 import { VoiceConnection } from "@discordjs/voice";
-import { modifyMessageWithImageInput } from "./image-text.js";
+import { generateOpenAIAnswer } from "./openai-api.js";
+import { botChatGptModelChanged, botSystemMessageChanged } from "./openai-util.js";
 
 dotenv.config();
 
@@ -41,7 +41,6 @@ discordClient.on(Events.MessageCreate, async (message: Message) => {
       let messageSent = false;
       const stopTyping = () => messageSent;
       const typingPromise = sendTyping(message, stopTyping);
-      messageContent = await modifyMessageWithImageInput(message, messageContent);
       let answer = await generateOpenAIAnswer(messageContent, message.channelId);
       const messagePromise = sendMessageToProperChannel(answer, message.channelId).then(() => {
         messageSent = true;
