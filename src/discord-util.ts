@@ -131,7 +131,7 @@ const getOpusStream = (receiver: VoiceReceiver, userId: string): AudioReceiveStr
   });
 };
 
-const getCurrentChannel = async (channelId: string): Promise<ChannelCommonType> => {
+export const getCurrentChannel = async (channelId: string): Promise<ChannelCommonType> => {
   if (!channelId) return null;
   const channel = await discordClient.channels.fetch(channelId);
   if (channel instanceof TextChannel || channel instanceof VoiceChannel) {

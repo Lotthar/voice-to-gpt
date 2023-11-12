@@ -16,6 +16,7 @@ import dotenv from "dotenv";
 import { VoiceConnection } from "@discordjs/voice";
 import { generateOpenAIAnswer } from "./openai-api.js";
 import { botChatGptModelChanged, botSystemMessageChanged } from "./openai-util.js";
+import { assistantChanged, generateAssistantAnswer } from "./openai-assistant.js";
 
 dotenv.config();
 
@@ -34,18 +35,15 @@ discordClient.on(Events.MessageCreate, async (message: Message) => {
   try {
     if (message.author.bot) return;
     // Only answer to messages in the channel when the bot is specifically mentioned!
+
     if (botIsMentioned(message)) {
       let messageContent = getMessageContentWithoutMention(message);
-      const botSettingsChanged: boolean = await configuringBotSettings(messageContent, message.channelId);
-      if (botSettingsChanged) return;
-      let messageSent = false;
-      const stopTyping = () => messageSent;
-      const typingPromise = sendTyping(message, stopTyping);
-      let answer = await generateOpenAIAnswer(messageContent, message.channelId);
-      const messagePromise = sendMessageToProperChannel(answer, message.channelId).then(() => {
-        messageSent = true;
-      });
-      await Promise.all([typingPromise, messagePromise]);
+
+      if(messageContent.startsWith("!assistant")) {
+        useOpenAIAssistantBot(message, messageContent)
+      } else {
+        useStandardOpenAIBot(message,messageContent);
+      }
     }
   } catch (error) {
     console.error(`Error in MessageCreate event in channel: ${message.channelId}`, error);
@@ -67,6 +65,32 @@ discordClient.on(Events.VoiceStateUpdate, async (oldState: VoiceState, newState:
     console.error(`Error in VoiceStateUpdate event in channel: ${currentChannelId}`, error);
   }
 });
+
+const useOpenAIAssistantBot = async (message: Message, messageContent: string) => {
+  const assistantSettingChanged = await assistantChanged(messageContent, message.channelId);
+  if (assistantSettingChanged) return;
+  let messageSent = false;
+  const stopTyping = () => messageSent;
+  const typingPromise = sendTyping(message, stopTyping);
+  let answer = await generateAssistantAnswer(message);
+  const messagePromise = sendMessageToProperChannel(answer, message.channelId).then(() => {
+    messageSent = true;
+  });
+  await Promise.all([typingPromise, messagePromise]);
+}
+
+const useStandardOpenAIBot = async (message: Message, messageContent: string) => {
+  const botSettingsChanged: boolean = await configuringBotSettings(messageContent, message.channelId);
+  if (botSettingsChanged) return;
+  let messageSent = false;
+  const stopTyping = () => messageSent;
+  const typingPromise = sendTyping(message, stopTyping);
+  let answer = await generateOpenAIAnswer(messageContent, message.channelId);
+  const messagePromise = sendMessageToProperChannel(answer, message.channelId).then(() => {
+    messageSent = true;
+  });
+  await Promise.all([typingPromise, messagePromise]);
+}
 
 const configuringBotSettings = async (settingCommand: string, channelId: string): Promise<boolean> => {
   const botSpeakingLangChanged = await botSpeakingLanguageChanged(settingCommand, channelId);
