@@ -27,7 +27,7 @@ export const generateAssistantAnswer = async (message: Message, messageContent: 
 
   const assistantMessage = await retrieveAssistantMessage(threadId);
   console.log("Assistant message", assistantMessage);
-  await deleteAssistantFiles(messageFileIds);
+  // await deleteAssistantFiles(messageFileIds);
   return extractAssistantMessage(assistantMessage);
 };
 
@@ -40,12 +40,22 @@ const resetCurrentThread = async(assistantData: ChannelAssistantData, channelId:
 }
 
 const getCurrentThread = async (assistantData: ChannelAssistantData, channelId: string) => {
-  if (!assistantData.threadId) {
+  if (!assistantData.threadId || await isThreadInactive(assistantData.threadId)) {
     const thread = await openai.beta.threads.create();
     assistantData.threadId = thread.id;
     await saveAssistantInStorage(assistantData, channelId);
   } 
   return assistantData.threadId;
+}
+
+const isThreadInactive = async (threadId: string) => {
+  try {
+    await openai.beta.threads.retrieve(threadId);
+    return false;
+  }catch(error) {
+    console.log(error);
+    return true;
+  }
 }
 
 const extractAssistantMessage = (message: ThreadMessage) => {

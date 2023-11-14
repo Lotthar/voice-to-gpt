@@ -2,7 +2,7 @@ import { generateOpenAIAnswer } from "../openai/openai-api.js";
 import { sendMessageToProperChannel } from "../util/discord-util.js";
 import { processAudioContentIntoText, generateTTSResourceURIArray } from "./google-api.js";
 import { createAudioResource, createAudioPlayer, AudioPlayerStatus, AudioPlayer, VoiceConnection } from "@discordjs/voice";
-// import { createTTSAudioURL } from "./fy-tts-api.js";
+import { createTTSAudioURL } from "./fy-tts-api.js";
 import { currentVoice } from "../interfaces/voice.js";
 import { isCurrentVoiceLanguage } from "../util/lang-util.js";
 import { checkIfGoogleAPIisUsed } from "../util/voice-util.js";

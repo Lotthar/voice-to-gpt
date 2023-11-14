@@ -1,5 +1,5 @@
 {
-  "watch": ["dist"],
-  "ext": "js",
-  "exec": "node --inspect-brk ./dist/bot.js"
+  "watch": ["src/**/*.ts"],
+  "ignore": ["src/**/*.spec.ts", "node_modules"],
+  "exec": "ts-node --files ./dist/bot.js"
 }

@@ -4,26 +4,23 @@
     {
       "type": "node",
       "request": "attach",
-      "name": "Debug TypeScript with Nodemon",
+      "name": "Attach to Nodemon",
+      "processId": "${command:PickProcess}",
       "restart": true,
-      "sourceMaps": true,
-      "outFiles": ["${workspaceFolder}/dist/**/*.js"]
+      "skipFiles": ["<node_internals>/**"]
     },
     {
       "type": "node",
       "request": "launch",
-      "name": "TypeScript Watch",
-      "runtimeArgs": ["-r", "ts-node/register"],
-      "args": ["--onsSuccess"],
-      "program": "tsc-watch",
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
+      "name": "Launch Nodemon",
+      "runtimeExecutable": "nodemon",
+      "runtimeArgs": ["--inspect-brk", "${workspaceFolder}/dist/bot.js"],
     }
   ],
   "compounds": [
     {
-      "name": "Debug TypeScript with Watch",
-      "configurations": ["TypeScript Watch", "Debug TypeScript with Nodemon"]
+      "name": "Debug with Nodemon",
+      "configurations": ["Launch Nodemon","Attach to Nodemon", ]
     }
   ]
 }
