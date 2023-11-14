@@ -1,6 +1,6 @@
-import { downloadFileFromS3, uploadFileToS3 } from "./aws-s3-util.js";
-import { readJsonStreamToString, readTextStreamToString } from "./stream-util.js";
-import { sendMessageToProperChannel } from "./discord-util.js";
+import { downloadFileFromS3, uploadFileToS3 } from "../util/aws-s3-util.js";
+import { readJsonStreamToString, readTextStreamToString } from "../util/stream-util.js";
+import { sendMessageToProperChannel } from "../util/discord-util.js";
 import {
   Tiktoken,
   load,
@@ -9,7 +9,7 @@ import {
   genericResponse,
   GPTModels,
   GptModelData,
-} from "./interfaces/openai.js";
+} from "../interfaces/openai.js";
 import OpenAI from "openai";
 import dotenv from "dotenv";
 

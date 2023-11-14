@@ -8,10 +8,10 @@ import {
   VoiceReceiver,
   AudioReceiveStream,
 } from "@discordjs/voice";
-import { playOpenAiAnswerAfterSpeech } from "./audio-text.js";
-import { discordClient } from "./bot.js";
+import { playOpenAiAnswerAfterSpeech } from "../tts-stt/audio-text.js";
+import { discordClient } from "../bot.js";
 import { createFlacAudioContentFromOpus } from "./audio-util.js";
-import { ChannelCommonType } from "./types/discord.js";
+import { ChannelCommonType } from "../types/discord.js";
 
 const BOT_NAME = "VoiceToGPT";
 

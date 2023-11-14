@@ -1,4 +1,4 @@
-import { genericResponse } from "./interfaces/openai.js";
+import { genericResponse } from "../interfaces/openai.js";
 import {OpenAI} from "openai";
 import {
   loadChatHistoryOrCreateNew,

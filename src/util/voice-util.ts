@@ -2,9 +2,9 @@ import { sendMessageToProperChannel } from "./discord-util.js";
 import { uploadFileToS3, downloadFileFromS3 } from "./aws-s3-util.js";
 import { readJsonStreamToString } from "./stream-util.js";
 import { isCurrentVoiceLanguage } from "./lang-util.js";
-import { generateTTSResourceURL } from "./google-api.js";
+import { generateTTSResourceURL } from "../tts-stt/google-api.js";
 // import { loadFakeYouVoice, loadTTSModel } from "./fy-tts-api.js";
-import { currentVoice, voices, DEFAULT_ENGLISH_VOICE } from "./interfaces/voice.js";
+import { currentVoice, voices, DEFAULT_ENGLISH_VOICE } from "../interfaces/voice.js";
 
 const defaultAnswer = "Your question was not understood or heard properly, please repeat.";
 const waitingAnswer = "Please wait while the answer is being prepared.";

@@ -1,8 +1,8 @@
 import * as googleTTS from "google-tts-api";
 import { SpeechClient } from "@google-cloud/speech";
-import { currentVoiceLanguage } from "./interfaces/language.js";
-import { IRecognizeRequest, IRecognizeResponse, ISpeechRecognitionResult, AudioEncoding } from "./types/google.js";
-import { LongTTSOption } from "./interfaces/google.js";
+import { currentVoiceLanguage } from "../interfaces/language.js";
+import { IRecognizeRequest, IRecognizeResponse, ISpeechRecognitionResult, AudioEncoding } from "../types/google.js";
+import { LongTTSOption } from "../interfaces/google.js";
 import dotenv from "dotenv";
 
 dotenv.config();

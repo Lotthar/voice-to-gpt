@@ -9,14 +9,14 @@ import {
   getMessageContentWithoutMention,
   addVoiceConnectionReadyEvent,
   sendTyping,
-} from "./discord-util.js";
-import { loadCurrentVoiceLangugageIfNone, botSpeakingLanguageChanged } from "./lang-util.js";
-import { botTTSVoiceChanged, loadVoiceIfNone } from "./voice-util.js";
+} from "./util/discord-util.js";
+import { loadCurrentVoiceLangugageIfNone, botSpeakingLanguageChanged } from "./util/lang-util.js";
+import { botTTSVoiceChanged, loadVoiceIfNone } from "./util/voice-util.js";
 import dotenv from "dotenv";
 import { VoiceConnection } from "@discordjs/voice";
-import { generateOpenAIAnswer } from "./openai-api.js";
-import { botChatGptModelChanged, botSystemMessageChanged } from "./openai-util.js";
-import { assistantChanged, generateAssistantAnswer } from "./openai-assistant.js";
+import { generateOpenAIAnswer } from "./openai/openai-api.js";
+import { botChatGptModelChanged, botSystemMessageChanged } from "./openai/openai-util.js";
+import { assistantChanged, generateAssistantAnswer } from "./openai/openai-assistant.js";
 
 dotenv.config();
 
@@ -35,11 +35,10 @@ discordClient.on(Events.MessageCreate, async (message: Message) => {
   try {
     if (message.author.bot) return;
     // Only answer to messages in the channel when the bot is specifically mentioned!
-
     if (botIsMentioned(message)) {
       let messageContent = getMessageContentWithoutMention(message);
-
       if(messageContent.startsWith("!assistant")) {
+        messageContent = messageContent.substring("!assistant".length, messageContent.length);
         useOpenAIAssistantBot(message, messageContent)
       } else {
         useStandardOpenAIBot(message,messageContent);
@@ -72,7 +71,7 @@ const useOpenAIAssistantBot = async (message: Message, messageContent: string) =
   let messageSent = false;
   const stopTyping = () => messageSent;
   const typingPromise = sendTyping(message, stopTyping);
-  let answer = await generateAssistantAnswer(message);
+  let answer = await generateAssistantAnswer(message, messageContent);
   const messagePromise = sendMessageToProperChannel(answer, message.channelId).then(() => {
     messageSent = true;
   });

@@ -2,7 +2,7 @@ import { createRequire } from "module";
 const requireModule = createRequire(import.meta.url);
 const FakeYou = requireModule("fakeyou.js");
 import dotenv from "dotenv";
-import { DEFAULT_ENGLISH_VOICE, SpeechVoice, currentVoice } from "./interfaces/voice.js";
+import { DEFAULT_ENGLISH_VOICE, SpeechVoice, currentVoice } from "../interfaces/voice.js";
 
 dotenv.config();
 

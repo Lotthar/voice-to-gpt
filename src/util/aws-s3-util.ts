@@ -1,5 +1,5 @@
 import { S3, PutObjectCommand, GetObjectCommand, PutObjectCommandOutput } from "@aws-sdk/client-s3";
-import { S3BucketContentParams, S3BucketGetParams, S3BucketResponseParams } from "./types/s3bucket.js";
+import { S3BucketContentParams, S3BucketGetParams, S3BucketResponseParams } from "../types/s3bucket.js";
 import dotenv from "dotenv";
 import { Readable } from "stream";
 dotenv.config();
