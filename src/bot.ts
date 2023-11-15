@@ -71,8 +71,7 @@ const useOpenAIAssistantBot = async (message: Message, messageContent: string) =
   let messageSent = false;
   const stopTyping = () => messageSent;
   const typingPromise = sendTyping(message, stopTyping);
-  let answer = await generateAssistantAnswer(message, messageContent);
-  const messagePromise = sendMessageToProperChannel(answer, message.channelId).then(() => {
+  let messagePromise = generateAssistantAnswer(message, messageContent).then(() => {
     messageSent = true;
   });
   await Promise.all([typingPromise, messagePromise]);

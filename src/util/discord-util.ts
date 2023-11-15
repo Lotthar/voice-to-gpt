@@ -1,4 +1,4 @@
-import { ChannelType, TextChannel, VoiceChannel, Message, VoiceState } from "discord.js";
+import { ChannelType, TextChannel, VoiceChannel, Message, VoiceState, Attachment, AttachmentBuilder } from "discord.js";
 import {
   VoiceConnectionStatus,
   joinVoiceChannel,
@@ -12,6 +12,7 @@ import { playOpenAiAnswerAfterSpeech } from "../tts-stt/audio-text.js";
 import { discordClient } from "../bot.js";
 import { createFlacAudioContentFromOpus } from "./audio-util.js";
 import { ChannelCommonType } from "../types/discord.js";
+import { AssistantFile } from "../interfaces/openai.js";
 
 const BOT_NAME = "VoiceToGPT";
 
@@ -98,12 +99,19 @@ export const sendTyping = async (message: Message, stopTyping: Function) => {
   }
 };
 
-export const sendMessageToProperChannel = async (message: string, channelId: string, maxLength = 2000): Promise<void> => {
+export const sendMessageToProperChannelWithFile = async (message: string, files: Array<AssistantFile>, channelId: string) => {
+  const channel = await sendMessageToProperChannel(message, channelId);
+  if(channel === null || files.length === 0) return;
+  const fileAttachments = files.map(fileData =>  new AttachmentBuilder(fileData.file, { name:  fileData.name }));
+  channel.send({files: fileAttachments});
+}
+
+export const sendMessageToProperChannel = async (message: string, channelId: string, maxLength = 2000): Promise<ChannelCommonType> => {
   const channel = await getCurrentChannel(channelId);
-  if (channel === null) return;
+  if (channel === null) return null;
   if (message.length <= maxLength) {
     await channel.send(message);
-    return;
+    return channel;
   }
   const messageParts: string[] = [];
   let currentIndex: number = 0;
@@ -115,6 +123,7 @@ export const sendMessageToProperChannel = async (message: string, channelId: str
   for (const part of messageParts) {
     await channel.send(part);
   }
+  return channel;
 };
 
 /**

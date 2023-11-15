@@ -1,17 +1,14 @@
-import fs, { ReadStream } from "node:fs";
 import fetch from "node-fetch";
-import { Assistant, AssistantCreateParams } from "openai/resources/beta/assistants/assistants.mjs";
+import { AssistantCreateParams } from "openai/resources/beta/assistants/assistants.mjs";
 import { downloadFileFromS3, uploadFileToS3 } from "../util/aws-s3-util.js";
 import { readJsonStreamToString } from "../util/stream-util.js";
 import { openai } from "./openai-util.js";
-import { sendMessageToProperChannel } from "../util/discord-util.js";
-import { ChannelAssistantData, GPTAssistantModels, genericResponse } from "../interfaces/openai.js";
+import { sendMessageToProperChannel, sendMessageToProperChannelWithFile } from "../util/discord-util.js";
+import { AssistantFile, ChannelAssistantData, GPTAssistantModels, GPTAssistantOptions, genericResponse } from "../interfaces/openai.js";
 import { Attachment, Message } from "discord.js";
-
-import { MessageContentImageFile, MessageContentText, ThreadMessage } from "openai/resources/beta/threads/messages/messages.mjs";
+import { MessageContentText, ThreadMessage } from "openai/resources/beta/threads/messages/messages.mjs";
 import { ResponseLike } from "openai/uploads.mjs";
 
-const assistantOptions = ["name", "instructions", "model"];
 
 export const generateAssistantAnswer = async (message: Message, messageContent: string) => {
   let assistantData = await getCurrentAssistantForChannel(message.channelId);
@@ -20,120 +17,102 @@ export const generateAssistantAnswer = async (message: Message, messageContent: 
 
   const threadId = await getCurrentThread(assistantData, message.channelId);
   const messageFileIds = await addInputFilesForAssistantMessage(message);
-  await createUserMessage(threadId,messageContent,messageFileIds);
+  await createUserMessage(threadId, messageContent, messageFileIds);
+  const run = await openai.beta.threads.runs.create(threadId, { assistant_id: assistantData.assistantId });
+  await pollForRunUntil(run.id, threadId, "completed");
 
-  const run = await createAssistantRun(assistantData.assistantId, threadId);
-  await pollForRunStatus(run.id, threadId, "completed");
-
-  const assistantMessage = await retrieveAssistantMessage(threadId);
-  console.log("Assistant message", assistantMessage);
-  // await deleteAssistantFiles(messageFileIds);
-  return extractAssistantMessage(assistantMessage);
+  const assistantMessages = await retrieveAssistantMessages(threadId, run.id);
+  await extractAndSendAssistantMessage(assistantMessages, message.channelId);
 };
 
-const resetCurrentThread = async(assistantData: ChannelAssistantData, channelId: string) => {
+const resetCurrentThread = async (assistantData: ChannelAssistantData, channelId: string) => {
   const newThread = await openai.beta.threads.create();
-  if(!!assistantData.threadId) await openai.beta.threads.del(assistantData.threadId);
+  if (!!assistantData.threadId) await openai.beta.threads.del(assistantData.threadId);
   assistantData.threadId = newThread.id;
   await saveAssistantInStorage(assistantData, channelId);
-  return assistantData.threadId
-}
+  return assistantData.threadId;
+};
 
 const getCurrentThread = async (assistantData: ChannelAssistantData, channelId: string) => {
-  if (!assistantData.threadId || await isThreadInactive(assistantData.threadId)) {
+  if (!assistantData.threadId || (await isThreadInactive(assistantData.threadId))) {
     const thread = await openai.beta.threads.create();
     assistantData.threadId = thread.id;
     await saveAssistantInStorage(assistantData, channelId);
-  } 
+  }
+  console.log(`Working with threadId: ${assistantData.threadId}`);
   return assistantData.threadId;
-}
+};
 
-const isThreadInactive = async (threadId: string) => {
-  try {
-    await openai.beta.threads.retrieve(threadId);
-    return false;
-  }catch(error) {
-    console.log(error);
-    return true;
+const extractAndSendAssistantMessage = async (messages: ThreadMessage[], channelId: string) => {
+  let textMessage = null, annotations = null, assisstantFiles = null;
+  if(messages.length > 0) {
+    for(let message of messages) {
+      for (let content of message.content) {
+        if (content.type === "text") {
+          textMessage = content.text.value;
+          annotations = content.text.annotations;
+          assisstantFiles = await extractAssistantFiles(annotations);
+          await sendMessageToProperChannelWithFile(textMessage, assisstantFiles, channelId);
+        }
+      }
+    }
   }
-}
+    
+};
 
-const extractAssistantMessage = (message: ThreadMessage) => {
-  const content: MessageContentText | MessageContentImageFile = message.content[0];
-  if (content.type === "text") {
-    return content.text.value;
-  } else {
-    return "";
+const extractAssistantFiles = async (annotations: (MessageContentText.Text.FileCitation | MessageContentText.Text.FilePath)[]) => {
+  const files: Array<AssistantFile> = [];
+  for (let annotation of annotations) {
+    if (annotation.type === "file_path") {
+      const fileResponse = await openai.files.content(annotation.file_path.file_id);
+      const fileData = await fileResponse.arrayBuffer();
+      const fileDataBuffer = Buffer.from(fileData);
+      const fileName = annotation.text.split("/").slice(-1)[0];
+      files.push({ name: fileName, file: fileDataBuffer });
+    }
   }
-}
+  return files;
+};
 
 const createUserMessage = async (threadId: string, content: string, fileIds: string[]) => {
   const newMessage = await openai.beta.threads.messages.create(threadId, {
     role: "user",
     content: content,
-    file_ids: fileIds
+    file_ids: fileIds,
   });
-  console.log("New Message", newMessage);
   return newMessage;
-}
+};
 
 const addInputFilesForAssistantMessage = async (message: Message) => {
   const inputFiles = await getInputMessageFilesArray(message);
   const assistantFileIds: string[] = [];
   for (let inputFile of inputFiles) {
-    const assistantFile = await createAssistantFile(inputFile);
+    const assistantFile = await openai.files.create({
+      file: inputFile,
+      purpose: "assistants",
+    });
     assistantFileIds.push(assistantFile.id);
   }
   return assistantFileIds;
 };
 
-const retrieveAssistantMessage = async (threadId: string) => {
+const retrieveAssistantMessages = async (threadId: string, runId: string) => {
   const threadMessages = await openai.beta.threads.messages.list(threadId, {
     order: "desc",
-    limit: 1,
+    limit: 10,
   });
-  console.log("Thread messages", threadMessages);
-  return threadMessages.data[0];
-};
-
-const createAssistantRun = async (assistantId: string, threadId: string) => {
-  const run = await openai.beta.threads.runs.create(threadId, { assistant_id: assistantId });
-  return run;
-};
-const retrieveAssistantRun = async (runId: string, threadId: string) => {
-  const run = await openai.beta.threads.runs.retrieve(threadId, runId);
-  return run;
-};
-
-const createAssistantFile = async (file: ResponseLike) => {
-  const assistantFile = await openai.files.create({
-    file: file,
-    purpose: "assistants",
-  });
-  return assistantFile;
-};
-
-const retrieveAssistantFile = async (fileId: string, messageId: string, threadId: string) => {
-  const file = await openai.beta.threads.messages.files.retrieve(threadId, messageId, fileId);
-  return file;
-};
-const deleteAssistantFiles = async (fileIds: string[]) => {
-  for(let fileId of fileIds) {
-    await deleteAssistantFile(fileId);
+  const result = [];
+  for(let threadMessage of threadMessages.data) {
+    if(threadMessage.role === "assistant" && threadMessage.run_id === runId) 
+      result.push(threadMessage);
   }
-}
-
-const deleteAssistantFile = async (fileId: string) => {
-  const file = await openai.files.del(fileId);
-  return file;
+  return result.reverse();
 };
-
-
 
 export const assistantChanged = async (message: string, channelId: string): Promise<boolean> => {
   const command = "!assistant_change";
   if (!message.startsWith(command)) return false;
-  const { name, instructions, model } = parseAsssitantConfigInput(message, assistantOptions);
+  const { name, instructions, model } = parseAsssitantConfigInput(message, GPTAssistantOptions);
   let assistantData = await getCurrentAssistantForChannel(channelId);
   if (assistantData === null || !assistantData.assistantId) {
     await createAssistant(channelId, name, instructions, determineModel(model));
@@ -217,13 +196,12 @@ export const getInputMessageFilesArray = async (message: Message) => {
       try {
         const fetchResponse = await fetchFileFromUrl(attachment);
         files.push(fetchResponse);
-      } catch(error) {
+      } catch (error) {
         await sendMessageToProperChannel(`File ${attachment.name} was not processed properly and is not taken into consideration`, message.channelId);
         continue;
       }
     }
   }
-  console.log(files);
   return files;
 };
 
@@ -248,10 +226,10 @@ const parseAsssitantConfigInput = (input: string, configParamLabels: string[]) =
   return params;
 };
 
-const pollForRunStatus = async (runId: string, threadId: string, desiredStatus: string, intervalMs = 1500, maxAttempts = 60) => {
+const pollForRunUntil = async (runId: string, threadId: string, desiredStatus: string, intervalMs = 1500, maxAttempts = 60) => {
   for (let attempts = 0; attempts < maxAttempts; attempts++) {
     try {
-      const run = await retrieveAssistantRun(runId, threadId);
+      const run = await openai.beta.threads.runs.retrieve(threadId, runId);
       if (run.status === desiredStatus) return run.id;
 
       await new Promise((resolve) => setTimeout(resolve, intervalMs));
@@ -260,6 +238,17 @@ const pollForRunStatus = async (runId: string, threadId: string, desiredStatus: 
     }
   }
   throw new Error(`Max attempts reached, desired status '${desiredStatus}' not found for Assistant run with id: ${runId}.`);
+};
+
+
+const isThreadInactive = async (threadId: string) => {
+  try {
+    await openai.beta.threads.retrieve(threadId);
+    return false;
+  } catch (error) {
+    console.log(error);
+    return true;
+  }
 };
 
 const determineModel = (modelName: string): string => {
