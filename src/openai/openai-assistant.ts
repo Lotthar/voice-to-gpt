@@ -12,9 +12,10 @@ import { ResponseLike } from "openai/uploads.mjs";
 
 export const generateAssistantAnswer = async (message: Message, messageContent: string) => {
   let assistantData = await getCurrentAssistantForChannel(message.channelId);
-  if (assistantData === null)
-    return `Please create assistant for this channel before trying, use: **!assistant_changed name="Asistant name" instructions="Asistant instructions" model="here put 'gpt-3' or 'gpt4'"** to create or update assistant parameters`;
-
+  if (assistantData === null) {
+    await sendMessageToProperChannel(`Please create assistant for this channel before trying, use: **!assistant_change name="Asistant name" instructions="Asistant instructions" model="here put 'gpt-3' or 'gpt4'"** . You can update assistant parameters with the same way!`, message.channelId);
+    return;
+  }
   const threadId = await getCurrentThread(assistantData, message.channelId);
   const messageFileIds = await passUserInputFilesToAssistant(message);
   await createUserMessage(threadId, messageContent, messageFileIds);
