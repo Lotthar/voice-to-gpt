@@ -141,7 +141,8 @@ export const createAssistant = async (channelId: string, name: string | undefine
     const createParams: AssistantCreateParams = {
       name: `${!name ? channelId : name}(voice-to-gpt)`,
       instructions: instructions,
-      tools: [{ type: "code_interpreter" }, { type: "retrieval" }],
+      // tools: [{ type: "code_interpreter" }, { type: "retrieval" }], - retrieval is currently causing bugs for almost all types of files so using code interpreter for now
+       tools: [{ type: "code_interpreter" }],
       model: model,
     };
     const assistant = await openai.beta.assistants.create(createParams);
