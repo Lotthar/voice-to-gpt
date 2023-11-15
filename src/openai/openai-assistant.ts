@@ -16,7 +16,7 @@ export const generateAssistantAnswer = async (message: Message, messageContent: 
     return `Please create assistant for this channel before trying, use: **!assistant_changed name="Asistant name" instructions="Asistant instructions" model="here put 'gpt-3' or 'gpt4'"** to create or update assistant parameters`;
 
   const threadId = await getCurrentThread(assistantData, message.channelId);
-  const messageFileIds = await addInputFilesForAssistantMessage(message);
+  const messageFileIds = await passUserInputFilesToAssistant(message);
   await createUserMessage(threadId, messageContent, messageFileIds);
   const run = await openai.beta.threads.runs.create(threadId, { assistant_id: assistantData.assistantId });
   await pollForRunUntil(run.id, threadId, "completed");
@@ -51,7 +51,7 @@ const extractAndSendAssistantMessage = async (messages: ThreadMessage[], channel
         if (content.type === "text") {
           textMessage = content.text.value;
           annotations = content.text.annotations;
-          assisstantFiles = await extractAssistantFiles(annotations);
+          assisstantFiles = await extractAssistantFilesFrom(annotations);
           await sendMessageToProperChannelWithFile(textMessage, assisstantFiles, channelId);
         }
       }
@@ -60,7 +60,7 @@ const extractAndSendAssistantMessage = async (messages: ThreadMessage[], channel
     
 };
 
-const extractAssistantFiles = async (annotations: (MessageContentText.Text.FileCitation | MessageContentText.Text.FilePath)[]) => {
+const extractAssistantFilesFrom = async (annotations: (MessageContentText.Text.FileCitation | MessageContentText.Text.FilePath)[]) => {
   const files: Array<AssistantFile> = [];
   for (let annotation of annotations) {
     if (annotation.type === "file_path") {
@@ -83,7 +83,7 @@ const createUserMessage = async (threadId: string, content: string, fileIds: str
   return newMessage;
 };
 
-const addInputFilesForAssistantMessage = async (message: Message) => {
+const passUserInputFilesToAssistant = async (message: Message) => {
   const inputFiles = await getInputMessageFilesArray(message);
   const assistantFileIds: string[] = [];
   for (let inputFile of inputFiles) {
@@ -110,7 +110,7 @@ const retrieveAssistantMessages = async (threadId: string, runId: string) => {
 };
 
 export const assistantChanged = async (message: string, channelId: string): Promise<boolean> => {
-  const command = "!assistant_change";
+  const command = "_change";
   if (!message.startsWith(command)) return false;
   const { name, instructions, model } = parseAsssitantConfigInput(message, GPTAssistantOptions);
   let assistantData = await getCurrentAssistantForChannel(channelId);
@@ -121,6 +121,19 @@ export const assistantChanged = async (message: string, channelId: string): Prom
   }
   return true;
 };
+
+export const assistantThreadReset = async (message: string, channelId: string) => {
+  const command = "_clear";
+  if (!message.startsWith(command)) return false;
+  let assistantData = await getCurrentAssistantForChannel(channelId);
+  if(assistantData === null) return false;
+  await resetCurrentThread(assistantData,channelId);
+  await sendMessageToProperChannel(
+    `**You have cleared your conversation so far, please star over!**`,
+    channelId
+  );
+  return true;
+}
 
 export const createAssistant = async (channelId: string, name: string | undefined, instructions: string, model: string) => {
   try {

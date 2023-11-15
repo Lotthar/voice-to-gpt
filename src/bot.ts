@@ -16,7 +16,7 @@ import dotenv from "dotenv";
 import { VoiceConnection } from "@discordjs/voice";
 import { generateOpenAIAnswer } from "./openai/openai-api.js";
 import { botChatGptModelChanged, botSystemMessageChanged } from "./openai/openai-util.js";
-import { assistantChanged, generateAssistantAnswer } from "./openai/openai-assistant.js";
+import { assistantChanged, assistantThreadReset, generateAssistantAnswer } from "./openai/openai-assistant.js";
 
 dotenv.config();
 
@@ -66,8 +66,8 @@ discordClient.on(Events.VoiceStateUpdate, async (oldState: VoiceState, newState:
 });
 
 const useOpenAIAssistantBot = async (message: Message, messageContent: string) => {
-  const assistantSettingChanged = await assistantChanged(messageContent, message.channelId);
-  if (assistantSettingChanged) return;
+  const assistantSettingsChanged = await configuringAssistantSettings(messageContent, message.channelId);
+  if (assistantSettingsChanged) return;
   let messageSent = false;
   const stopTyping = () => messageSent;
   const typingPromise = sendTyping(message, stopTyping);
@@ -78,7 +78,7 @@ const useOpenAIAssistantBot = async (message: Message, messageContent: string) =
 }
 
 const useStandardOpenAIBot = async (message: Message, messageContent: string) => {
-  const botSettingsChanged: boolean = await configuringBotSettings(messageContent, message.channelId);
+  const botSettingsChanged = await configuringBotSettings(messageContent, message.channelId);
   if (botSettingsChanged) return;
   let messageSent = false;
   const stopTyping = () => messageSent;
@@ -88,6 +88,14 @@ const useStandardOpenAIBot = async (message: Message, messageContent: string) =>
     messageSent = true;
   });
   await Promise.all([typingPromise, messagePromise]);
+}
+
+const configuringAssistantSettings = async (settingCommand: string, channelId: string) => {
+  const assistantSettingChanged = await assistantChanged(settingCommand, channelId);
+  if (assistantSettingChanged) return true;
+  const assistantThreadCleared = await assistantThreadReset(settingCommand,channelId);
+  if(assistantThreadCleared) return true;
+  return false;
 }
 
 const configuringBotSettings = async (settingCommand: string, channelId: string): Promise<boolean> => {
