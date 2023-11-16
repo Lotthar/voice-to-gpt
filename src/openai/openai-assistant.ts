@@ -241,7 +241,7 @@ const parseAsssitantConfigInput = (input: string, configParamLabels: string[]) =
   return params;
 };
 
-const pollForRunUntil = async (runId: string, threadId: string, desiredStatus: string, intervalMs = 1500, maxAttempts = 60) => {
+const pollForRunUntil = async (runId: string, threadId: string, desiredStatus: string, intervalMs = 2000, maxAttempts = 60) => {
   for (let attempts = 0; attempts < maxAttempts; attempts++) {
     try {
       const run = await openai.beta.threads.runs.retrieve(threadId, runId);
