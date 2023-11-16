@@ -223,7 +223,6 @@ export const getInputMessageFilesArray = async (message: Message) => {
 const fetchFileFromUrl = async (attachment: Attachment) => {
   const response = await fetch(attachment.url);
   if (!response.ok) throw new Error();
-  console.log(response);
   return response;
 };
 
