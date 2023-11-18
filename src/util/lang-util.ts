@@ -30,7 +30,7 @@ const getCurrentVoiceLanguage = async (channelId: string) => {
 
 export const resetLangugageWithVoice = async (langName: string, channelId: string): Promise<void> => {
   await setCurrentLanguage(langName, channelId);
-  await setCurrentVoice(currentVoice.name, channelId);
+  await setCurrentVoice(channelId);
   console.log(`Voice and language have been successfully changed for channel: ${channelId}`);
 };
 

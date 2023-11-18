@@ -23,7 +23,7 @@ export const joinVoiceChannelAndGetConnection = (newState: VoiceState): VoiceCon
     channelId: newState.channelId!,
     guildId: newState.guild.id,
     adapterCreator: newState.guild.voiceAdapterCreator,
-    selfMute: true,
+    selfMute: false,
     selfDeaf: false,
   });
   return connection;
@@ -54,7 +54,7 @@ const addSpeakingEvents = (connection: VoiceConnection, channelId: string): void
       opusStream = null;
     } catch (error) {
       console.error("Error playing answer on voice channel: ", error);
-      await sendMessageToProperChannel("**There was problem with the answer**", channelId);
+      await sendMessageToProperChannel("**There was problem with the answer**", channelId ,true);
     }
   });
 };
@@ -106,11 +106,11 @@ export const sendMessageToProperChannelWithFile = async (message: string, files:
   channel.send({files: fileAttachments});
 }
 
-export const sendMessageToProperChannel = async (message: string, channelId: string, maxLength = 2000): Promise<ChannelCommonType> => {
+export const sendMessageToProperChannel = async (message: string, channelId: string,tts = false, maxLength = 2000): Promise<ChannelCommonType> => {
   const channel = await getCurrentChannel(channelId);
   if (channel === null) return null;
   if (message.length <= maxLength) {
-    await channel.send(message);
+    await channel.send({content: message, tts: tts});
     return channel;
   }
   const messageParts: string[] = [];
@@ -121,7 +121,7 @@ export const sendMessageToProperChannel = async (message: string, channelId: str
     currentIndex += maxLength;
   }
   for (const part of messageParts) {
-    await channel.send(part);
+    await channel.send({content: message, tts: tts});
   }
   return channel;
 };

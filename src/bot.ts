@@ -11,7 +11,7 @@ import {
   sendTyping,
 } from "./util/discord-util.js";
 import { loadCurrentVoiceLangugageIfNone, botSpeakingLanguageChanged } from "./util/lang-util.js";
-import { botTTSVoiceChanged, loadVoiceIfNone } from "./util/voice-util.js";
+import { loadVoiceIfNone } from "./util/voice-util.js";
 import dotenv from "dotenv";
 import { VoiceConnection } from "@discordjs/voice";
 import { generateOpenAIAnswer } from "./openai/openai-api.js";
@@ -84,7 +84,7 @@ const useStandardOpenAIBot = async (message: Message, messageContent: string) =>
   const stopTyping = () => messageSent;
   const typingPromise = sendTyping(message, stopTyping);
   let answer = await generateOpenAIAnswer(messageContent, message.channelId);
-  const messagePromise = sendMessageToProperChannel(answer, message.channelId).then(() => {
+  const messagePromise = sendMessageToProperChannel(answer, message.channelId, true).then(() => {
     messageSent = true;
   });
   await Promise.all([typingPromise, messagePromise]);
@@ -103,8 +103,6 @@ const configuringBotSettings = async (settingCommand: string, channelId: string)
   if (botSpeakingLangChanged) return true;
   const systemMsgChanged = await botSystemMessageChanged(settingCommand, channelId);
   if (systemMsgChanged) return true;
-  const botVoiceChanged = await botTTSVoiceChanged(settingCommand, channelId);
-  if (botVoiceChanged) return true;
   const botModelChanged = await botChatGptModelChanged(settingCommand, channelId);
   if (botModelChanged) return true;
   return false;
