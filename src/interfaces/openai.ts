@@ -15,6 +15,13 @@ export interface ChannelAssistantData {
   threadId?: string,
 }
 
+export interface AssistantOpenAI {
+  assistantId?: string,
+  name: string,
+  instructions: string,
+  model: string
+}
+
 export interface AssistantFile {
   name: string,
   file: Buffer
