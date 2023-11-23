@@ -110,7 +110,7 @@ export const sendMessageToProperChannel = async (message: string, channelId: str
   const channel = await getCurrentChannel(channelId);
   if (channel === null) return null;
   if (message.length <= maxLength) {
-    await channel.send({content: message, tts: tts});
+    await channel.send(message);
     return channel;
   }
   const messageParts: string[] = [];
@@ -121,7 +121,7 @@ export const sendMessageToProperChannel = async (message: string, channelId: str
     currentIndex += maxLength;
   }
   for (const part of messageParts) {
-    await channel.send({content: message, tts: tts});
+    await channel.send(message);
   }
   return channel;
 };
