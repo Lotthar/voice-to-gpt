@@ -106,11 +106,11 @@ export const sendMessageToProperChannelWithFile = async (message: string, files:
   channel.send({files: fileAttachments});
 }
 
-export const sendMessageToProperChannel = async (message: string, channelId: string, maxLength = 2000): Promise<ChannelCommonType> => {
+export const sendMessageToProperChannel = async (message: string, channelId: string,tts = false, maxLength = 2000): Promise<ChannelCommonType> => {
   const channel = await getCurrentChannel(channelId);
   if (channel === null) return null;
   if (message.length <= maxLength) {
-    await channel.send(message);
+    await channel.send({content: message, tts: tts});
     return channel;
   }
   const messageParts: string[] = [];
@@ -121,7 +121,7 @@ export const sendMessageToProperChannel = async (message: string, channelId: str
     currentIndex += maxLength;
   }
   for (const part of messageParts) {
-    await channel.send(part);
+    await channel.send({content: part, tts: tts});
   }
   return channel;
 };

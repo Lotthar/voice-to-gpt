@@ -1,8 +1,8 @@
+import { currentVoiceLanguage } from "../interfaces/language.js";
 import { generateOpenAIAnswer } from "../openai/openai-api.js";
 import { sendMessageToProperChannel } from "../util/discord-util.js";
 import { processAudioContentIntoText, generateTTSResourceURIArray } from "./google-api.js";
-import { createAudioResource, createAudioPlayer, AudioPlayerStatus, AudioPlayer, VoiceConnection } from "@discordjs/voice";
-import { currentVoice } from "../interfaces/voice.js";
+import { createAudioResource, createAudioPlayer, AudioPlayerStatus, AudioPlayer, VoiceConnection, PlayerSubscription } from "@discordjs/voice";
 
 let player: AudioPlayer | null = null;
 let currentAnswerAudioURIs: string[] = [];
@@ -16,18 +16,17 @@ export const playOpenAiAnswerAfterSpeech = async (audioContent: string, connecti
 
 const initPlayerAndPlayWaitingMessage = (connection: VoiceConnection): void => {
   if(player === null) initAndSubscribeAudioPlayerToVoiceChannel();
+  const subscribe = connection.subscribe(player!);
   currentAnswerAudioURIs = [];
-  connection.subscribe(player!);
-  if (currentVoice.waitingAnswer === null) return;
-  console.log(currentVoice.waitingAnswer);
-  player!.play(createAudioResource(currentVoice.waitingAnswer, {inlineVolume: true}));
+  if (currentVoiceLanguage.waitingAnswer === null) return;
+  player!.play(createAudioResource(currentVoiceLanguage.waitingAnswer));
+  subscribe?.unsubscribe();
 };
 
 const initAndSubscribeAudioPlayerToVoiceChannel = (): void => {
   player = createAudioPlayer();
   addOnIdlePlayerEvent();
   addOnErrorPlayerEvent();
-  console.log(player)
 };
 
 const processAudioFromText = async (text: string | null, channelId: string): Promise<void> => {
@@ -41,16 +40,16 @@ const processAudioFromText = async (text: string | null, channelId: string): Pro
 
 const getFirstAudioFromCurrent = (): string => {
   const noAudioURIs = currentAnswerAudioURIs.length === 0;
-  if (noAudioURIs) currentAnswerAudioURIs.push(currentVoice.defaultAnswer!);
+  if (noAudioURIs) currentAnswerAudioURIs.push(currentVoiceLanguage.defaultAnswer!);
   const firstQueuedAudio = currentAnswerAudioURIs.shift();
-  return !!firstQueuedAudio ? firstQueuedAudio : currentVoice.defaultAnswer!;
+  return !!firstQueuedAudio ? firstQueuedAudio : currentVoiceLanguage.defaultAnswer!;
 };
 
 const addOnIdlePlayerEvent = (): void => {
   player!.on(AudioPlayerStatus.Idle, () => {
     if (currentAnswerAudioURIs.length > 0) {
       const firstQueuedAudio = currentAnswerAudioURIs.shift();
-      player!.play(createAudioResource(firstQueuedAudio ? firstQueuedAudio : currentVoice.defaultAnswer!, {inlineVolume: true}));
+      player!.play(createAudioResource(firstQueuedAudio ? firstQueuedAudio : currentVoiceLanguage.defaultAnswer!));
     }
   });
 };

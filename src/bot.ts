@@ -11,7 +11,6 @@ import {
   sendTyping,
 } from "./util/discord-util.js";
 import { loadCurrentVoiceLangugageIfNone, botSpeakingLanguageChanged } from "./util/lang-util.js";
-import { loadVoiceIfNone } from "./util/voice-util.js";
 import dotenv from "dotenv";
 import { VoiceConnection } from "@discordjs/voice";
 import { generateOpenAIAnswer } from "./openai/openai-api.js";
@@ -57,7 +56,6 @@ discordClient.on(Events.VoiceStateUpdate, async (oldState: VoiceState, newState:
     if (invalidChannel || invalidChannel === null) return;
     voiceChannelConnection = getConnection(newState.guild.id);
     await loadCurrentVoiceLangugageIfNone(currentChannelId!);
-    await loadVoiceIfNone(currentChannelId!);
     if (!voiceChannelConnection) voiceChannelConnection = joinVoiceChannelAndGetConnection(newState);
     addVoiceConnectionReadyEvent(voiceChannelConnection, currentChannelId!);
   } catch (error) {
