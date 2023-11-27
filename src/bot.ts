@@ -10,7 +10,7 @@ import {
   addVoiceConnectionReadyEvent,
   sendTyping,
 } from "./util/discord-util.js";
-import { loadCurrentVoiceLangugageIfNone, botSpeakingLanguageChanged } from "./util/lang-util.js";
+import { botSpeakingLanguageChanged } from "./util/lang-util.js";
 import dotenv from "dotenv";
 import { VoiceConnection } from "@discordjs/voice";
 import { generateOpenAIAnswer } from "./openai/openai-api.js";
@@ -55,7 +55,6 @@ discordClient.on(Events.VoiceStateUpdate, async (oldState: VoiceState, newState:
     const invalidChannel = await checkIfInvalidVoiceChannel(oldState, newState);
     if (invalidChannel || invalidChannel === null) return;
     voiceChannelConnection = getConnection(newState.guild.id);
-    await loadCurrentVoiceLangugageIfNone(currentChannelId!);
     if (!voiceChannelConnection) voiceChannelConnection = joinVoiceChannelAndGetConnection(newState);
     addVoiceConnectionReadyEvent(voiceChannelConnection, currentChannelId!);
   } catch (error) {

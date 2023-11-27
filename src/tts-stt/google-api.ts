@@ -1,6 +1,5 @@
 import * as googleTTS from "google-tts-api";
 import { SpeechClient } from "@google-cloud/speech";
-import { currentVoiceLanguage } from "../interfaces/language.js";
 import { IRecognizeRequest, IRecognizeResponse, ISpeechRecognitionResult, AudioEncoding } from "../types/google.js";
 import { LongTTSOption } from "../interfaces/google.js";
 import dotenv from "dotenv";
@@ -15,7 +14,8 @@ const speechToTextClient: SpeechClient = new SpeechClient({
   },
 });
 
-export const processAudioContentIntoText = async (audioDataBase64: string): Promise<string | null> => {
+export const processAudioContentIntoText = async (audioDataBase64: string, sttLang: string): Promise<string | null> => {
+  console.log(sttLang);
   const request: IRecognizeRequest = {
     audio: {
       content: audioDataBase64,
@@ -24,7 +24,7 @@ export const processAudioContentIntoText = async (audioDataBase64: string): Prom
       encoding: AudioEncoding.FLAC,
       sampleRateHertz: 48000,
       audioChannelCount: 2,
-      languageCode: currentVoiceLanguage.sttCode,
+      languageCode: sttLang,
       enableSeparateRecognitionPerChannel: true,
     },
   };
@@ -43,18 +43,19 @@ const callGoogleSpeechApi = async (request: IRecognizeRequest): Promise<string |
   }
 };
 
-export const generateTTSResourceURIArray = (text: string): string[] => {
-  const ttsResourceLink = googleTTS.getAllAudioUrls(text, getTTSRequestOpts());
+export const generateTTSResourceURIArray = (text: string, ttsLang: string): string[] => {
+  console.log(ttsLang);
+  const ttsResourceLink = googleTTS.getAllAudioUrls(text, getTTSRequestOpts(ttsLang));
   return ttsResourceLink.map((resource) => resource.url);
 };
 
-export const generateTTSResourceURL = (text: string): string => {
-  return googleTTS.getAudioUrl(text, getTTSRequestOpts());
+export const generateTTSResourceURL = (text: string, ttsLang: string): string => {
+  return googleTTS.getAudioUrl(text, getTTSRequestOpts(ttsLang));
 };
 
-const getTTSRequestOpts = (): LongTTSOption => {
+const getTTSRequestOpts = (ttsLang: string): LongTTSOption => {
   return {
-    lang: currentVoiceLanguage.ttsCode,
+    lang: ttsLang,
     slow: false,
     host: "https://translate.google.com",
     splitPunct: ",.?",

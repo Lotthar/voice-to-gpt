@@ -1,6 +1,7 @@
-import { currentVoiceLanguage } from "../interfaces/language.js";
+import { Language } from "../interfaces/language.js";
 import { generateOpenAIAnswer } from "../openai/openai-api.js";
 import { sendMessageToProperChannel } from "../util/discord-util.js";
+import { getCurrentVoiceLanguage } from "../util/lang-util.js";
 import { processAudioContentIntoText, generateTTSResourceURIArray } from "./google-api.js";
 import { createAudioResource, createAudioPlayer, AudioPlayerStatus, AudioPlayer, VoiceConnection, PlayerSubscription } from "@discordjs/voice";
 
@@ -8,48 +9,54 @@ let player: AudioPlayer | null = null;
 let currentAnswerAudioURIs: string[] = [];
 
 export const playOpenAiAnswerAfterSpeech = async (audioContent: string, connection: VoiceConnection, channelId: string) => {
-  initPlayerAndPlayWaitingMessage(connection);
-  const transcript = await processAudioContentIntoText(audioContent);
+  const currentVoiceLang = await getCurrentVoiceLanguage(channelId);
+  initPlayerAndPlayWaitingMessage(connection, currentVoiceLang);
+  const transcript = await processAudioContentIntoText(audioContent,currentVoiceLang.sttCode!);
   const openAiAnswer = await generateOpenAIAnswer(transcript!, channelId);
-  await processAudioFromText(openAiAnswer, channelId);
+  await processAudioFromText(openAiAnswer,currentVoiceLang,  channelId);
 };
 
-const initPlayerAndPlayWaitingMessage = (connection: VoiceConnection): void => {
-  if(player === null) initAndSubscribeAudioPlayerToVoiceChannel();
+const initPlayerAndPlayWaitingMessage = (connection: VoiceConnection, currentVoiceLang: Language): void => {
+  if(player === null) initAndSubscribeAudioPlayerToVoiceChannel(currentVoiceLang);
   const subscribe = connection.subscribe(player!);
   currentAnswerAudioURIs = [];
-  if (currentVoiceLanguage.waitingAnswer === null) return;
-  player!.play(createAudioResource(currentVoiceLanguage.waitingAnswer));
-  subscribe?.unsubscribe();
+  if (currentVoiceLang.waitingAnswer === null) return;
+  player!.play(createAudioResource(currentVoiceLang.waitingAnswer));
 };
 
-const initAndSubscribeAudioPlayerToVoiceChannel = (): void => {
+const initAndSubscribeAudioPlayerToVoiceChannel = (currentVoiceLang: Language): void => {
   player = createAudioPlayer();
-  addOnIdlePlayerEvent();
+  addOnIdlePlayerEvent(currentVoiceLang);
   addOnErrorPlayerEvent();
+  player.on(AudioPlayerStatus.Playing, () => {
+    console.log('The audio player has started playing...');
+  });
+  
 };
 
-const processAudioFromText = async (text: string | null, channelId: string): Promise<void> => {
+const processAudioFromText = async (text: string | null, currentVoiceLang: Language, channelId: string): Promise<void> => {
   if (text !== null) {
-    currentAnswerAudioURIs = generateTTSResourceURIArray(text);
+    currentAnswerAudioURIs = generateTTSResourceURIArray(text, currentVoiceLang.ttsCode!);
     await sendMessageToProperChannel(text, channelId);
-    const audio = getFirstAudioFromCurrent();
-    player!.play(createAudioResource(audio, {inlineVolume: true}));
+    const audio = getFirstAudioFromCurrent(currentVoiceLang);
+    player!.play(createAudioResource(audio));
   }
 };
 
-const getFirstAudioFromCurrent = (): string => {
+const getFirstAudioFromCurrent = (currentVoiceLang: Language,): string => {
   const noAudioURIs = currentAnswerAudioURIs.length === 0;
-  if (noAudioURIs) currentAnswerAudioURIs.push(currentVoiceLanguage.defaultAnswer!);
+  if (noAudioURIs) currentAnswerAudioURIs.push(currentVoiceLang.defaultAnswer!);
   const firstQueuedAudio = currentAnswerAudioURIs.shift();
-  return !!firstQueuedAudio ? firstQueuedAudio : currentVoiceLanguage.defaultAnswer!;
+  return !!firstQueuedAudio ? firstQueuedAudio : currentVoiceLang.defaultAnswer!;
 };
 
-const addOnIdlePlayerEvent = (): void => {
+
+const addOnIdlePlayerEvent = (lang: Language): void => {
   player!.on(AudioPlayerStatus.Idle, () => {
+    console.log('The audio player is IDLE!');
     if (currentAnswerAudioURIs.length > 0) {
       const firstQueuedAudio = currentAnswerAudioURIs.shift();
-      player!.play(createAudioResource(firstQueuedAudio ? firstQueuedAudio : currentVoiceLanguage.defaultAnswer!));
+      player!.play(createAudioResource(firstQueuedAudio ? firstQueuedAudio : lang.defaultAnswer!));
     }
   });
 };
