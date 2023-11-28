@@ -1,7 +1,7 @@
 import { generateOpenAIAnswer } from "../openai/openai-api.js";
-import { generateSpeechFromText, generateTextFromSpeech } from "./openai-whisper.js";
+import { generateSpeechFromText, generateTextFromSpeech } from "../openai/openai-whisper.js";
 import { sendMessageToProperChannel } from "../util/discord-util.js";
-import { createAudioResource, createAudioPlayer, AudioPlayerStatus, AudioPlayer, VoiceConnection, PlayerSubscription } from "@discordjs/voice";
+import { createAudioResource, createAudioPlayer, AudioPlayer, VoiceConnection } from "@discordjs/voice";
 
 let player: AudioPlayer | null = null;
 
@@ -9,7 +9,7 @@ export const playOpenAiAnswerWithSpeech= async (audioBuffer: Buffer, connection:
   initAndSubscribeAudioPlayerToVoiceChannel(connection);
   const transcript = await generateTextFromSpeech(audioBuffer, "wav");
   const openAiAnswer = await generateOpenAIAnswer(transcript!, channelId);
-  await processAudioFromText(openAiAnswer, channelId);
+  await playSpeechAudioFromText(openAiAnswer, channelId);
 };
 
 const initAndSubscribeAudioPlayerToVoiceChannel = (connection: VoiceConnection): void => {
@@ -20,7 +20,7 @@ const initAndSubscribeAudioPlayerToVoiceChannel = (connection: VoiceConnection):
   }
 };
 
-const processAudioFromText = async (text: string | null, channelId: string): Promise<void> => {
+const playSpeechAudioFromText = async (text: string | null, channelId: string): Promise<void> => {
   if (text !== null) {
     const audio = await generateSpeechFromText(text);
     await sendMessageToProperChannel(text, channelId);

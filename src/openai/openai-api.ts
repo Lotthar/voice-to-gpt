@@ -7,7 +7,7 @@ import {
   checkAndReturnValidResponseData,
   getChatGptModel,
   openai
-} from "../util/openai-util.js";
+} from "../util/openai-api-util.js";
 
 export const generateOpenAIAnswer = async (question: string, channelId: string): Promise<string> => {
   if (question === null) return genericResponse;

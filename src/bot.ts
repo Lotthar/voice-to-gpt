@@ -13,8 +13,8 @@ import {
 import dotenv from "dotenv";
 import { VoiceConnection } from "@discordjs/voice";
 import { generateOpenAIAnswer } from "./openai/openai-api.js";
-import { botChatGptModelChanged, botSystemMessageChanged } from "./util/openai-util.js";
-import { assistantChanged, assistantCreated, assistantThreadReset, assistantUpdated, deleteAssistant, generateAssistantAnswer, listAllAssistants } from "./openai/openai-assistant.js";
+import { botChatGptModelChanged, botSystemMessageChanged } from "./util/openai-api-util.js";
+import { assistantForChannelChanged, assistantCreated, assistantThreadReset, assistantUpdated, deleteAssistant, generateAssistantAnswer, listAllAssistants } from "./openai/openai-assistant.js";
 
 dotenv.config();
 
@@ -87,7 +87,7 @@ const useStandardOpenAIBot = async (message: Message, messageContent: string) =>
 }
 
 const configuringAssistantSettings = async (settingCommand: string, channelId: string) => {
-  const assistantSettingChanged = await assistantChanged(settingCommand, channelId);
+  const assistantSettingChanged = await assistantForChannelChanged(settingCommand, channelId);
   if (assistantSettingChanged) return true;
 
   const assistantSettingList = await listAllAssistants(settingCommand, channelId);

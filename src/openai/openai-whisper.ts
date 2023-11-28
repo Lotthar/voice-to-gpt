@@ -1,6 +1,6 @@
 import axios from 'axios';
 import FormData from 'form-data';
-import { openai } from '../util/openai-util.js';
+import { openai } from '../util/openai-api-util.js';
 import { Readable } from "stream";
 
 
@@ -24,7 +24,7 @@ export const generateTextFromSpeech = async(audioBuffer: Buffer, audioFormat: st
     }
 }
 
-export const generateSpeechFromText = async(text: string) => {
+export const generateSpeechFromText = async(text: string) : Promise<Readable> => {
     const mp3 = await openai.audio.speech.create({
       model: "tts-1",
       voice: "alloy",
