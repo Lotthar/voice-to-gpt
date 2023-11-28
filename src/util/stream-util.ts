@@ -3,20 +3,7 @@ import { AudioReceiveStream } from "@discordjs/voice";
 import { StreamEncoder } from "flac-bindings";
 import { Readable, TransformOptions } from "node:stream";
 import { Transform, PassThrough, TransformCallback } from "node:stream";
-
-export class OpusDecodingStream extends Transform {
-  private _encoder: OpusEncoder;
-
-  constructor(options: TransformOptions, encoder: OpusEncoder) {
-    super(options);
-    this._encoder = encoder;
-  }
-
-  _transform(data: Buffer, encoding: any, callback: TransformCallback) {
-    this.push(this._encoder.decode(data));
-    callback();
-  }
-}
+import { Writer } from "wav";
 
 export const opusStreamToFlacBase64 = async (
   opusStream: AudioReceiveStream,
@@ -35,6 +22,24 @@ export const opusStreamToFlacBase64 = async (
       .on("data", (chunk) => audioDataChunks.push(chunk))
       .on("error", (err) => reject(err))
       .on("end", () => resolve(Buffer.concat(audioDataChunks).toString("base64")));
+  });
+};
+
+// Convert an Opus stream to a WAV file
+export const convertOpusStreamToWavBuffer = async (opusStream: AudioReceiveStream,opusEncoder: OpusEncoder, wavEncoder: Writer): Promise<Buffer> => {
+  return new Promise((resolve, reject) => {
+    const finalAudioDataStream = new PassThrough();
+    const opusStreamDecoder = new OpusDecodingStream({}, opusEncoder);
+    opusStream
+        .pipe(opusStreamDecoder)
+        .pipe(wavEncoder)
+        .pipe(finalAudioDataStream);
+
+    const audioDataChunks: Buffer[] = [];
+    finalAudioDataStream
+      .on("data", (chunk) => audioDataChunks.push(chunk))
+      .on("error", (err) => reject(err))
+      .on("end", () => resolve(Buffer.concat(audioDataChunks)));
   });
 };
 
@@ -57,3 +62,17 @@ export const readTextStreamToString = async (stream: any): Promise<string> => {
       .on("end", () => resolve(message));
   });
 };
+
+export class OpusDecodingStream extends Transform {
+  private _encoder: OpusEncoder;
+
+  constructor(options: TransformOptions, encoder: OpusEncoder) {
+    super(options);
+    this._encoder = encoder;
+  }
+
+  _transform(data: Buffer, encoding: any, callback: TransformCallback) {
+    this.push(this._encoder.decode(data));
+    callback();
+  }
+}

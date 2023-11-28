@@ -8,11 +8,11 @@ import {
   VoiceReceiver,
   AudioReceiveStream,
 } from "@discordjs/voice";
-import { playOpenAiAnswerAfterSpeech } from "../tts-stt/audio-text.js";
+import { playOpenAiAnswerWithSpeech } from "../tts-stt/audio-text.js";
 import { discordClient } from "../bot.js";
-import { createFlacAudioContentFromOpus } from "./audio-util.js";
 import { ChannelCommonType } from "../types/discord.js";
-import { AssistantFile } from "../interfaces/openai.js";
+import { AssistantFile } from "../types/openai.js";
+import { createWavAudioBufferFromOpus } from "./audio-util.js";
 
 const BOT_NAME = "VoiceToGPT";
 
@@ -49,8 +49,8 @@ const addSpeakingEvents = (connection: VoiceConnection, channelId: string): void
     try {
       if (opusStream === null) return;
       console.log(`User ${userId} finished speaking, creating an answer...`);
-      const voiceAudioBase64 = await createFlacAudioContentFromOpus(opusStream, channelId);
-      await playOpenAiAnswerAfterSpeech(voiceAudioBase64, connection, channelId);
+      const voiceAudioBuffer = await createWavAudioBufferFromOpus(opusStream, channelId);
+      await playOpenAiAnswerWithSpeech(voiceAudioBuffer, connection, channelId);
       opusStream = null;
     } catch (error) {
       console.error("Error playing answer on voice channel: ", error);

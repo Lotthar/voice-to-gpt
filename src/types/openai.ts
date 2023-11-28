@@ -1,5 +1,4 @@
 import { createRequire } from "module";
-import { Assistant } from "openai/resources/beta/assistants/assistants.mjs";
 
 export interface OpenAiMessage {
   role: "system" | "assistant" | "user";

@@ -10,11 +10,10 @@ import {
   addVoiceConnectionReadyEvent,
   sendTyping,
 } from "./util/discord-util.js";
-import { botSpeakingLanguageChanged } from "./util/lang-util.js";
 import dotenv from "dotenv";
 import { VoiceConnection } from "@discordjs/voice";
 import { generateOpenAIAnswer } from "./openai/openai-api.js";
-import { botChatGptModelChanged, botSystemMessageChanged } from "./openai/openai-util.js";
+import { botChatGptModelChanged, botSystemMessageChanged } from "./util/openai-util.js";
 import { assistantChanged, assistantCreated, assistantThreadReset, assistantUpdated, deleteAssistant, generateAssistantAnswer, listAllAssistants } from "./openai/openai-assistant.js";
 
 dotenv.config();
@@ -109,8 +108,6 @@ const configuringAssistantSettings = async (settingCommand: string, channelId: s
 }
 
 const configuringBotSettings = async (settingCommand: string, channelId: string): Promise<boolean> => {
-  const botSpeakingLangChanged = await botSpeakingLanguageChanged(settingCommand, channelId);
-  if (botSpeakingLangChanged) return true;
   const systemMsgChanged = await botSystemMessageChanged(settingCommand, channelId);
   if (systemMsgChanged) return true;
   const botModelChanged = await botChatGptModelChanged(settingCommand, channelId);

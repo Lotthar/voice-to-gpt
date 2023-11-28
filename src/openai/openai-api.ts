@@ -1,4 +1,4 @@
-import { genericResponse } from "../interfaces/openai.js";
+import { genericResponse } from "../types/openai.js";
 import {OpenAI} from "openai";
 import {
   loadChatHistoryOrCreateNew,
@@ -7,7 +7,7 @@ import {
   checkAndReturnValidResponseData,
   getChatGptModel,
   openai
-} from "./openai-util.js";
+} from "../util/openai-util.js";
 
 export const generateOpenAIAnswer = async (question: string, channelId: string): Promise<string> => {
   if (question === null) return genericResponse;
