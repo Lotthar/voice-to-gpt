@@ -20,13 +20,12 @@ dotenv.config();
 
 let voiceChannelConnection: VoiceConnection | undefined;
 
-// Set up Discord client for bot
 export const discordClient = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildVoiceStates],
 });
 
 discordClient.once(Events.ClientReady, (client: Client<true>) => {
-  console.log(`Ready! Logged in as ${client.user.tag}`);
+  console.log(`Bot is Ready! Logged in as ${client.user.tag}`);
 });
 
 discordClient.on(Events.MessageCreate, async (message: Message) => {
@@ -107,7 +106,7 @@ const configuringAssistantSettings = async (settingCommand: string, channelId: s
 
   const assistantStoped = await assistantRunsStop(settingCommand, channelId);
   if(assistantStoped) return true;
-  
+
   return false;
 }
 

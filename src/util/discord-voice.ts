@@ -1,6 +1,6 @@
 import { generateOpenAIAnswer } from "../openai/openai-api.js";
-import { generateSpeechFromText, generateTextFromSpeech } from "../openai/openai-whisper.js";
-import { sendMessageToProperChannel } from "../util/discord-util.js";
+import { generateSpeechFromText, generateTextFromSpeech } from "../openai/openai-whisper-api.js";
+import { sendMessageToProperChannel } from "./discord-util.js";
 import { createAudioResource, createAudioPlayer, AudioPlayer, VoiceConnection } from "@discordjs/voice";
 
 let player: AudioPlayer | null = null;

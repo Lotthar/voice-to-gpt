@@ -4,7 +4,6 @@ import { Readable, TransformOptions } from "node:stream";
 import { Transform, PassThrough, TransformCallback } from "node:stream";
 import { Writer } from "wav";
 
-// Convert an Opus stream to a WAV file
 export const convertOpusStreamToWavBuffer = async (opusStream: AudioReceiveStream,opusEncoder: OpusEncoder, wavEncoder: Writer): Promise<Buffer> => {
   return new Promise((resolve, reject) => {
     const finalAudioDataStream = new PassThrough();

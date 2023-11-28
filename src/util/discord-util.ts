@@ -8,7 +8,7 @@ import {
   VoiceReceiver,
   AudioReceiveStream,
 } from "@discordjs/voice";
-import { playOpenAiAnswerWithSpeech } from "../tts-stt/audio-text.js";
+import { playOpenAiAnswerWithSpeech } from "./discord-voice.js";
 import { discordClient } from "../bot.js";
 import { ChannelCommonType } from "../types/discord.js";
 import { AssistantFile } from "../types/openai.js";
