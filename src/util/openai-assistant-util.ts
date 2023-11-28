@@ -28,7 +28,33 @@ export const retrieveAssistantMessages = async (threadId: string, runId: string)
   return result.reverse();
 };
 
-export const retireveAllAssistants = async () => {
+export const cancelAllRuns = async (threadId: string) => {
+  const allRuns = await retrieveThreadRuns(threadId);
+  for(let run of allRuns) {
+    try {
+      if(run.status === "queued" || run.status === "in_progress") {
+        await openai.beta.threads.runs.cancel(threadId, run.id)
+      }
+    }catch(error) {
+      console.log(`Error canceling the run ${run.id}`, error);
+    }
+  }
+}
+
+export const retrieveThreadRuns = async (threadId: string) => {
+  try {
+    const runs = await openai.beta.threads.runs.list(threadId, {
+      order: "desc",
+      limit: 10,
+    });
+    return runs.data;
+  } catch (error) {
+    console.log(error);
+    return [];
+  }
+}
+
+export const retrieveAllAssistants = async () => {
   try {
     const assistants = await openai.beta.assistants.list({
       limit: 20,
@@ -124,14 +150,18 @@ export const pollForRunUntil = async (runId: string, threadId: string, desiredSt
   for (let attempts = 0; attempts < maxAttempts; attempts++) {
     try {
       const run = await openai.beta.threads.runs.retrieve(threadId, runId);
-      if (run.status === desiredStatus) return run.id;
-
+      if (run.status === 'cancelling' || run.status === 'cancelled') {
+        return false;
+      }
+      if(run.status === desiredStatus) return true;
+    
       await new Promise((resolve) => setTimeout(resolve, intervalMs));
     } catch (error) {
       console.error("Poll for Assistant run failed:", error);
     }
   }
-  throw new Error(`Max attempts reached, desired status '${desiredStatus}' not found for Assistant run with id: ${runId}.`);
+  console.error(`Max attempts reached, desired status '${desiredStatus}' not found for Assistant run with id: ${runId}.`);
+  return false;
 };
 
 export const isThreadInactive = async (threadId: string) => {

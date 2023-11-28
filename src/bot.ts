@@ -14,7 +14,7 @@ import dotenv from "dotenv";
 import { VoiceConnection } from "@discordjs/voice";
 import { generateOpenAIAnswer } from "./openai/openai-api.js";
 import { botChatGptModelChanged, botSystemMessageChanged } from "./util/openai-api-util.js";
-import { assistantForChannelChanged, assistantCreated, assistantThreadReset, assistantUpdated, deleteAssistant, generateAssistantAnswer, listAllAssistants } from "./openai/openai-assistant.js";
+import { assistantForChannelChanged, assistantCreated, assistantThreadReset, assistantUpdated, deleteAssistant, generateAssistantAnswer, listAllAssistants, assistantRunsStop } from "./openai/openai-assistant-api.js";
 
 dotenv.config();
 
@@ -104,6 +104,10 @@ const configuringAssistantSettings = async (settingCommand: string, channelId: s
 
   const assistantThreadCleared = await assistantThreadReset(settingCommand,channelId);
   if(assistantThreadCleared) return true;
+
+  const assistantStoped = await assistantRunsStop(settingCommand, channelId);
+  if(assistantStoped) return true;
+  
   return false;
 }
 

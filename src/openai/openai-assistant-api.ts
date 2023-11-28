@@ -6,6 +6,7 @@ import { sendMessageToProperChannel } from "../util/discord-util.js";
 import { AssistantOpenAI, ChannelAssistantData, GPTAssistantOptions } from "../types/openai.js";
 import { Message } from "discord.js";
 import {
+  cancelAllRuns,
   createUserMessage,
   determineModel,
   extractAndSendAssistantMessage,
@@ -14,7 +15,7 @@ import {
   parseAssitantConfigInput,
   passUserInputFilesToAssistant,
   pollForRunUntil,
-  retireveAllAssistants,
+  retrieveAllAssistants,
   retrieveAssistantMessages,
 } from "../util/openai-assistant-util.js";
 
@@ -38,8 +39,8 @@ export const generateAssistantAnswer = async (message: Message, messageContent: 
   const messageFileIds = await passUserInputFilesToAssistant(message);
   await createUserMessage(currentThreadId, messageContent, messageFileIds);
   const assistantRun = await openai.beta.threads.runs.create(currentThreadId, { assistant_id: assistantData.assistantId });
-  await pollForRunUntil(assistantRun.id, currentThreadId, "completed");
-
+  const runCompleted = await pollForRunUntil(assistantRun.id, currentThreadId, "completed");
+  if(!runCompleted) return;
   const assistantMessages = await retrieveAssistantMessages(currentThreadId, assistantRun.id);
   await extractAndSendAssistantMessage(assistantMessages, message.channelId);
 };
@@ -47,12 +48,11 @@ export const generateAssistantAnswer = async (message: Message, messageContent: 
 export const listAllAssistants = async (message: string, channelId: string): Promise<boolean> => {
   const command = "_list";
   if (!message.startsWith(command)) return false;
-  const assistants = await retireveAllAssistants();
+  const assistants = await retrieveAllAssistants();
   let result = "## All Assistants \n\n";
   assistants.forEach((assistant) => {
     result += `* **${assistant.name}(${assistant.model})** - *${assistant.instructions}* \n`;
   });
-
   await sendMessageToProperChannel(result, channelId);
   return true;
 };
@@ -102,7 +102,10 @@ export const assistantForChannelChanged = async (message: string, channelId: str
   if (!message.startsWith(command)) return false;
   const { name } = parseAssitantConfigInput(message, GPTAssistantOptions);
   let chosenAssistant = await retrieveAssistantByName(name, channelId);
-  if (!chosenAssistant) return true;
+  if (!chosenAssistant) {
+    await sendMessageToProperChannel(`Assistant with name starting with: **'${name}'** doesn't exist!`, channelId);
+    return true;
+  }
   let assistantData = { assistantId: chosenAssistant.id };
   await saveChannelAssistantInStorage(assistantData, channelId);
   const currentAssistant = await getChannelAssistantFromStorage(channelId);
@@ -115,11 +118,27 @@ export const assistantForChannelChanged = async (message: string, channelId: str
 };
 
 const retrieveAssistantByName = async (name: string, channelId: string) => {
-  const allAssistants = await retireveAllAssistants();
+  const allAssistants = await retrieveAllAssistants();
   let chosenAssistant = allAssistants.find((assistant) => assistant.name?.toLocaleLowerCase()?.startsWith(name.toLocaleLowerCase()));
   if (!!chosenAssistant) return chosenAssistant;
-  await sendMessageToProperChannel(`Assistant with name starting with: **'${name}'** doesn't exist!`, channelId);
 };
+
+export const assistantRunsStop = async (message: string, channelId: string) => {
+  const command = "_stop";
+  if (!message.startsWith(command)) return false;
+  let assistantData = await getChannelAssistantFromStorage(channelId);
+  if (assistantData === null) {
+    return true;
+  }
+  if(assistantData.threadId === null) {
+    await sendMessageToProperChannel(`Current assistant has no tasks to be stoped!`,channelId);
+    return true;
+  }
+  await cancelAllRuns(assistantData.threadId!);
+  await sendMessageToProperChannel(`**You have stoped all tasks!**`, channelId);
+  return true;
+};
+
 
 export const assistantThreadReset = async (message: string, channelId: string) => {
   const command = "_clear";

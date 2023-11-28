@@ -23,7 +23,7 @@ export const joinVoiceChannelAndGetConnection = (newState: VoiceState): VoiceCon
     channelId: newState.channelId!,
     guildId: newState.guild.id,
     adapterCreator: newState.guild.voiceAdapterCreator,
-    selfMute: false,
+    selfMute: true,
     selfDeaf: false,
   });
   return connection;
