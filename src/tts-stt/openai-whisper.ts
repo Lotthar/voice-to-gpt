@@ -27,7 +27,7 @@ export const generateTextFromSpeech = async(audioBuffer: Buffer, audioFormat: st
 export const generateSpeechFromText = async(text: string) => {
     const mp3 = await openai.audio.speech.create({
       model: "tts-1",
-      voice: "onyx",
+      voice: "alloy",
       input: text,
     });
     const buffer = Buffer.from(await mp3.arrayBuffer());
