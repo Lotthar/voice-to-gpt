@@ -13,11 +13,10 @@ export const playOpenAiAnswerWithSpeech= async (audioBuffer: Buffer, connection:
 };
 
 const initAndSubscribeAudioPlayerToVoiceChannel = (connection: VoiceConnection): void => {
-  if(player === null) {
-    player = createAudioPlayer();
-    connection.subscribe(player!);
-    addOnErrorPlayerEvent();
-  }
+  if(player === null) player = createAudioPlayer();
+  connection.subscribe(player!);
+  addOnErrorPlayerEvent();
+
 };
 
 const playSpeechAudioFromText = async (text: string | null, channelId: string): Promise<void> => {

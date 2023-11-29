@@ -135,7 +135,7 @@ const getOpusStream = (receiver: VoiceReceiver, userId: string): AudioReceiveStr
   return receiver.subscribe(userId, {
     end: {
       behavior: EndBehaviorType.AfterSilence,
-      duration: 500,
+      duration: 1000,
     },
   });
 };
