@@ -2,12 +2,12 @@ import axios from "axios";
 import { generateOpenAIAnswer } from "../openai/openai-api.js";
 import { generateSpeechFromText, generateTextFromSpeech } from "../openai/openai-whisper-api.js";
 import { sendMessageToProperChannel } from "./discord-util.js";
-import { createAudioResource, createAudioPlayer, AudioPlayer, VoiceConnection, AudioPlayerStatus, StreamType, AudioResource } from "@discordjs/voice";
+import { createAudioResource, createAudioPlayer, AudioPlayer, VoiceConnection } from "@discordjs/voice";
 import { Readable } from "node:stream";
 import { waitingAudioURI } from "../types/discord.js";
 
 let player: AudioPlayer | null = null;
-let waitingAudioResource: AudioResource<null> | undefined;
+let waitingAudioResource: any;
 
 export const playOpenAiAnswerWithSpeech= async (audioBuffer: Buffer, connection: VoiceConnection, channelId: string) => {
   await initAndSubscribeAudioPlayerToVoiceChannel(connection);
@@ -23,7 +23,8 @@ const initAndSubscribeAudioPlayerToVoiceChannel = async (connection: VoiceConnec
     addOnErrorPlayerEvent();
   }
   await generateWaitingAudioResourceIfNone(); 
-  if(!!waitingAudioResource) player!.play(waitingAudioResource);
+  if(!!waitingAudioResource) 
+    player!.play(createAudioResource(Readable.from(waitingAudioResource)));
 };
 
 const playSpeechAudioFromText = async (text: string | null, channelId: string): Promise<void> => {
@@ -49,7 +50,7 @@ const generateWaitingAudioResourceIfNone = async() => {
             'Content-Type': 'audio/ogg'
         }
       });
-      waitingAudioResource = createAudioResource(Readable.from(data));
+      waitingAudioResource = data;
     } catch(error) {
       console.error("Error creating waiting sound before the answer!", error);
     }

@@ -1,11 +1,10 @@
-import { ChannelType, TextChannel, VoiceChannel, Message, VoiceState, Attachment, AttachmentBuilder } from "discord.js";
+import { ChannelType, TextChannel, VoiceChannel, Message, VoiceState, AttachmentBuilder } from "discord.js";
 import {
   VoiceConnectionStatus,
   joinVoiceChannel,
   EndBehaviorType,
   getVoiceConnection,
   VoiceConnection,
-  VoiceReceiver,
   AudioReceiveStream,
 } from "@discordjs/voice";
 import { playOpenAiAnswerWithSpeech } from "./discord-voice.js";
