@@ -40,8 +40,6 @@ const addSpeakingEvents = (connection: VoiceConnection, channelId: string): void
   const receiver = connection.receiver;
   receiver.speaking.on("start", async (userId: string) => {
     console.log(`User ${userId} started speaking, waiting for finish...`);
-    const isUserAlreadySubscribed = receiver.subscriptions.get(userId);
-    if(isUserAlreadySubscribed) return;
     receiver.subscribe(userId, {
       end: {
         behavior: EndBehaviorType.AfterSilence,
