@@ -53,8 +53,10 @@ discordClient.on(Events.VoiceStateUpdate, async (oldState: VoiceState, newState:
     const invalidChannel = await checkIfInvalidVoiceChannel(oldState, newState);
     if (invalidChannel || invalidChannel === null) return;
     voiceChannelConnection = getConnection(newState.guild.id);
-    if (!voiceChannelConnection) voiceChannelConnection = joinVoiceChannelAndGetConnection(newState);
-    addVoiceConnectionReadyEvent(voiceChannelConnection, currentChannelId!);
+    if (!voiceChannelConnection) {
+      voiceChannelConnection = joinVoiceChannelAndGetConnection(newState);
+      addVoiceConnectionReadyEvent(voiceChannelConnection, currentChannelId!);
+    }
   } catch (error) {
     console.error(`Error in VoiceStateUpdate event in channel: ${currentChannelId}`, error);
   }

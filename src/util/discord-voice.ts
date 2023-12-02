@@ -1,7 +1,7 @@
 import { generateOpenAIAnswer } from "../openai/openai-api.js";
 import { generateSpeechFromText, generateTextFromSpeech } from "../openai/openai-whisper-api.js";
 import { sendMessageToProperChannel } from "./discord-util.js";
-import { createAudioResource, createAudioPlayer, AudioPlayer, VoiceConnection } from "@discordjs/voice";
+import { createAudioResource, createAudioPlayer, AudioPlayer, VoiceConnection, AudioPlayerStatus } from "@discordjs/voice";
 
 let player: AudioPlayer | null = null;
 
@@ -13,10 +13,11 @@ export const playOpenAiAnswerWithSpeech= async (audioBuffer: Buffer, connection:
 };
 
 const initAndSubscribeAudioPlayerToVoiceChannel = (connection: VoiceConnection): void => {
-  if(player === null) player = createAudioPlayer();
-  connection.subscribe(player!);
-  addOnErrorPlayerEvent();
-
+  if(player === null) {
+    player = createAudioPlayer();
+    connection.subscribe(player!);
+    addOnErrorPlayerEvent();
+  }
 };
 
 const playSpeechAudioFromText = async (text: string | null, channelId: string): Promise<void> => {

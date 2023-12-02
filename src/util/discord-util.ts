@@ -39,17 +39,23 @@ export const addVoiceConnectionReadyEvent = (connection: VoiceConnection, channe
 const addSpeakingEvents = (connection: VoiceConnection, channelId: string): void => {
   const receiver = connection.receiver;
   receiver.speaking.on("start", async (userId: string) => {
-    if (opusStream === null) {
-      console.log(`User ${userId} started speaking, waiting for finish...`);
-      opusStream = getOpusStream(receiver, userId);
-    }
+    console.log(`User ${userId} started speaking, waiting for finish...`);
+    const isUserAlreadySubscribed = receiver.subscriptions.get(userId);
+    if(isUserAlreadySubscribed) return;
+    receiver.subscribe(userId, {
+      end: {
+        behavior: EndBehaviorType.AfterSilence,
+        duration: 1000,
+      },
+    });
   });
 
   receiver.speaking.on("end", async (userId: string) => {
     try {
-      if (opusStream === null) return;
+      const userOpusStream = receiver.subscriptions.get(userId);
+      if(!userOpusStream) return;
       console.log(`User ${userId} finished speaking, creating an answer...`);
-      const voiceAudioBuffer = await createWavAudioBufferFromOpus(opusStream, channelId);
+      const voiceAudioBuffer = await createWavAudioBufferFromOpus(userOpusStream, channelId);
       await playOpenAiAnswerWithSpeech(voiceAudioBuffer, connection, channelId);
       opusStream = null;
     } catch (error) {
@@ -124,20 +130,6 @@ export const sendMessageToProperChannel = async (message: string, channelId: str
     await channel.send({content: part, tts: tts});
   }
   return channel;
-};
-
-/**
- *  A Readable object mode stream of Opus packets
-    Will end when the voice connection is destroyed, or the user has not said anything for 500ms
- * @param {*} receiver - voice channel voice reciever object
- */
-const getOpusStream = (receiver: VoiceReceiver, userId: string): AudioReceiveStream => {
-  return receiver.subscribe(userId, {
-    end: {
-      behavior: EndBehaviorType.AfterSilence,
-      duration: 1000,
-    },
-  });
 };
 
 export const getCurrentChannel = async (channelId: string): Promise<ChannelCommonType> => {
