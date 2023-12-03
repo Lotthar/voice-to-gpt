@@ -13,7 +13,7 @@ export const playOpenAiAnswerWithSpeech= async (audioBuffer: Buffer, connection:
   await initAndSubscribeAudioPlayerToVoiceChannel(connection);
   const transcript = await generateTextFromSpeech(audioBuffer, "wav");
   const openAiAnswer = await generateOpenAIAnswer(transcript!, channelId);
-  await playSpeechAudioFromText(openAiAnswer, channelId);
+  await playSpeechAudioFromText(openAiAnswer);
 };
 
 const initAndSubscribeAudioPlayerToVoiceChannel = async (connection: VoiceConnection): Promise<void> => {
@@ -27,10 +27,9 @@ const initAndSubscribeAudioPlayerToVoiceChannel = async (connection: VoiceConnec
     player!.play(createAudioResource(Readable.from(waitingAudioResource)));
 };
 
-const playSpeechAudioFromText = async (text: string | null, channelId: string): Promise<void> => {
+const playSpeechAudioFromText = async (text: string | null): Promise<void> => {
   if (text !== null) {
     const audio = await generateSpeechFromText(text);
-    await sendMessageToProperChannel(text, channelId);
     player!.play(createAudioResource(audio));
   }
 };

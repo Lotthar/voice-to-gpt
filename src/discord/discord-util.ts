@@ -11,7 +11,7 @@ import { playOpenAiAnswerWithSpeech } from "./discord-voice.js";
 import { discordClient } from "../bot.js";
 import { ChannelCommonType } from "../types/discord.js";
 import { AssistantFile } from "../types/openai.js";
-import { createWavAudioBufferFromOpus } from "./audio-util.js";
+import { createWavAudioBufferFromOpus } from "../util/audio-util.js";
 
 const BOT_NAME = "VoiceToGPT";
 

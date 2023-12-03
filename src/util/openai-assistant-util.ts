@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
 import { openai } from "../util/openai-api-util.js";
-import { sendMessageToProperChannel, sendMessageToProperChannelWithFile } from "../util/discord-util.js";
+import { sendMessageToProperChannel, sendMessageToProperChannelWithFile } from "../discord/discord-util.js";
 import { AssistantFile, GPTAssistantModels } from "../types/openai.js";
 import { Attachment, Message } from "discord.js";
 import { ResponseLike } from "openai/uploads.mjs";

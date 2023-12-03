@@ -2,7 +2,7 @@ import { AssistantCreateParams } from "openai/resources/beta/assistants/assistan
 import { downloadFileFromS3, uploadFileToS3 } from "../util/aws-s3-util.js";
 import { readJsonStreamToString } from "../util/stream-util.js";
 import { openai } from "../util/openai-api-util.js";
-import { sendMessageToProperChannel } from "../util/discord-util.js";
+import { sendMessageToProperChannel } from "../discord/discord-util.js";
 import { AssistantOpenAI, ChannelAssistantData, GPTAssistantOptions } from "../types/openai.js";
 import { Message } from "discord.js";
 import {
