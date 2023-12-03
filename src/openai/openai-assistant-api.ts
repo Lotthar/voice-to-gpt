@@ -45,16 +45,13 @@ export const generateAssistantAnswer = async (message: Message, messageContent: 
   await extractAndSendAssistantMessage(assistantMessages, message.channelId);
 };
 
-export const listAllAssistants = async (message: string, channelId: string): Promise<boolean> => {
-  const command = "_list";
-  if (!message.startsWith(command)) return false;
+export const listAllAssistants = async (): Promise<string> => {
   const assistants = await retrieveAllAssistants();
-  let result = "## All Assistants \n\n";
+  let result = "## Availiable Assistants \n\n";
   assistants.forEach((assistant) => {
     result += `* **${assistant.name}(${assistant.model})** - *${assistant.instructions}* \n`;
   });
-  await sendMessageToProperChannel(result, channelId);
-  return true;
+  return result;
 };
 
 export const assistantCreated = async (message: string, channelId: string): Promise<boolean> => {
