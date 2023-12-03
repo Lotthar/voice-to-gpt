@@ -10,11 +10,12 @@ import {
   sendMessageWithTypingAndClbk,
 } from "./discord/discord-util.js";
 import { VoiceConnection } from "@discordjs/voice";
-import { registerCommandsInDiscord } from "./discord/discord-commands.js";
+import { commandBotCallbacks, registerCommandsInDiscord } from "./discord/discord-commands.js";
 import { BotCommand } from "./types/discord.js";
 import dotenv from "dotenv";
 import { generateAssistantAnswer } from "./openai/openai-assistant-api.js";
 import { generateOpenAIAnswer } from "./openai/openai-api.js";
+import { resetHistoryIfNewSystemMessage } from "./util/openai-api-util.js";
 
 dotenv.config();
 
@@ -29,6 +30,7 @@ discordClient.once(Events.ClientReady, (client: Client<true>) => {
 });
 
 export const discordCommands = new Collection<string,BotCommand>();
+await registerCommandsInDiscord(discordCommands);
 
 discordClient.on(Events.MessageCreate, async (message: Message) => {
   try {
@@ -72,7 +74,8 @@ discordClient.on(Events.InteractionCreate, async (interaction: Interaction) => {
 		return;
 	}
 	try {
-		await command.execute(interaction);
+    const commandClbk = commandBotCallbacks.get(interaction.commandName);
+		await command.execute(interaction, commandClbk);
 	} catch (error) {
 		console.error(error);
 		if (interaction.replied || interaction.deferred) {
@@ -84,5 +87,4 @@ discordClient.on(Events.InteractionCreate, async (interaction: Interaction) => {
 });
 
 discordClient.login(process.env.DISCORD_API_KEY);
-await registerCommandsInDiscord(discordCommands);
 

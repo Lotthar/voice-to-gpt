@@ -95,7 +95,7 @@ const getCurrentSystemMessage = async (channelId: string): Promise<string | null
   }
 };
 
-const setChatGptModel = async (model: string, channelId: string): Promise<void> => {
+export const setChatGptModel = async (model: string, channelId: string): Promise<void> => {
   try {
     const gptModelPath = getChatGptModelPath(channelId);
     await uploadFileToS3(gptModelPath, model);
@@ -120,21 +120,6 @@ export const getChatGptModel = async (channelId: string): Promise<GptModelData> 
     await setChatGptModel(gptModel, channelId);
     return { modelName: gptModel, model };
   }
-};
-
-export const botChatGptModelChanged = async (message: string, channelId: string): Promise<boolean> => {
-  const command = "!model ";
-  if (!message.startsWith(command)) return false;
-  const currentModelId = message.replace(command, "");
-  await determineAndSetModel(currentModelId, channelId);
-  return true;
-};
-
-const determineAndSetModel = async (modelId: string, channelId: string): Promise<void> => {
-  let model = GPTModels.find((model) => model.startsWith(modelId));
-  model = !!model ? model : GPTModels[0];
-  setChatGptModel(model, channelId);
-  await sendMessageToProperChannel(`You changed current GPT model to: **${model}**`, channelId);
 };
 
 export const countApiResponseTokens = async (currentChatHistory: Array<OpenAI.Chat.ChatCompletionMessageParam>, model: any, modelName: string): Promise<number> => {
