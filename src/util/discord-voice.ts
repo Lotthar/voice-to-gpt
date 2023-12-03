@@ -19,9 +19,9 @@ export const playOpenAiAnswerWithSpeech= async (audioBuffer: Buffer, connection:
 const initAndSubscribeAudioPlayerToVoiceChannel = async (connection: VoiceConnection): Promise<void> => {
   if(player === null) {
     player = createAudioPlayer();
-    connection.subscribe(player!);
     addOnErrorPlayerEvent();
   }
+  connection.subscribe(player!);
   await generateWaitingAudioResourceIfNone(); 
   if(!!waitingAudioResource) 
     player!.play(createAudioResource(Readable.from(waitingAudioResource)));
