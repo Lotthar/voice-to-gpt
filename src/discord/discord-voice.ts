@@ -1,7 +1,6 @@
 import axios from "axios";
 import { generateOpenAIAnswer } from "../openai/openai-api.js";
 import { generateSpeechFromText, generateTextFromSpeech } from "../openai/openai-whisper-api.js";
-import { sendMessageToProperChannel } from "./discord-util.js";
 import { createAudioResource, createAudioPlayer, AudioPlayer, VoiceConnection } from "@discordjs/voice";
 import { Readable } from "node:stream";
 import { waitingAudioURI } from "../types/discord.js";

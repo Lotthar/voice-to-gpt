@@ -1,4 +1,4 @@
-import { CommandInteraction, SlashCommandBuilder, TextChannel, VoiceChannel } from "discord.js";
+import { ChatInputCommandInteraction,SlashCommandBuilder, TextChannel, VoiceChannel } from "discord.js";
 
 export type ChannelCommonType = TextChannel | VoiceChannel | null;
 
@@ -6,5 +6,10 @@ export const waitingAudioURI = "https://commondatastorage.googleapis.com/codesku
 
 export interface BotCommand {
     data: SlashCommandBuilder,
-    execute: (interaction: CommandInteraction) => Promise<void>
+    execute: (interaction: ChatInputCommandInteraction) => Promise<void>
+}
+
+export const isBotCommand = (object: any) => {
+    return 'data' in object &&
+           'execute' in object;
 }

@@ -122,15 +122,6 @@ export const getChatGptModel = async (channelId: string): Promise<GptModelData> 
   }
 };
 
-export const botSystemMessageChanged = async (message: string, channelId: string): Promise<boolean> => {
-  const command = "!system ";
-  if (!message.startsWith(command)) return false;
-  const currentSystemMessage = message.replace(command, "");
-  await resetHistoryIfNewSystemMessage(currentSystemMessage, channelId);
-  await sendMessageToProperChannel(`You changed system message to: **${currentSystemMessage}**`, channelId);
-  return true;
-};
-
 export const botChatGptModelChanged = async (message: string, channelId: string): Promise<boolean> => {
   const command = "!model ";
   if (!message.startsWith(command)) return false;

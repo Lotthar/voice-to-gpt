@@ -1,4 +1,4 @@
-import { Client, Collection, CommandInteraction, Events, GatewayIntentBits, Interaction, Message, VoiceState } from "discord.js";
+import { Client, Collection, Events, GatewayIntentBits, Interaction, Message, VoiceState } from "discord.js";
 
 import {
   joinVoiceChannelAndGetConnection,
@@ -7,11 +7,14 @@ import {
   botIsMentioned,
   getMessageContentWithoutMention,
   addVoiceConnectionReadyEvent,
+  sendMessageWithTypingAndClbk,
 } from "./discord/discord-util.js";
 import { VoiceConnection } from "@discordjs/voice";
-import { loadAllBotCommands, registerCommandsInDiscord, useOpenAIAssistantBot, useStandardOpenAIBot } from "./discord/discord-commands.js";
+import { registerCommandsInDiscord } from "./discord/discord-commands.js";
 import { BotCommand } from "./types/discord.js";
 import dotenv from "dotenv";
+import { generateAssistantAnswer } from "./openai/openai-assistant-api.js";
+import { generateOpenAIAnswer } from "./openai/openai-api.js";
 
 dotenv.config();
 
@@ -35,9 +38,9 @@ discordClient.on(Events.MessageCreate, async (message: Message) => {
       let messageContent = getMessageContentWithoutMention(message);
       if(messageContent.startsWith("!assistant")) {
         messageContent = messageContent.substring("!assistant".length, messageContent.length);
-        useOpenAIAssistantBot(message, messageContent)
+        await sendMessageWithTypingAndClbk(message, () => generateAssistantAnswer(message, messageContent));
       } else {
-        useStandardOpenAIBot(message,messageContent);
+        await sendMessageWithTypingAndClbk(message, () => generateOpenAIAnswer(messageContent, message.channelId));
       }
     }
   } catch (error) {
@@ -63,14 +66,11 @@ discordClient.on(Events.VoiceStateUpdate, async (oldState: VoiceState, newState:
 
 discordClient.on(Events.InteractionCreate, async (interaction: Interaction) => {
 	if (!interaction.isChatInputCommand()) return;
-
 	const command = discordCommands.get(interaction.commandName);
-
 	if (!command) {
 		console.error(`No command matching ${interaction.commandName} was found.`);
 		return;
 	}
-
 	try {
 		await command.execute(interaction);
 	} catch (error) {
@@ -83,6 +83,6 @@ discordClient.on(Events.InteractionCreate, async (interaction: Interaction) => {
 	}
 });
 
-
 discordClient.login(process.env.DISCORD_API_KEY);
 await registerCommandsInDiscord(discordCommands);
+

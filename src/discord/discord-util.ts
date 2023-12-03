@@ -5,7 +5,6 @@ import {
   EndBehaviorType,
   getVoiceConnection,
   VoiceConnection,
-  AudioReceiveStream,
 } from "@discordjs/voice";
 import { playOpenAiAnswerWithSpeech } from "./discord-voice.js";
 import { discordClient } from "../bot.js";
@@ -14,8 +13,6 @@ import { AssistantFile } from "../types/openai.js";
 import { createWavAudioBufferFromOpus } from "../util/audio-util.js";
 
 const BOT_NAME = "VoiceToGPT";
-
-let opusStream: AudioReceiveStream | null = null;
 
 export const joinVoiceChannelAndGetConnection = (newState: VoiceState): VoiceConnection => {
   const connection = joinVoiceChannel({
@@ -54,7 +51,6 @@ const addSpeakingEvents = (connection: VoiceConnection, channelId: string): void
       console.log(`User ${userId} finished speaking, creating an answer...`);
       const voiceAudioBuffer = await createWavAudioBufferFromOpus(userOpusStream, channelId);
       await playOpenAiAnswerWithSpeech(voiceAudioBuffer, connection, channelId);
-      opusStream = null;
     } catch (error) {
       console.error("Error playing answer on voice channel: ", error);
       await sendMessageToProperChannel("**There was problem with the answer**", channelId);
@@ -100,6 +96,16 @@ export const sendTyping = async (message: Message, stopTyping: Function) => {
     message.channel.sendTyping();
     await new Promise((resolve) => setTimeout(resolve, 2000));
   }
+};
+
+export const sendMessageWithTypingAndClbk = async (message: Message, clbk: () => Promise<void | string>) => {
+  let messageSent = false;
+  const stopTyping = () => messageSent;
+  const typingPromise = sendTyping(message, stopTyping);
+  const clbkPromise = clbk().then(() => {
+    messageSent = true;
+  });
+  await Promise.all([typingPromise, clbkPromise]);
 };
 
 export const sendMessageToProperChannelWithFile = async (message: string, files: Array<AssistantFile>, channelId: string) => {
