@@ -1,6 +1,6 @@
 import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
-
-export const serverCommand =  {
+import { BotCommand } from '../../../types/discord.js';
+const command: BotCommand = {
 	data: new SlashCommandBuilder()
 		.setName('user')
 		.setDescription('Provides information about the user.'),
@@ -10,3 +10,5 @@ export const serverCommand =  {
 		await interaction.reply(`This command was run by ${interaction.user.username}`);
 	},
 };
+
+export default command;

@@ -1,6 +1,7 @@
 declare namespace NodeJS {
   interface ProcessEnv {
     DISCORD_API_KEY: string;
+    DISCORD_APP_ID:string,
     OPEN_API_KEY: string;
     AWS_ACCESS_KEY: string;
     AWS_SECRET_ACCESS_KEY: string;

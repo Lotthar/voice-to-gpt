@@ -1,4 +1,4 @@
-import { Client, Collection, Events, GatewayIntentBits, Message, VoiceState } from "discord.js";
+import { Client, Collection, CommandInteraction, Events, GatewayIntentBits, Interaction, Message, VoiceState } from "discord.js";
 
 import {
   joinVoiceChannelAndGetConnection,
@@ -8,10 +8,10 @@ import {
   getMessageContentWithoutMention,
   addVoiceConnectionReadyEvent,
 } from "./discord/discord-util.js";
-import dotenv from "dotenv";
 import { VoiceConnection } from "@discordjs/voice";
-import { useOpenAIAssistantBot, useStandardOpenAIBot } from "./discord/discord-commands.js";
-
+import { loadAllBotCommands, registerCommandsInDiscord, useOpenAIAssistantBot, useStandardOpenAIBot } from "./discord/discord-commands.js";
+import { BotCommand } from "./types/discord.js";
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -25,7 +25,7 @@ discordClient.once(Events.ClientReady, (client: Client<true>) => {
   console.log(`Bot is Ready! Logged in as ${client.user.tag}`);
 });
 
-export const discordCommands = new Collection();
+export const discordCommands = new Collection<string,BotCommand>();
 
 discordClient.on(Events.MessageCreate, async (message: Message) => {
   try {
@@ -61,5 +61,28 @@ discordClient.on(Events.VoiceStateUpdate, async (oldState: VoiceState, newState:
   }
 });
 
+discordClient.on(Events.InteractionCreate, async (interaction: Interaction) => {
+	if (!interaction.isChatInputCommand()) return;
+
+	const command = discordCommands.get(interaction.commandName);
+
+	if (!command) {
+		console.error(`No command matching ${interaction.commandName} was found.`);
+		return;
+	}
+
+	try {
+		await command.execute(interaction);
+	} catch (error) {
+		console.error(error);
+		if (interaction.replied || interaction.deferred) {
+			await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+		} else {
+			await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+		}
+	}
+});
+
 
 discordClient.login(process.env.DISCORD_API_KEY);
+await registerCommandsInDiscord(discordCommands);
