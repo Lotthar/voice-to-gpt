@@ -19,6 +19,11 @@ export interface AssistantOpenAI {
   name: string,
   instructions: string,
   model: string
+  tools?: Array<AssistantTool>
+}
+
+export interface AssistantTool {
+  type: "code_interpreter" | "retrieval"
 }
 
 export interface AssistantFile {

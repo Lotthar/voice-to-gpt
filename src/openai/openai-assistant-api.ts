@@ -3,8 +3,8 @@ import { downloadFileFromS3, uploadFileToS3 } from "../util/aws-s3-util.js";
 import { readJsonStreamToString } from "../util/stream-util.js";
 import { openai } from "../util/openai-api-util.js";
 import { sendMessageToProperChannel } from "../discord/discord-util.js";
-import { AssistantOpenAI, ChannelAssistantData, GPTAssistantOptions } from "../types/openai.js";
-import { Message } from "discord.js";
+import { AssistantOpenAI, ChannelAssistantData, GPTAssistantModels, GPTAssistantOptions } from "../types/openai.js";
+import { ChatInputCommandInteraction, Message } from "discord.js";
 import {
   cancelAllRuns,
   createUserMessage,
@@ -52,14 +52,6 @@ export const listAllAssistants = async (): Promise<string> => {
     result += `* **${assistant.name}(${assistant.model})** - *${assistant.instructions}* \n`;
   });
   return result;
-};
-
-export const assistantCreated = async (message: string, channelId: string): Promise<boolean> => {
-  const command = "_create";
-  if (!message.startsWith(command)) return false;
-  const { name, instructions, model } = parseAssitantConfigInput(message, GPTAssistantOptions);
-  await createAssistant(channelId, { instructions, name: name, model: determineModel(model) });
-  return true;
 };
 
 export const assistantUpdated = async (message: string, channelId: string): Promise<boolean> => {
@@ -147,22 +139,20 @@ export const assistantThreadReset = async (message: string, channelId: string) =
   return true;
 };
 
-export const createAssistant = async (channelId: string, { name, model, instructions }: AssistantOpenAI) => {
+export const createAssistant = async (interaction: ChatInputCommandInteraction, newAssistant: AssistantOpenAI) => {
   try {
     const createParams: AssistantCreateParams = {
-      name: `${!name ? channelId : name}`,
-      instructions: instructions,
-      tools: [{ type: "code_interpreter" }, { type: "retrieval" }], // retrieval is currently causing bugs for almost all types of files so using code interpreter for now
-      model: model,
+      name: newAssistant.name,
+      instructions: newAssistant.instructions,
+      model: newAssistant.model,
+      tools: newAssistant.tools ?? [{type: "code_interpreter"}, {type: "retrieval"}],
     };
-    const assistant = await openai.beta.assistants.create(createParams);
-    await sendMessageToProperChannel(
-      `You **created** a new GPT Assistant named: **${assistant.name}**, model: **${assistant.model}**, instructions: *${assistant.instructions}*`,
-      channelId
-    );
+    const createadAssistant = await openai.beta.assistants.create(createParams);
+    await interaction.reply({
+      content:`You **created** a new GPT Assistant named: **${createadAssistant.name}**, model: **${createadAssistant.model}**, tools: **${createadAssistant.tools}**, instructions: *${createadAssistant.instructions}*`, ephemeral: true});
   } catch (error) {
-    console.error(`Error creating assistant for channel: ${channelId}`, error);
-    await sendMessageToProperChannel(`Error creating assistant!`, channelId);
+    console.error(`Error creating assistant for channel: ${interaction.channelId}`, error);
+    await interaction.reply({content: `Error creating assistant!`, ephemeral: true});
   }
   
 };

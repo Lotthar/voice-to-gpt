@@ -5,7 +5,7 @@ import { BotCommand, isBotCommand } from "../types/discord.js";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 import { resetHistoryIfNewSystemMessage, setChatGptModel } from "../util/openai-api-util.js";
-import { listAllAssistants } from "../openai/openai-assistant-api.js";
+import { createAssistant, listAllAssistants } from "../openai/openai-assistant-api.js";
 
 dotenv.config();
 
@@ -17,6 +17,7 @@ export const commandBotCallbacks: Map<string, any> = new Map();
 commandBotCallbacks.set('system_message', resetHistoryIfNewSystemMessage);
 commandBotCallbacks.set('model', setChatGptModel);
 commandBotCallbacks.set('assistant_list', listAllAssistants);
+commandBotCallbacks.set('assistant_create', createAssistant);
 
 
 export const registerCommandsInDiscord = async (commandsToRegister: Collection<string, BotCommand>) => {
