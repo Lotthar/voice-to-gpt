@@ -45,11 +45,11 @@ discordClient.on(Events.MessageCreate, async (message: Message) => {
     // Only answer to messages in the channel when the bot is specifically mentioned!
     if (botIsMentioned(message)) {
       let messageContent = getMessageContentWithoutMention(message);
-      if (messageContent.startsWith("!assistant")) {
-        messageContent = messageContent.substring("!assistant".length, messageContent.length);
-        await sendMessageWithTypingAndClbk(message, () => generateAssistantAnswer(message, messageContent));
-      } else {
+      if (messageContent.startsWith("!basic")) {
+        messageContent = messageContent.substring("!basic".length, messageContent.length);
         await sendMessageWithTypingAndClbk(message, () => generateOpenAIAnswer(messageContent, message.channelId));
+      } else {
+        await sendMessageWithTypingAndClbk(message, () => generateAssistantAnswer(message, messageContent));
       }
     }
   } catch (error) {
