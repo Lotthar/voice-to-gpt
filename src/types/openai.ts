@@ -1,4 +1,6 @@
 import { createRequire } from "module";
+import { AssistantUpdateParams } from "openai/resources/beta/assistants/assistants.mjs";
+
 
 export interface OpenAiMessage {
   role: "system" | "assistant" | "user";
@@ -14,16 +16,17 @@ export interface ChannelAssistantData {
   threadId?: string,
 }
 
+export type AssistantToolsArray = Array<
+| AssistantUpdateParams.AssistantToolsCode
+| AssistantUpdateParams.AssistantToolsRetrieval
+| AssistantUpdateParams.AssistantToolsFunction>
+
 export interface AssistantOpenAI {
   assistantId?: string,
   name: string,
   instructions: string,
-  model: string
-  tools?: Array<AssistantTool>
-}
-
-export interface AssistantTool {
-  type: "code_interpreter" | "retrieval"
+  model?: string
+  tools?: AssistantToolsArray
 }
 
 export interface AssistantFile {

@@ -54,6 +54,17 @@ export const retrieveThreadRuns = async (threadId: string) => {
   }
 }
 
+export const retrieveAssistantByName = async (name: string) => {
+  const assistants = await retrieveAllAssistants();
+  return assistants.find(assistant => assistant.name === name);
+}
+
+export const retrieveAllAssitantsNames = async () => {
+  const assistants = await retrieveAllAssistants();
+  return assistants.filter(assistant => assistant.name !== null)
+                   .map(assistant => assistant.name!);
+}
+
 export const retrieveAllAssistants = async () => {
   try {
     const assistants = await openai.beta.assistants.list({

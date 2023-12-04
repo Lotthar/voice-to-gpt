@@ -6,7 +6,7 @@ const sysMessage: BotCommand = {
 		.setName('system_message')
 		.addStringOption(option =>
 			option.setName('message')
-				.setDescription('Value of the new system message.')
+				.setDescription('Setting value of the standard GPT bot system message.')
 				.setRequired(true))
 		.setDescription('Creates new system message for standard bot and resets the chat history.'),
 	execute: async(interaction: ChatInputCommandInteraction, resetSystemMessage: (message: string, channelId: string) => Promise<void>) => {

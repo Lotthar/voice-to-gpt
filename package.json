@@ -23,7 +23,6 @@
     "@discordjs/opus": "^0.9.0",
     "@discordjs/voice": "^0.16.1",
     "@dqbd/tiktoken": "^1.0.7",
-    "@google-cloud/speech": "^5.4.0",
     "axios": "^1.6.0",
     "discord.js": "^14.8.0",
     "dotenv": "^16.0.3",
@@ -31,7 +30,6 @@
     "form-data": "^4.0.0",
     "libsodium-wrappers": "^0.7.11",
     "node-fetch": "^3.3.2",
-    "nodemon": "^3.0.1",
     "openai": "^4.17.5",
     "opusscript": "^0.0.8",
     "typescript": "^5.0.4",
@@ -46,6 +44,7 @@
     "@types/fluent-ffmpeg": "^2.1.24",
     "@types/node": "^18.18.9",
     "@types/wav": "^1.0.4",
-    "tsc-watch": "^6.0.0"
+    "tsc-watch": "^6.0.0",
+    "nodemon": "^3.0.1"
   }
 }

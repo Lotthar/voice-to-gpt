@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction,SlashCommandBuilder, TextChannel, VoiceChannel } from "discord.js";
+import { AutocompleteInteraction, ChatInputCommandInteraction,SlashCommandBuilder, TextChannel, VoiceChannel } from "discord.js";
 
 export type ChannelCommonType = TextChannel | VoiceChannel | null;
 
@@ -6,8 +6,8 @@ export const waitingAudioURI = "https://commondatastorage.googleapis.com/codesku
 
 export interface BotCommand {
     data: SlashCommandBuilder;
-    execute: (interaction: ChatInputCommandInteraction, clkb: any) => Promise<void>;
-    // clbk: any;
+    execute?: (interaction: ChatInputCommandInteraction, clkb: any) => Promise<void>;
+    autocomplete?: (interaction: AutocompleteInteraction, clkb: any) => Promise<void>;
 }
 
 export const isBotCommand = (object: any) => {

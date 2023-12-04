@@ -3,19 +3,18 @@ import { downloadFileFromS3, uploadFileToS3 } from "../util/aws-s3-util.js";
 import { readJsonStreamToString } from "../util/stream-util.js";
 import { openai } from "../util/openai-api-util.js";
 import { sendMessageToProperChannel } from "../discord/discord-util.js";
-import { AssistantOpenAI, ChannelAssistantData, GPTAssistantModels, GPTAssistantOptions } from "../types/openai.js";
+import { AssistantOpenAI, AssistantToolsArray, ChannelAssistantData, GPTAssistantModels, GPTAssistantOptions } from "../types/openai.js";
 import { ChatInputCommandInteraction, Message } from "discord.js";
 import {
   cancelAllRuns,
   createUserMessage,
-  determineModel,
   extractAndSendAssistantMessage,
   getAssistantPath,
   isThreadInactive,
-  parseAssitantConfigInput,
   passUserInputFilesToAssistant,
   pollForRunUntil,
   retrieveAllAssistants,
+  retrieveAssistantByName,
   retrieveAssistantMessages,
 } from "../util/openai-assistant-util.js";
 
@@ -54,89 +53,14 @@ export const listAllAssistants = async (): Promise<string> => {
   return result;
 };
 
-export const assistantUpdated = async (message: string, channelId: string): Promise<boolean> => {
-  const command = "_update";
-  if (!message.startsWith(command)) return false;
-  const { name, instructions, model } = parseAssitantConfigInput(message, GPTAssistantOptions);
-  const existingAssistant = await retrieveAssistantByName(name, channelId);
-  if (!existingAssistant) {
-    await sendMessageToProperChannel(
-      `Assistant with name starting: **${name}** doesn't exist, please create one first (**!assistant_create** command)if it doesn't exist!`,
-      channelId
-    );
-    return true;
-  }
-  await updateAssistant(channelId, { instructions, assistantId: existingAssistant.id, name: existingAssistant.name!, model: determineModel(model) });
-  return true;
-};
-
-export const deleteAssistant = async (message: string, channelId: string): Promise<boolean> => {
-  const command = "_delete";
-  if (!message.startsWith(command)) return false;
-  const { name } = parseAssitantConfigInput(message, GPTAssistantOptions);
-  try {
-    let chosenAssistant = await retrieveAssistantByName(name, channelId);
-    if (!chosenAssistant) return true;
-    await openai.beta.assistants.del(chosenAssistant.id);
-    await sendMessageToProperChannel(`Assistant with the name: **${chosenAssistant.name}** successfully *deleted*!`,channelId);
-  } catch (error) {
-    console.log(error);
-    await sendMessageToProperChannel(`Error deleting assistant which name starts with: **${name}**`,channelId);
-  }
-  return true;
-};
-
-export const assistantForChannelChanged = async (message: string, channelId: string): Promise<boolean> => {
-  const command = "_change";
-  if (!message.startsWith(command)) return false;
-  const { name } = parseAssitantConfigInput(message, GPTAssistantOptions);
-  let chosenAssistant = await retrieveAssistantByName(name, channelId);
-  if (!chosenAssistant) {
-    await sendMessageToProperChannel(`Assistant with name starting with: **'${name}'** doesn't exist!`, channelId);
-    return true;
-  }
+export const changeAssistantForChannel = async (name: string, interaction: ChatInputCommandInteraction): Promise<void> => {
+  let chosenAssistant = await retrieveAssistantByName(name);
+  if (!chosenAssistant) return;
   let assistantData = { assistantId: chosenAssistant.id };
-  await saveChannelAssistantInStorage(assistantData, channelId);
-  const currentAssistant = await getChannelAssistantFromStorage(channelId);
+  await saveChannelAssistantInStorage(assistantData, interaction.channelId);
+  const currentAssistant = await getChannelAssistantFromStorage(interaction.channelId);
   if (!!currentAssistant && !!currentAssistant.threadId) await openai.beta.threads.del(currentAssistant.threadId);
-  await sendMessageToProperChannel(
-    `Selected Assistant with name: **'${chosenAssistant.name}'** and instructions: **'${chosenAssistant.instructions}'** !`,
-    channelId
-  );
-  return true;
-};
-
-const retrieveAssistantByName = async (name: string, channelId: string) => {
-  const allAssistants = await retrieveAllAssistants();
-  let chosenAssistant = allAssistants.find((assistant) => assistant.name?.toLocaleLowerCase()?.startsWith(name.toLocaleLowerCase()));
-  if (!!chosenAssistant) return chosenAssistant;
-};
-
-export const assistantRunsStop = async (message: string, channelId: string) => {
-  const command = "_stop";
-  if (!message.startsWith(command)) return false;
-  let assistantData = await getChannelAssistantFromStorage(channelId);
-  if (assistantData === null) {
-    return true;
-  }
-  if(assistantData.threadId === null) {
-    await sendMessageToProperChannel(`Current assistant has no tasks to be stoped!`,channelId);
-    return true;
-  }
-  await cancelAllRuns(assistantData.threadId!);
-  await sendMessageToProperChannel(`**You have stoped all tasks!**`, channelId);
-  return true;
-};
-
-
-export const assistantThreadReset = async (message: string, channelId: string) => {
-  const command = "_clear";
-  if (!message.startsWith(command)) return false;
-  let assistantData = await getChannelAssistantFromStorage(channelId);
-  if (assistantData === null) return false;
-  await resetCurrentThread(assistantData, channelId);
-  await sendMessageToProperChannel(`**You have cleared your conversation so far, please star over!**`, channelId);
-  return true;
+  await interaction.reply(`Selected GPT Assistant for current channel with name: **${chosenAssistant.name}**, model: **${chosenAssistant.model}** and instructions: *${chosenAssistant.instructions}* !`);
 };
 
 export const createAssistant = async (interaction: ChatInputCommandInteraction, newAssistant: AssistantOpenAI) => {
@@ -144,12 +68,11 @@ export const createAssistant = async (interaction: ChatInputCommandInteraction, 
     const createParams: AssistantCreateParams = {
       name: newAssistant.name,
       instructions: newAssistant.instructions,
-      model: newAssistant.model,
-      tools: newAssistant.tools ?? [{type: "code_interpreter"}, {type: "retrieval"}],
+      model: newAssistant.model ?? GPTAssistantModels[0],
+      tools: newAssistant.tools,
     };
     const createadAssistant = await openai.beta.assistants.create(createParams);
-    await interaction.reply({
-      content:`You **created** a new GPT Assistant named: **${createadAssistant.name}**, model: **${createadAssistant.model}**, tools: **${createadAssistant.tools}**, instructions: *${createadAssistant.instructions}*`, ephemeral: true});
+    await interaction.reply(`You **created** a new GPT Assistant named: **${createadAssistant.name}**, model: **${createadAssistant.model}**, tools: **${createadAssistant.tools}**, instructions: *${createadAssistant.instructions}*`);
   } catch (error) {
     console.error(`Error creating assistant for channel: ${interaction.channelId}`, error);
     await interaction.reply({content: `Error creating assistant!`, ephemeral: true});
@@ -157,22 +80,61 @@ export const createAssistant = async (interaction: ChatInputCommandInteraction, 
   
 };
 
-export const updateAssistant = async (channelId: string, { name, model, instructions, assistantId }: AssistantOpenAI) => {
+export const updateAssistant = async (interaction: ChatInputCommandInteraction, newAssistant: AssistantOpenAI) => {
   try {
-    let updateParams: Record<string, string> = {};
-    if (!!name) updateParams.name = name;
-    if (!!model) updateParams.model = model;
-    updateParams.instructions = instructions;
-    const assistant = await openai.beta.assistants.update(assistantId!, updateParams);
-    await sendMessageToProperChannel(
-      `You **updated** GPT Assistant for this channel! Current name: **${assistant.name}**, model: **${assistant.model}**, instructions: *${assistant.instructions}*`,
-      channelId
-    );
+    let updateParams: Record<string,string | AssistantToolsArray> = {};
+    if (!newAssistant.name || !updateParams.instructions) return;
+    updateParams.instructions = newAssistant.instructions;
+    if (!!newAssistant.model) updateParams.model = newAssistant.model;
+    if (!!newAssistant.tools) updateParams.tools = newAssistant.tools;
+    const currentAssistant = await retrieveAssistantByName(newAssistant.name);
+    if(!currentAssistant) {
+      await interaction.reply(`There is no GPT Assistant with name: **${newAssistant.name}**!`);
+      return;
+    }
+    const updatedAssistant = await openai.beta.assistants.update(currentAssistant.id, updateParams);
+    await interaction.reply(`You **updated** GPT Assistant wuth name: **${updatedAssistant.name}** model: **${updatedAssistant.model}**, tools: ${updateParams.tools} and instructions: *${updatedAssistant.instructions}*`);
   } catch (error) {
-    console.error(`Error updating assistant for channel: ${channelId}`, error);
-    await sendMessageToProperChannel(`Error updating assistant!`, channelId);
+    console.error(`Error updating assistant for channel: ${interaction.channelId}`, error);
+    await interaction.reply(`Error updating assistant!`);
   }
 };
+
+export const deleteAssistantByName = async (name: string, interaction: ChatInputCommandInteraction): Promise<void> => {
+  try {
+    let chosenAssistant = await retrieveAssistantByName(name);
+    if (!chosenAssistant) return;
+    await openai.beta.assistants.del(chosenAssistant.id);
+    await interaction.reply(`GPT Assistant with the name: **${chosenAssistant.name}** successfully **deleted**!`);
+  } catch (error) {
+    console.log(error);
+    await interaction.reply(`Error deleting assistant which name starts with: **${name}**`);
+  }
+};
+
+export const resetAssistantThread = async (interaction: ChatInputCommandInteraction) => {
+  let assistantData = await getChannelAssistantFromStorage(interaction.channelId);
+  if (assistantData === null) return false;
+  await resetCurrentThread(assistantData, interaction.channelId);
+  await interaction.reply(`You have **cleared** your conversation so far with GPT Assistant, please star over!`);
+  return true;
+};
+
+export const stopAssistantThreadRuns = async (interaction: ChatInputCommandInteraction) => {
+  let assistantData = await getChannelAssistantFromStorage(interaction.channelId);
+  if (assistantData === null) {
+    return true;
+  }
+  if(assistantData.threadId === null) {
+    await interaction.reply(`Current assistant has no tasks to be stoped!`);
+    return true;
+  }
+  await cancelAllRuns(assistantData.threadId!);
+  await interaction.reply(`You have **stopped** all GPT Assistant's tasks!`);
+  return true;
+};
+
+
 
 export const saveChannelAssistantInStorage = async (assistantData: ChannelAssistantData, channelId: string): Promise<void> => {
   try {

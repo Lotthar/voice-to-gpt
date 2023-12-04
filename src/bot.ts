@@ -1,4 +1,12 @@
-import { Client, Collection, Events, GatewayIntentBits, Interaction, Message, VoiceState } from "discord.js";
+import {
+  Client,
+  Collection,
+  Events,
+  GatewayIntentBits,
+  Interaction,
+  Message,
+  VoiceState,
+} from "discord.js";
 
 import {
   joinVoiceChannelAndGetConnection,
@@ -10,12 +18,11 @@ import {
   sendMessageWithTypingAndClbk,
 } from "./discord/discord-util.js";
 import { VoiceConnection } from "@discordjs/voice";
-import { commandBotCallbacks, registerCommandsInDiscord } from "./discord/discord-commands.js";
+import { handleAutocompleteInteraction, handleChatInputInteraction, registerCommandsInDiscord } from "./discord/discord-commands.js";
 import { BotCommand } from "./types/discord.js";
 import dotenv from "dotenv";
 import { generateAssistantAnswer } from "./openai/openai-assistant-api.js";
 import { generateOpenAIAnswer } from "./openai/openai-api.js";
-import { resetHistoryIfNewSystemMessage } from "./util/openai-api-util.js";
 
 dotenv.config();
 
@@ -29,7 +36,7 @@ discordClient.once(Events.ClientReady, (client: Client<true>) => {
   console.log(`Bot is Ready! Logged in as ${client.user.tag}`);
 });
 
-export const discordCommands = new Collection<string,BotCommand>();
+export const discordCommands = new Collection<string, BotCommand>();
 await registerCommandsInDiscord(discordCommands);
 
 discordClient.on(Events.MessageCreate, async (message: Message) => {
@@ -38,7 +45,7 @@ discordClient.on(Events.MessageCreate, async (message: Message) => {
     // Only answer to messages in the channel when the bot is specifically mentioned!
     if (botIsMentioned(message)) {
       let messageContent = getMessageContentWithoutMention(message);
-      if(messageContent.startsWith("!assistant")) {
+      if (messageContent.startsWith("!assistant")) {
         messageContent = messageContent.substring("!assistant".length, messageContent.length);
         await sendMessageWithTypingAndClbk(message, () => generateAssistantAnswer(message, messageContent));
       } else {
@@ -67,24 +74,14 @@ discordClient.on(Events.VoiceStateUpdate, async (oldState: VoiceState, newState:
 });
 
 discordClient.on(Events.InteractionCreate, async (interaction: Interaction) => {
-	if (!interaction.isChatInputCommand()) return;
-	const command = discordCommands.get(interaction.commandName);
-	if (!command) {
-		console.error(`No command matching ${interaction.commandName} was found.`);
-		return;
-	}
-	try {
-    const commandClbk = commandBotCallbacks.get(interaction.commandName);
-		await command.execute(interaction, commandClbk);
-	} catch (error) {
-		console.error(error);
-		if (interaction.replied || interaction.deferred) {
-			await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
-		} else {
-			await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
-		}
-	}
+  if (interaction.isChatInputCommand()) {
+    await handleChatInputInteraction(interaction, discordCommands);
+    return;
+  }
+  if(interaction.isAutocomplete()) {
+    await handleAutocompleteInteraction(interaction,discordCommands);
+    return;
+  }
 });
 
 discordClient.login(process.env.DISCORD_API_KEY);
-

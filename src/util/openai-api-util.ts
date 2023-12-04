@@ -1,6 +1,5 @@
 import { downloadFileFromS3, uploadFileToS3 } from "./aws-s3-util.js";
 import { readJsonStreamToString, readTextStreamToString } from "./stream-util.js";
-import { sendMessageToProperChannel } from "../discord/discord-util.js";
 import {
   Tiktoken,
   load,

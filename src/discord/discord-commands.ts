@@ -1,11 +1,12 @@
-import { Collection, REST, Routes } from "discord.js";
+import { AutocompleteInteraction, ChatInputCommandInteraction, Collection, REST, Routes } from "discord.js";
 import { readdirSync } from "fs";
 import path from "path";
 import { BotCommand, isBotCommand } from "../types/discord.js";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 import { resetHistoryIfNewSystemMessage, setChatGptModel } from "../util/openai-api-util.js";
-import { createAssistant, listAllAssistants } from "../openai/openai-assistant-api.js";
+import { stopAssistantThreadRuns, createAssistant, deleteAssistantByName, listAllAssistants, resetAssistantThread, updateAssistant, changeAssistantForChannel } from "../openai/openai-assistant-api.js";
+import { retrieveAllAssitantsNames } from "../util/openai-assistant-util.js";
 
 dotenv.config();
 
@@ -14,23 +15,27 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export const commandBotCallbacks: Map<string, any> = new Map();
 
-commandBotCallbacks.set('system_message', resetHistoryIfNewSystemMessage);
-commandBotCallbacks.set('model', setChatGptModel);
-commandBotCallbacks.set('assistant_list', listAllAssistants);
-commandBotCallbacks.set('assistant_create', createAssistant);
+commandBotCallbacks.set("system_message", { execute: resetHistoryIfNewSystemMessage });
+commandBotCallbacks.set("model", { execute: setChatGptModel });
+commandBotCallbacks.set("assistant_list", { execute: listAllAssistants });
+commandBotCallbacks.set("assistant_change", { execute: changeAssistantForChannel , autocomplete: retrieveAllAssitantsNames });
+commandBotCallbacks.set("assistant_create", { execute: createAssistant });
+commandBotCallbacks.set("assistant_update", { execute: updateAssistant, autocomplete: retrieveAllAssitantsNames });
+commandBotCallbacks.set("assistant_delete", { execute: deleteAssistantByName, autocomplete: retrieveAllAssitantsNames });
+commandBotCallbacks.set("assistant_reset", { execute: resetAssistantThread });
+commandBotCallbacks.set("assistant_stop", { execute: stopAssistantThreadRuns });
 
 
 export const registerCommandsInDiscord = async (commandsToRegister: Collection<string, BotCommand>) => {
-    const commands = await loadAllBotCommands(commandsToRegister);
-	try {
-		console.log(`Started refreshing ${commands.length} application (/) commands.`);		
-        await discordRestClient.put(Routes.applicationGuildCommands(
-            process.env.DISCORD_APP_ID,process.env.DISCORD_GUILD_ID),{ body: commands });
-		console.log(`Successfully reloaded application (/) commands.`);
-	} catch (error) {
-		console.error("Error loading VoiceToGPT commands!", error);
-	}
-}
+  const commands = await loadAllBotCommands(commandsToRegister);
+  try {
+    console.log(`Started refreshing ${commands.length} application (/) commands.`);
+    await discordRestClient.put(Routes.applicationGuildCommands(process.env.DISCORD_APP_ID, process.env.DISCORD_GUILD_ID), { body: commands });
+    console.log(`Successfully reloaded application (/) commands.`);
+  } catch (error) {
+    console.error("Error loading VoiceToGPT commands!", error);
+  }
+};
 
 export const loadAllBotCommands = async (commands: Collection<string, BotCommand>) => {
   const commandsPath = path.join(__dirname, "commands");
@@ -41,8 +46,8 @@ export const loadAllBotCommands = async (commands: Collection<string, BotCommand
     try {
       let command = (await import(filePath)).default;
       if (!isBotCommand(command)) continue;
-        commands.set(command.data.name, command);
-        commandsToRegister.push(command.data.toJSON());
+      commands.set(command.data.name, command);
+      commandsToRegister.push(command.data.toJSON());
     } catch (error) {
       console.error(`Error loading command at ${filePath}:`, error);
     }
@@ -50,28 +55,36 @@ export const loadAllBotCommands = async (commands: Collection<string, BotCommand
   return commandsToRegister;
 };
 
+export const handleAutocompleteInteraction = async (interaction: AutocompleteInteraction, commands: Collection<string, BotCommand>) => {
+  try {
+    const command = commands.get(interaction.commandName);
+    if (!command) {
+      console.error(`No command matching ${interaction.commandName} was found.`);
+      return;
+    }
+    const autocompleteCommand = commandBotCallbacks.get(interaction.commandName).autocomplete;
+    command.autocomplete!(interaction, autocompleteCommand);
+  } catch (error) {
+    console.error("Error autocompleting interaction", error);
+  }
+};
 
-// const configuringAssistantSettings = async (settingCommand: string, channelId: string) => {
-//   const assistantSettingChanged = await assistantForChannelChanged(settingCommand, channelId);
-//   if (assistantSettingChanged) return true;
+export const handleChatInputInteraction = async (interaction: ChatInputCommandInteraction, commands: Collection<string, BotCommand>) => {
+  try {
+    const command = commands.get(interaction.commandName);
+    if (!command) {
+      console.error(`No command matching ${interaction.commandName} was found.`);
+      return;
+    }
+    const commandExecuteClbk = commandBotCallbacks.get(interaction.commandName).execute;
+    await command.execute!(interaction, commandExecuteClbk);
+  } catch (error) {
+    console.error(error);
+    if (interaction.replied || interaction.deferred) {
+      await interaction.followUp({ content: "There was an error while executing this command!", ephemeral: true });
+    } else {
+      await interaction.reply({ content: "There was an error while executing this command!", ephemeral: true });
+    }
+  }
+};
 
-//   const assistantSettingList = await listAllAssistants(settingCommand, channelId);
-//   if (assistantSettingList) return true;
-
-//   const assistantSettingDeleted = await deleteAssistant(settingCommand, channelId);
-//   if (assistantSettingDeleted) return true;
-
-//   const assistantSettingUpdated = await assistantUpdated(settingCommand, channelId);
-//   if (assistantSettingUpdated) return true;
-
-//   const assistantSettingCreated = await assistantCreated(settingCommand, channelId);
-//   if (assistantSettingCreated) return true;
-
-//   const assistantThreadCleared = await assistantThreadReset(settingCommand, channelId);
-//   if (assistantThreadCleared) return true;
-
-//   const assistantStoped = await assistantRunsStop(settingCommand, channelId);
-//   if (assistantStoped) return true;
-
-//   return false;
-// };
