@@ -32,7 +32,7 @@ const assistantUpdate: BotCommand = {
 	autocomplete: async(interaction: AutocompleteInteraction, getExistingAssistants: () => Promise<string[]>) => {
         const existingAssistantChoices = await getExistingAssistants();
         const focusedValue = interaction.options.getFocused();
-		const filtered = existingAssistantChoices.filter(choice => choice.startsWith(focusedValue));
+		const filtered = existingAssistantChoices.filter(choice => choice.toLowerCase().startsWith(focusedValue.toLowerCase()));
 		await interaction.respond(
 			filtered.map(choice => ({ name: choice, value: choice })),
 		);
