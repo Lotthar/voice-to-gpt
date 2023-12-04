@@ -6,8 +6,13 @@ export const waitingAudioURI = "https://commondatastorage.googleapis.com/codesku
 
 export interface BotCommand {
     data: SlashCommandBuilder;
-    execute?: (interaction: ChatInputCommandInteraction, clkb: any) => Promise<void>;
+    execute: (interaction: ChatInputCommandInteraction, clkb: any) => Promise<void>;
     autocomplete?: (interaction: AutocompleteInteraction, clkb: any) => Promise<void>;
+}
+
+export interface BotCommandCallbacks {
+    execute: (arg1?: any, arg2?: any, arg3?: any) => Promise<any>
+    autocomplete?: (arg1?: any, arg2?: any, arg3?: any) => Promise<any>
 }
 
 export const isBotCommand = (object: any) => {
