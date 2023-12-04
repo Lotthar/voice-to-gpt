@@ -13,6 +13,12 @@ dotenv.config();
 const discordRestClient = new REST().setToken(process.env.DISCORD_API_KEY);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+
+/**
+ * 1. Each command needs a new definition in commands directory as separate file with default export
+ * 2. In order to inject functions from different contexts inside command's execute or autocomplete function
+ *    use map fro below **commandBotCallbacks** and follow the same principle
+ */
 export const commandBotCallbacks: Map<string, any> = new Map();
 
 commandBotCallbacks.set("system_message", { execute: resetHistoryIfNewSystemMessage });
