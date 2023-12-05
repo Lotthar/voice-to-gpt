@@ -1,7 +1,7 @@
 import { AssistantCreateParams } from "openai/resources/beta/assistants/assistants.mjs";
 import { downloadFileFromS3, uploadFileToS3 } from "../util/aws-s3-util.js";
 import { readJsonStreamToString } from "../util/stream-util.js";
-import { openai } from "../util/openai-api-util.js";
+import { openai } from "./openai-api-util.js";
 import { sendMessageToProperChannel } from "../discord/discord-util.js";
 import { AssistantOpenAI, AssistantToolsArray, ChannelAssistantData, GPTAssistantModels, GPTAssistantOptions } from "../types/openai.js";
 import { ChatInputCommandInteraction, Message } from "discord.js";
@@ -16,7 +16,7 @@ import {
   retrieveAllAssistants,
   retrieveAssistantByName,
   retrieveAssistantMessages,
-} from "../util/openai-assistant-util.js";
+} from "./openai-assistant-util.js";
 
 export const generateAssistantAnswer = async (message: Message, messageContent: string) => {
   let assistantData = await getChannelAssistantFromStorage(message.channelId);
@@ -72,7 +72,7 @@ export const createAssistant = async (interaction: ChatInputCommandInteraction, 
       tools: newAssistant.tools,
     };
     const createadAssistant = await openai.beta.assistants.create(createParams);
-    await interaction.reply(`You **created** a new GPT Assistant named: **${createadAssistant.name}**, model: **${createadAssistant.model}**, tools: **${createadAssistant.tools}**, instructions: *${createadAssistant.instructions}*`);
+    await interaction.reply(`You **created** a new GPT Assistant named: **${createadAssistant.name}**, model: **${createadAssistant.model}**, tools: **${JSON.stringify(createadAssistant.tools.map(t => t.type))}**, instructions: *${createadAssistant.instructions}*`);
   } catch (error) {
     console.error(`Error creating assistant for channel: ${interaction.channelId}`, error);
     await interaction.reply({content: `Error creating assistant!`, ephemeral: true});
@@ -83,8 +83,8 @@ export const createAssistant = async (interaction: ChatInputCommandInteraction, 
 export const updateAssistant = async (interaction: ChatInputCommandInteraction, newAssistant: AssistantOpenAI) => {
   try {
     let updateParams: Record<string,string | AssistantToolsArray> = {};
-    if (!newAssistant.name || !updateParams.instructions) return;
-    updateParams.instructions = newAssistant.instructions;
+    if (!newAssistant.name) return;
+    if (!!newAssistant.instructions) updateParams.instructions = newAssistant.instructions;
     if (!!newAssistant.model) updateParams.model = newAssistant.model;
     if (!!newAssistant.tools) updateParams.tools = newAssistant.tools;
     const currentAssistant = await retrieveAssistantByName(newAssistant.name);
@@ -93,7 +93,7 @@ export const updateAssistant = async (interaction: ChatInputCommandInteraction, 
       return;
     }
     const updatedAssistant = await openai.beta.assistants.update(currentAssistant.id, updateParams);
-    await interaction.reply(`You **updated** GPT Assistant wuth name: **${updatedAssistant.name}** model: **${updatedAssistant.model}**, tools: ${updateParams.tools} and instructions: *${updatedAssistant.instructions}*`);
+    await interaction.reply(`You **updated** GPT Assistant wuth name: **${updatedAssistant.name}** model: **${updatedAssistant.model}**, tools: **${JSON.stringify(updatedAssistant.tools.map(t => t.type))}** and instructions: *${updatedAssistant.instructions}*`);
   } catch (error) {
     console.error(`Error updating assistant for channel: ${interaction.channelId}`, error);
     await interaction.reply(`Error updating assistant!`);

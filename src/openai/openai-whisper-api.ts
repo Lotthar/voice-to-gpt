@@ -1,6 +1,6 @@
 import axios from 'axios';
 import FormData from 'form-data';
-import { openai } from '../util/openai-api-util.js';
+import { openai } from './openai-api-util.js';
 import { Readable } from "stream";
 
 

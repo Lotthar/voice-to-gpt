@@ -24,7 +24,7 @@ export type AssistantToolsArray = Array<
 export interface AssistantOpenAI {
   assistantId?: string,
   name: string,
-  instructions: string,
+  instructions?: string,
   model?: string
   tools?: AssistantToolsArray
 }

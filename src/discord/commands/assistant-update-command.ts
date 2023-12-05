@@ -12,8 +12,7 @@ const assistantUpdate: BotCommand = {
                 .setRequired(true))
         .addStringOption(option =>
             option.setName('instructions')
-                .setDescription('New instructions for GPT Assistant with chosen name.')
-                .setRequired(true))    
+                .setDescription('New instructions for GPT Assistant with chosen name.'))    
 		.addStringOption(option =>
 			option.setName('model')
 				.setDescription('New model version for GPT Assistant with chosen name.')
@@ -39,11 +38,11 @@ const assistantUpdate: BotCommand = {
 	},
     execute: async(interaction: ChatInputCommandInteraction, updateAssistant: (interaction: ChatInputCommandInteraction, newAssistant: AssistantOpenAI) => Promise<string>) => {
         const name = interaction.options.getString('name');
-        const instructions = interaction.options.getString('instructions');
-        if(name === null || instructions === null) {
+        if(name === null) {
             await interaction.reply(`You can't update a GPT Assistant without specifying its name and instructions!`);
             return;
         }
+        const instructions = interaction.options.getString('instructions') ?? undefined;
         const model = interaction.options.getString('model') ?? undefined;
         const choosenTool = interaction.options.getString('tools') ?? undefined;
         const tools = !choosenTool ? [{type: "code_interpreter"}, {type: "retrieval"}] as AssistantToolsArray: [{type: choosenTool}] as AssistantToolsArray;

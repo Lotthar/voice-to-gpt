@@ -7,7 +7,7 @@ import {
   checkAndReturnValidResponseData,
   getChatGptModel,
   openai
-} from "../util/openai-api-util.js";
+} from "./openai-api-util.js";
 import { sendMessageToProperChannel } from "../discord/discord-util.js";
 
 export const generateOpenAIAnswer = async (question: string, channelId: string): Promise<string> => {

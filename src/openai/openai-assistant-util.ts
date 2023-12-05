@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import { openai } from "../util/openai-api-util.js";
+import { openai } from "./openai-api-util.js";
 import { sendMessageToProperChannel, sendMessageToProperChannelWithFile } from "../discord/discord-util.js";
 import { AssistantFile, GPTAssistantModels } from "../types/openai.js";
 import { Attachment, Message } from "discord.js";

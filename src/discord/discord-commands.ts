@@ -4,9 +4,9 @@ import path from "path";
 import { BotCommand, BotCommandCallbacks, isBotCommand } from "../types/discord.js";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
-import { resetHistoryIfNewSystemMessage, setChatGptModel } from "../util/openai-api-util.js";
+import { resetHistoryIfNewSystemMessage, setChatGptModel } from "../openai/openai-api-util.js";
 import { stopAssistantThreadRuns, createAssistant, deleteAssistantByName, listAllAssistants, resetAssistantThread, updateAssistant, changeAssistantForChannel, generateAssistantAnswer } from "../openai/openai-assistant-api.js";
-import { retrieveAllAssitantsNames } from "../util/openai-assistant-util.js";
+import { retrieveAllAssitantsNames } from "../openai/openai-assistant-util.js";
 
 dotenv.config();
 
