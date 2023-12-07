@@ -68,7 +68,7 @@ export const createAssistant = async (interaction: ChatInputCommandInteraction, 
     const createParams: AssistantCreateParams = {
       name: newAssistant.name,
       instructions: newAssistant.instructions,
-      model: newAssistant.model ?? GPTAssistantModels[0],
+      model: newAssistant.model ?? GPTAssistantModels[1],
       tools: newAssistant.tools,
     };
     const createadAssistant = await openai.beta.assistants.create(createParams);

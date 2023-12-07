@@ -171,9 +171,4 @@ export const isThreadInactive = async (threadId: string) => {
   }
 };
 
-export const determineModel = (modelName: string): string => {
-  let model = GPTAssistantModels.find((model) => model.startsWith(modelName));
-  return !!model ? model : GPTAssistantModels[0];
-};
-
 export const getAssistantPath = (channelId: string): string => `assistants/${channelId}-assistant.json`;
