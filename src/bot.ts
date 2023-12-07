@@ -78,7 +78,8 @@ discordClient.on(Events.InteractionCreate, async (interaction: Interaction) => {
     await handleChatInputInteraction(interaction, discordCommands);
     return;
   }
-  if(interaction.isAutocomplete()) await handleAutocompleteInteraction(interaction,discordCommands);
+  if(interaction.isAutocomplete()) 
+    await handleAutocompleteInteraction(interaction,discordCommands);
 });
 
 discordClient.login(process.env.DISCORD_API_KEY);

@@ -143,20 +143,6 @@ const fetchFileFromUrl = async (attachment: Attachment) => {
   return response;
 };
 
-export const parseAssitantConfigInput = (input: string, configParamLabels: string[]) => {
-  input = input.trim();
-  const params: Record<string, string> = {};
-  configParamLabels.forEach((label) => {
-    const regex = new RegExp(`${label}\\s*=\\s*"([^"]*)"`, "gi");
-    let match;
-    while ((match = regex.exec(input)) !== null) {
-      const value = match[1];
-      params[label] = value;
-    }
-  });
-  return params;
-};
-
 export const pollForRunUntil = async (runId: string, threadId: string, desiredStatus: string, intervalMs = 2000, maxAttempts = 150) => {
   for (let attempts = 0; attempts < maxAttempts; attempts++) {
     try {

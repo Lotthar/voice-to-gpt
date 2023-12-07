@@ -17,8 +17,8 @@ const assistantUpdate: BotCommand = {
 			option.setName('model')
 				.setDescription('New model version for GPT Assistant with chosen name.')
 				.addChoices(
-					{ name: 'GPT-3.5(cheaper)', value: GPTAssistantModels[0]},
-					{ name: 'GPT-4', value: GPTAssistantModels[1] },
+					{ name: 'GPT-4', value: GPTAssistantModels[0]},
+					{ name: 'GPT-3.5(cheaper)', value: GPTAssistantModels[1] },
 				))
         .addStringOption(option =>
             option.setName('tools')

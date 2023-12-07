@@ -36,7 +36,6 @@ export interface AssistantFile {
 
 export const GPTModels = ["gpt-3.5-turbo", "gpt-4"];
 export const GPTAssistantModels = ["gpt-4-1106-preview", "gpt-3.5-turbo-1106"];
-export const GPTAssistantOptions = ["name", "instructions", "model"];
 
 export const genericResponse = "The answer is not generated properly!";
 

@@ -100,12 +100,11 @@ export const sendTyping = async (message: Message, stopTyping: Function) => {
 
 export const sendMessageWithTypingAndClbk = async (message: Message, clbk: () => Promise<void | string>) => {
   let messageSent = false;
-  const stopTyping = () => messageSent;
-  const typingPromise = sendTyping(message, stopTyping);
+  const sendTypingPromise = sendTyping(message, () => messageSent);
   const clbkPromise = clbk().then(() => {
     messageSent = true;
   });
-  await Promise.all([typingPromise, clbkPromise]);
+  await Promise.all([sendTypingPromise, clbkPromise]);
 };
 
 export const sendMessageToProperChannelWithFile = async (message: string, files: Array<AssistantFile>, channelId: string) => {

@@ -3,7 +3,7 @@ import { downloadFileFromS3, uploadFileToS3 } from "../util/aws-s3-util.js";
 import { readJsonStreamToString } from "../util/stream-util.js";
 import { openai } from "./openai-api-util.js";
 import { sendMessageToProperChannel } from "../discord/discord-util.js";
-import { AssistantOpenAI, AssistantToolsArray, ChannelAssistantData, GPTAssistantModels, GPTAssistantOptions } from "../types/openai.js";
+import { AssistantOpenAI, AssistantToolsArray, ChannelAssistantData, GPTAssistantModels } from "../types/openai.js";
 import { ChatInputCommandInteraction, Message } from "discord.js";
 import {
   cancelAllRuns,
@@ -22,7 +22,7 @@ export const generateAssistantAnswer = async (message: Message, messageContent: 
   let assistantData = await getChannelAssistantFromStorage(message.channelId);
   if (assistantData === null) {
     await sendMessageToProperChannel(
-      `Please create or select assistant for this channel before trying, use: **!assistant_change name="Asistant name" instructions="Asistant instructions" model="here put 'gpt-3' or 'gpt4'"** . You can update assistant parameters with the same way!`,
+      `Please create or select assistant for this channel before trying, use: **/assistant_change**. You can update assistant using **/assistant_update**`,
       message.channelId
     );
     return;
@@ -85,13 +85,14 @@ export const updateAssistant = async (interaction: ChatInputCommandInteraction, 
     let updateParams: Record<string,string | AssistantToolsArray> = {};
     if (!newAssistant.name) return;
     if (!!newAssistant.instructions) updateParams.instructions = newAssistant.instructions;
-    if (!!newAssistant.model) updateParams.model = newAssistant.model;
     if (!!newAssistant.tools) updateParams.tools = newAssistant.tools;
     const currentAssistant = await retrieveAssistantByName(newAssistant.name);
     if(!currentAssistant) {
       await interaction.reply(`There is no GPT Assistant with name: **${newAssistant.name}**!`);
       return;
     }
+    if (!!newAssistant.model) updateParams.model = newAssistant.model;
+    else updateParams.model = currentAssistant.model;
     const updatedAssistant = await openai.beta.assistants.update(currentAssistant.id, updateParams);
     await interaction.reply(`You **updated** GPT Assistant wuth name: **${updatedAssistant.name}** model: **${updatedAssistant.model}**, tools: **${JSON.stringify(updatedAssistant.tools.map(t => t.type))}** and instructions: *${updatedAssistant.instructions}*`);
   } catch (error) {
