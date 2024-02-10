@@ -36,10 +36,10 @@ DISCORD_API_KEY=your_discord_api_key
 # OpenAI API key for authenticating API calls
 OPEN_API_KEY=your_openai_api_key
 
-# AWS authorization information for using AWS S3 bucket
-AWS_ACCESS_KEY=your_aws_access_key
-AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
-AWS_REGION=your_aws_region
+# AWS authorization information for using AWS S3 bucket (Using _VAL sufix to avoid colission with Vercel reserved env variable keywords)
+AWS_ACCESS_KEY_VAL_VAL=your_aws_access_key
+AWS_SECRET_ACCESS_KEY_VAL=your_aws_secret_access_key
+AWS_REGION_VAL=your_aws_region
 S3_BUCKET=your_s3_bucket_name
 
 # Google Cloud API authentication information

@@ -7,10 +7,10 @@ dotenv.config();
 const BUCKET: string = process.env.S3_BUCKET;
 
 const s3 = new S3({
-  region: process.env.AWS_REGION,
+  region: process.env.AWS_REGION_VAL,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    accessKeyId: process.env.AWS_ACCESS_KEY_VAL,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY_VAL,
   },
 });
 
