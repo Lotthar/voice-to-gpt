@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 import { resetHistoryIfNewSystemMessage, setChatGptModel } from "../openai/openai-api-util.js";
 import { stopAssistantThreadRuns, createAssistant, deleteAssistantByName, listAllAssistants, resetAssistantThread, updateAssistant, changeAssistantForChannel, generateAssistantAnswer } from "../openai/openai-assistant-api.js";
 import { retrieveAllAssitantsNames } from "../openai/openai-assistant-util.js";
+import { generateImage } from "../openai/openai-image-gen.js";
 
 dotenv.config();
 
@@ -23,7 +24,7 @@ export const commandCallbacks: Map<string, BotCommandCallbacks> = new Map();
 
 commandCallbacks.set("system_message", { execute: resetHistoryIfNewSystemMessage });
 commandCallbacks.set("model", { execute: setChatGptModel });
-commandCallbacks.set("assistant", {execute: generateAssistantAnswer});
+commandCallbacks.set("generate_image", {execute: generateImage});
 commandCallbacks.set("assistant_list", { execute: listAllAssistants });
 commandCallbacks.set("assistant_change", { execute: changeAssistantForChannel , autocomplete: retrieveAllAssitantsNames });
 commandCallbacks.set("assistant_create", { execute: createAssistant });
