@@ -34,6 +34,17 @@ export interface AssistantFile {
   file: Buffer
 }
 
+export interface ImageEmbed {
+  image: {
+      url: string;
+  };
+}
+
+export interface GeneratedImageResponse {
+  embeds: ImageEmbed;
+  content: string;
+}
+
 export const GPTModels = ["gpt-3.5-turbo", "gpt-4"];
 export const GPTAssistantModels = ["gpt-4-1106-preview", "gpt-3.5-turbo-1106"];
 

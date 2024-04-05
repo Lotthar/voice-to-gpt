@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
 import { BotCommand } from '../../types/discord.js';
 
-const imageGeneration: BotCommand = {
+const imageGen: BotCommand = {
 	data: new SlashCommandBuilder()
 		.setName('generate_image')
 		.addStringOption(option =>
@@ -9,10 +9,16 @@ const imageGeneration: BotCommand = {
 				.setDescription('Describe the image you want to be generated.')
 				.setRequired(true))
 		.setDescription('Generates the images using OpenAI Dall-E '),
-	execute: async(interaction: ChatInputCommandInteraction, generateImage: (prompt: string | null, interaction: ChatInputCommandInteraction) => Promise<void>) => {
+	execute: async(interaction: ChatInputCommandInteraction, generateImage: (prompt: string) => Promise<any>) => {
 		const prompt = interaction.options.getString('prompt') ?? null;
-		await generateImage(prompt, interaction);
+		if(prompt === null) {
+			await interaction.reply(`No prompt is provided to be able to generate image!`);
+			return;
+		}
+		await interaction.deferReply();
+		const { embeds, content } = await generateImage(prompt);
+		await interaction.editReply({ embeds, content});
 	},
 };
 
-export default imageGeneration;
+export default imageGen;

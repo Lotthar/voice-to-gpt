@@ -2,13 +2,9 @@ import { AttachmentBuilder, ChatInputCommandInteraction } from "discord.js";
 import { openai } from "./openai-api-util.js";
 import fetch from 'node-fetch';
 import { ImagesResponse } from "openai/resources/images.mjs";
+import { GeneratedImageResponse } from "../types/openai.js";
 
-export const generateImage = async (prompt: string,  interaction: ChatInputCommandInteraction) => {
-    if(prompt === null) {
-        await interaction.reply(`No prompt is provided to be able to generate image!`);
-        return;
-    }
-    await interaction.deferReply();
+export const generateImage = async (prompt: string) => {
     const response: ImagesResponse = await openai.images.generate({ 
       model: "dall-e-3",
       prompt: prompt,
@@ -16,10 +12,10 @@ export const generateImage = async (prompt: string,  interaction: ChatInputComma
       n: 1, 
       size: "1024x1024" 
     });
-    const imageFiles  = await getImagesFromResponse(response);
     const imageEmbeds = getImageEmbeds(response);
-    await interaction.editReply({files: imageFiles, embeds: imageEmbeds, content: `**Your Prompt**: "${prompt}" \n**Revised prompt**: "${response.data.map(d => d.revised_prompt)[0]}"`})
-  }
+    const imageContent = `**Your Prompt**: "${prompt}" \n**Revised prompt**: "${response.data.map(d => d.revised_prompt)[0]}"`;
+    return { embeds: imageEmbeds, content: imageContent } as unknown as GeneratedImageResponse;
+}
 
 const getImageEmbeds = (response: ImagesResponse) => {
     return response.data.map(imageData => {
