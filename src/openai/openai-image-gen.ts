@@ -2,7 +2,7 @@ import { AttachmentBuilder, ChatInputCommandInteraction } from "discord.js";
 import { openai } from "./openai-api-util.js";
 import fetch from 'node-fetch';
 import { ImagesResponse } from "openai/resources/images.mjs";
-import { GeneratedImageResponse } from "../types/openai.js";
+import { GeneratedImageResponse, ImageEmbed } from "../types/openai.js";
 
 export const generateImage = async (prompt: string) => {
     const response: ImagesResponse = await openai.images.generate({ 
@@ -13,9 +13,22 @@ export const generateImage = async (prompt: string) => {
       size: "1024x1024" 
     });
     const imageEmbeds = getImageEmbeds(response);
-    const imageContent = `**Your Prompt**: "${prompt}" \n**Revised prompt**: "${response.data.map(d => d.revised_prompt)[0]}"`;
-    return { embeds: imageEmbeds, content: imageContent } as unknown as GeneratedImageResponse;
+    const imageContent = `**Your Prompt**: "${prompt}" \n**Revised prompt**: "${response.data[0].revised_prompt}"`;
+    return { embeds: imageEmbeds, content: imageContent, url: response.data[0].url! } as unknown as GeneratedImageResponse;
 }
+export const regenerateImage = async (url: string) => {
+    const existingImage = await fetch(url);
+    const response: ImagesResponse = await openai.images.createVariation({ 
+      model: "dall-e-2",
+      image: existingImage,
+      n: 1, 
+      size: "1024x1024" 
+    });
+    const imageEmbeds = getImageEmbeds(response);
+    const imageContent = `**Your Prompt**: "${prompt}" \n**Revised prompt**: "${response.data[0].revised_prompt}"`;
+    return { embeds: imageEmbeds, content: imageContent, url: response.data[0].url! } as unknown as GeneratedImageResponse;
+}
+
 
 const getImageEmbeds = (response: ImagesResponse) => {
     return response.data.map(imageData => {
@@ -24,7 +37,7 @@ const getImageEmbeds = (response: ImagesResponse) => {
                 url: imageData.url!
             }
         }
-        return embed;
+        return embed as ImageEmbed;
     })
 }
   

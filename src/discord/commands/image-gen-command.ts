@@ -1,5 +1,6 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, ChatInputCommandInteraction, ComponentType, Message, SlashCommandBuilder } from 'discord.js';
 import { BotCommand } from '../../types/discord.js';
+import { regenerateImage } from '../../openai/openai-image-gen.js';
 
 const imageGen: BotCommand = {
 	data: new SlashCommandBuilder()
@@ -15,10 +16,38 @@ const imageGen: BotCommand = {
 			await interaction.reply(`No prompt is provided to be able to generate image!`);
 			return;
 		}
-		await interaction.deferReply();
-		const { embeds, content } = await generateImage(prompt);
-		await interaction.editReply({ embeds, content});
+		try {
+			await interaction.deferReply();
+			const { embeds, content, url } = await generateImage(prompt);
+			const response = await interaction.editReply({ embeds, content, components: [getButtonRow()] });
+			await generateImageButtons(response, url);
+		} catch (error) {
+			 console.log(error);
+			 await interaction.reply("Error in generating image using OpenAI");
+		}
 	},
 };
+
+const generateImageButtons = async(imgResponse: Message<boolean>, imgUrl: string) => {
+	const imageResponseCollector = imgResponse.createMessageComponentCollector({ componentType: ComponentType.Button, time: 3_600_000 });
+	imageResponseCollector.on('collect', async interaction => {
+		await regenerateImageInteraction(interaction, imgUrl);
+	});
+}
+
+const regenerateImageInteraction = async(interaction: ButtonInteraction,url: string) => {
+	await interaction.deferReply();
+	const { embeds: imageEmbeds, url: imageUrl, content: imageContent } = await regenerateImage(url);
+	const response = await interaction.editReply({embeds: imageEmbeds, content: imageContent, components: [getButtonRow()]});
+	await generateImageButtons(response, imageUrl);
+}
+
+const getButtonRow = () => {
+	const btmRegenerate = new ButtonBuilder()
+	.setCustomId('variation')
+	.setLabel('Regenerate Image')
+	.setStyle(ButtonStyle.Primary);
+	return new ActionRowBuilder<ButtonBuilder>().addComponents(btmRegenerate);
+}
 
 export default imageGen;

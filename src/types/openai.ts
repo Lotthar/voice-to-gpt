@@ -41,8 +41,9 @@ export interface ImageEmbed {
 }
 
 export interface GeneratedImageResponse {
-  embeds: ImageEmbed;
+  embeds: ImageEmbed[];
   content: string;
+  url: string;
 }
 
 export const GPTModels = ["gpt-3.5-turbo", "gpt-4"];
