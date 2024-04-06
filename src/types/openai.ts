@@ -1,3 +1,4 @@
+import { EmbedBuilder } from "discord.js";
 import { createRequire } from "module";
 import { AssistantUpdateParams } from "openai/resources/beta/assistants/assistants.mjs";
 
@@ -41,7 +42,7 @@ export interface ImageEmbed {
 }
 
 export interface GeneratedImageResponse {
-  embeds: ImageEmbed[];
+  embeds: EmbedBuilder[];
   content: string;
   url: string;
 }

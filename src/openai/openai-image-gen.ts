@@ -1,8 +1,8 @@
-import { AttachmentBuilder, ChatInputCommandInteraction } from "discord.js";
+import { AttachmentBuilder, ChatInputCommandInteraction, EmbedBuilder } from "discord.js";
 import { openai } from "./openai-api-util.js";
 import fetch from 'node-fetch';
 import { ImagesResponse } from "openai/resources/images.mjs";
-import { GeneratedImageResponse, ImageEmbed } from "../types/openai.js";
+import { GeneratedImageResponse } from "../types/openai.js";
 
 export const generateImage = async (prompt: string) => {
     const response: ImagesResponse = await openai.images.generate({ 
@@ -10,12 +10,14 @@ export const generateImage = async (prompt: string) => {
       prompt: prompt,
       quality: "hd",
       n: 1, 
+    //   style: "vivid"
       size: "1024x1024" 
     });
-    const imageEmbeds = getImageEmbeds(response);
-    const imageContent = `**Your Prompt**: "${prompt}" \n**Revised prompt**: "${response.data[0].revised_prompt}"`;
-    return { embeds: imageEmbeds, content: imageContent, url: response.data[0].url! } as unknown as GeneratedImageResponse;
+    const embeds = getImageEmbeds(response);
+    const content = `**Your Prompt**: "${prompt}" \n**Revised prompt**: "${response.data[0].revised_prompt}"`;
+    return { embeds, content, url: response.data[0].url! } as unknown as GeneratedImageResponse;
 }
+
 export const regenerateImage = async (url: string) => {
     const existingImage = await fetch(url);
     const response: ImagesResponse = await openai.images.createVariation({ 
@@ -24,21 +26,28 @@ export const regenerateImage = async (url: string) => {
       n: 1, 
       size: "1024x1024" 
     });
+    const embeds = getImageEmbeds(response);
+    return { embeds, content: "Regenerated Image", url: response.data[0].url! } as unknown as GeneratedImageResponse;
+}
+
+export const editImage = async (url: string, prompt: string, maskUrl: string) => {
+    const existingImage = await fetch(url);
+    const response: ImagesResponse = await openai.images.edit({
+        model: "dall-e-2",
+        prompt: prompt,
+        image: existingImage,
+        // mask: maskImage.data,
+        n: 1, 
+        size: "1024x1024" 
+    })
+    console.log(response);
     const imageEmbeds = getImageEmbeds(response);
     const imageContent = `**Your Prompt**: "${prompt}" \n**Revised prompt**: "${response.data[0].revised_prompt}"`;
     return { embeds: imageEmbeds, content: imageContent, url: response.data[0].url! } as unknown as GeneratedImageResponse;
 }
 
-
 const getImageEmbeds = (response: ImagesResponse) => {
-    return response.data.map(imageData => {
-        const embed = { 
-            image: {
-                url: imageData.url!
-            }
-        }
-        return embed as ImageEmbed;
-    })
+    return response.data.map(imageData => new EmbedBuilder().setImage(imageData.url!))
 }
   
 const getImagesFromResponse = async (response: ImagesResponse) => {
