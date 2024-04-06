@@ -2,7 +2,7 @@ import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, ChatIn
 import { BotCommand } from '../../types/discord.js';
 import { editImage, regenerateImage } from '../../openai/openai-image-gen.js';
 import { GeneratedImageResponse } from '../../types/openai.js';
-
+import { ImageGenerateParams } from 'openai/resources/images.mjs';
 const imageGen: BotCommand = {
 	data: new SlashCommandBuilder()
 		.setName('generate_image')
@@ -10,21 +10,48 @@ const imageGen: BotCommand = {
 			option.setName('prompt')
 				.setDescription('Describe the image you want to be generated.')
 				.setRequired(true))
+		.addStringOption(option =>
+			option.setName('size')
+				.setDescription('Select the size of the image to be generated')
+				.addChoices(
+					{ name: "1024x1024", value:  "1024x1024" },
+					{ name: "256x256", value: "256x256"},
+					{ name: "512x512", value: "512x512" },
+					{ name: "1792x1024", value: "1792x1024" },
+					{ name:  "1024x1792" , value: "1024x1792" },
+				)) 
+		.addStringOption(option =>
+			option.setName('quality')
+				.setDescription('Select image quality')
+				.addChoices(
+					{ name: "HD", value:  "hd" },
+					{ name: "Standard", value: "standard"},
+				))        
+		.addStringOption(option =>
+			option.setName('style')
+				.setDescription('Select image style')
+				.addChoices(
+					{ name: "Vivid", value:  "vivid" },
+					{ name: "Natural", value: "natural"},
+				))    
 		.setDescription('Generates the images using OpenAI Dall-E '),
-	execute: async(interaction: ChatInputCommandInteraction, generateImage: (prompt: string) => Promise<GeneratedImageResponse>) => {
+	execute: async(interaction: ChatInputCommandInteraction, generateImage: (prompt: string, size: ImageGenerateParams["size"], quality: ImageGenerateParams["quality"], style: ImageGenerateParams["style"]) => Promise<GeneratedImageResponse>) => {
+		await interaction.deferReply();
 		const prompt = interaction.options.getString('prompt') ?? null;
 		if(prompt === null) {
-			await interaction.reply(`No prompt is provided to be able to generate image!`);
+			await interaction.editReply(`No prompt is provided to be able to generate image!`);
 			return;
 		}
+		const size = (interaction.options.getString('size') ?? "1024x1024") as ImageGenerateParams["size"];
+		const quality = (interaction.options.getString('quality') ?? "hd") as ImageGenerateParams["quality"];
+		const style = (interaction.options.getString('style') ?? "vivid") as ImageGenerateParams["style"];
 		try {
-			await interaction.deferReply();
-			const { embeds, content, url: newImageUrl } = await generateImage(prompt);
+			const { embeds, content, url: newImageUrl } = await generateImage(prompt, size, quality, style);
 			const response = await interaction.editReply({ embeds, content, components: [getImageButtonsRow()] });
 			await generateImageButtons(response, newImageUrl);
 		} catch (error) {
 			 console.log(error);
-			 await interaction.reply("Error in generating image using OpenAI");
+			 await interaction.editReply("Error in generating image using OpenAI");
 		}
 	},
 };

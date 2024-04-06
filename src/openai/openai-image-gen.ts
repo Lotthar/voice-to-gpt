@@ -3,15 +3,16 @@ import { openai } from "./openai-api-util.js";
 import fetch from 'node-fetch';
 import { ImagesResponse } from "openai/resources/images.mjs";
 import { GeneratedImageResponse } from "../types/openai.js";
+import { ImageGenerateParams } from "openai/resources/index.mjs";
 
-export const generateImage = async (prompt: string) => {
+export const generateImage = async (prompt: string, size: ImageGenerateParams["size"], quality: ImageGenerateParams["quality"], style: ImageGenerateParams["style"]) => {
     const response: ImagesResponse = await openai.images.generate({ 
       model: "dall-e-3",
       prompt: prompt,
-      quality: "hd",
+      quality: quality,
       n: 1, 
-    //   style: "vivid"
-      size: "1024x1024" 
+      style: style,
+      size: size
     });
     const embeds = getImageEmbeds(response);
     const content = `**Your Prompt**: "${prompt}" \n**Revised prompt**: "${response.data[0].revised_prompt}"`;

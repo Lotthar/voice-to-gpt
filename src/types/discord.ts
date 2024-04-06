@@ -11,7 +11,7 @@ export interface BotCommand {
 }
 
 export interface BotCommandCallbacks {
-    execute: (arg1?: any, arg2?: any, arg3?: any) => Promise<any>
+    execute: (arg1?: any, arg2?: any, arg3?: any, arg4?: any) => Promise<any>
     autocomplete?: (arg1?: any, arg2?: any, arg3?: any) => Promise<any>
 }
 
