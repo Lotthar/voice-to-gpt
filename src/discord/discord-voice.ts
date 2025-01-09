@@ -1,5 +1,5 @@
 import axios from "axios";
-import { generateOpenAIAnswer } from "../openai/openai-api.js";
+import { generateOpenAIAnswer, generateOpenAIAnswerFromTranscript } from "../openai/openai-api.js";
 import { generateSpeechFromText, generateTextFromSpeech } from "../openai/openai-whisper-api.js";
 import { createAudioResource, createAudioPlayer, AudioPlayer, VoiceConnection } from "@discordjs/voice";
 import { Readable } from "node:stream";
@@ -11,7 +11,7 @@ let waitingAudioResource: any;
 export const playOpenAiAnswerWithSpeech= async (audioBuffer: Buffer, connection: VoiceConnection, channelId: string) => {
   await initAndSubscribeAudioPlayerToVoiceChannel(connection);
   const transcript = await generateTextFromSpeech(audioBuffer, "wav");
-  const openAiAnswer = await generateOpenAIAnswer(transcript!, channelId);
+  const openAiAnswer = await generateOpenAIAnswerFromTranscript(transcript!, channelId);
   await playSpeechAudioFromText(openAiAnswer);
 };
 

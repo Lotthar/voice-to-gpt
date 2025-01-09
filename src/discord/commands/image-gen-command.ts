@@ -5,7 +5,7 @@ import { GeneratedImageResponse } from '../../types/openai.js';
 import { ImageGenerateParams } from 'openai/resources/images.mjs';
 const imageGen: BotCommand = {
 	data: new SlashCommandBuilder()
-		.setName('generate_image')
+		.setName('dalle_generate_image')
 		.addStringOption(option =>
 			option.setName('prompt')
 				.setDescription('Describe the image you want to be generated.')

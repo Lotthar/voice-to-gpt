@@ -20,6 +20,7 @@ const assistantDelete: BotCommand = {
 		);
 	},
     execute: async(interaction: ChatInputCommandInteraction, deleteAssistant: (name: string, interaction: ChatInputCommandInteraction) => Promise<string>) => {
+        await interaction.deferReply({ ephemeral: true });
         const name = interaction.options.getString('name');
         if(name === null) {
             await interaction.reply(`You can't delete a GPT Assistant without specifying its name and instructions!`);

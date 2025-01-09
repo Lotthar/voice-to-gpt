@@ -1,6 +1,7 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
 import { BotCommand } from '../../types/discord.js';
-import { AssistantOpenAI, AssistantToolsArray, GPTAssistantModels } from '../../types/openai.js';
+import { GPTAssistantModels } from '../../types/openai.js';
+import { AssistantCreateParams, AssistantTool } from 'openai/resources/beta/assistants.mjs';
 
 const assistantCreate: BotCommand = {
 	data: new SlashCommandBuilder()
@@ -20,6 +21,8 @@ const assistantCreate: BotCommand = {
 				.addChoices(
 					{ name: 'GPT-3.5(cheaper)', value: GPTAssistantModels[0]},
 					{ name: 'GPT-4', value:GPTAssistantModels[1] },
+                    { name: 'GPT-4 Omni', value:GPTAssistantModels[2] },
+                    { name: 'GPT-4 Omni Mini', value:GPTAssistantModels[3] },
 				))
         .addStringOption(option =>
             option.setName('tools')
@@ -29,8 +32,9 @@ const assistantCreate: BotCommand = {
                     { name: 'File Retrieveal', value: "retrieval" },
                 ))
 		.setDescription('Creates a new GPT Assistant with name, instructions, model and tools.'),
-	execute: async(interaction: ChatInputCommandInteraction, assistantCreate: (interaction: ChatInputCommandInteraction, assistant: AssistantOpenAI) => Promise<void>) => {
-		const name = interaction.options.getString('name');
+	execute: async(interaction: ChatInputCommandInteraction, assistantCreate: (interaction: ChatInputCommandInteraction, assistant: AssistantCreateParams) => Promise<void>) => {
+        await interaction.deferReply({ ephemeral: true });
+        const name = interaction.options.getString('name');
         const instructions = interaction.options.getString('instructions');
         if(name === null || instructions === null) {
             await interaction.reply(`You can't create a GPT Assistant without any name or instructions!`);
@@ -38,7 +42,7 @@ const assistantCreate: BotCommand = {
         }
         const model = interaction.options.getString('model') ??  GPTAssistantModels[0];
         const choosenTool = interaction.options.getString('tools') ?? undefined;
-        const tools = !choosenTool ? [{type: "code_interpreter"}, {type: "retrieval"}] as AssistantToolsArray: [{type: choosenTool}] as AssistantToolsArray;
+        const tools: Array<AssistantTool> = !choosenTool ? [{type: "code_interpreter"}, {type: "file_search"}] : [{type: choosenTool} as AssistantTool];
 		await assistantCreate(interaction, { name, instructions, model, tools });
 	},
 };

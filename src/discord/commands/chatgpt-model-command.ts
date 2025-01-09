@@ -2,9 +2,9 @@ import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
 import { BotCommand } from '../../types/discord.js';
 import { GPTModels } from '../../types/openai.js';
 
-const gptModel: BotCommand = {
+const chatgptModel: BotCommand = {
 	data: new SlashCommandBuilder()
-		.setName('model')
+		.setName('chatgpt_model')
 		.addStringOption(option =>
 			option.setName('name')
 				.setDescription('Setting standard GPT bot model version.')
@@ -15,10 +15,11 @@ const gptModel: BotCommand = {
 				))
 		.setDescription('Selects a new GPT model version for bot to use.'),
 	execute: async(interaction: ChatInputCommandInteraction, resetModel: (model: string, channelId: string) => Promise<void>) => {
+		await interaction.deferReply({ ephemeral: true });
 		const chosenModel = interaction.options.getString('name') ?? GPTModels[0];
 		await resetModel(chosenModel, interaction.channelId);
 		await interaction.reply(`You changed current GPT model to: **${chosenModel}**`);
 	},
 };
 
-export default gptModel;
+export default chatgptModel;

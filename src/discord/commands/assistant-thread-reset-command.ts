@@ -6,6 +6,7 @@ const assistantList: BotCommand = {
 		.setName('assistant_reset')
 		.setDescription(`Reset current conversation with GPT assistant and it's history.`),
 	execute: async(interaction: ChatInputCommandInteraction, resetAssistantThread: (interaction: ChatInputCommandInteraction) => Promise<void>) => {
+		await interaction.deferReply({ ephemeral: true });
 		await resetAssistantThread(interaction);
 	},
 };

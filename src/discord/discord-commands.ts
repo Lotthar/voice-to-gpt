@@ -1,4 +1,4 @@
-import { AutocompleteInteraction, ChatInputCommandInteraction, Collection, REST, Routes } from "discord.js";
+import { AutocompleteInteraction, ChatInputCommandInteraction, Client, Collection, REST, Routes } from "discord.js";
 import { readdirSync } from "fs";
 import path from "path";
 import { BotCommand, BotCommandCallbacks, isBotCommand } from "../types/discord.js";
@@ -8,11 +8,12 @@ import { resetHistoryIfNewSystemMessage, setChatGptModel } from "../openai/opena
 import { stopAssistantThreadRuns, createAssistant, deleteAssistantByName, listAllAssistants, resetAssistantThread, updateAssistant, changeAssistantForChannel, generateAssistantAnswer } from "../openai/openai-assistant-api.js";
 import { retrieveAllAssitantsNames } from "../openai/openai-assistant-util.js";
 import { generateImage } from "../openai/openai-image-gen.js";
+import { generateOpenAIAnswer } from "../openai/openai-api.js";
 
 dotenv.config();
 
 const discordRestClient = new REST().setToken(process.env.DISCORD_API_KEY);
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __commandDirname = path.dirname(fileURLToPath(import.meta.url));
 
 
 /**
@@ -21,10 +22,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  *    use map fro below **commandBotCallbacks** and follow the same principle
  */
 export const commandCallbacks: Map<string, BotCommandCallbacks> = new Map();
-
-commandCallbacks.set("system_message", { execute: resetHistoryIfNewSystemMessage });
-commandCallbacks.set("model", { execute: setChatGptModel });
-commandCallbacks.set("generate_image", {execute: generateImage});
+commandCallbacks.set("chatgpt", { execute: generateOpenAIAnswer });
+commandCallbacks.set("chatgpt_sys_nessage", { execute: resetHistoryIfNewSystemMessage });
+commandCallbacks.set("chatgpt_model", { execute: setChatGptModel });
+commandCallbacks.set("dalle_generate_image", {execute: generateImage});
+commandCallbacks.set("assistant", { execute: generateAssistantAnswer });
 commandCallbacks.set("assistant_list", { execute: listAllAssistants });
 commandCallbacks.set("assistant_change", { execute: changeAssistantForChannel , autocomplete: retrieveAllAssitantsNames });
 commandCallbacks.set("assistant_create", { execute: createAssistant });
@@ -46,7 +48,7 @@ export const registerCommandsInDiscord = async (commandsToRegister: Collection<s
 };
 
 export const loadAllBotCommands = async (commands: Collection<string, BotCommand>) => {
-  const commandsPath = path.join(__dirname, "commands");
+  const commandsPath = path.join(__commandDirname, "commands");
   const commandFiles = readdirSync(commandsPath).filter((file) => file.endsWith(".js"));
   const commandsToRegister = [];
   for (const file of commandFiles) {

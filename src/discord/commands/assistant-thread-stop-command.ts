@@ -6,6 +6,7 @@ const assistantList: BotCommand = {
 		.setName('assistant_stop')
 		.setDescription(`Stop GPT assistant from completing the task.`),
 	execute: async(interaction: ChatInputCommandInteraction, stopAssistantThread: (interaction: ChatInputCommandInteraction) => Promise<void>) => {
+		await interaction.deferReply({ ephemeral: true });
 		await stopAssistantThread(interaction);
 	},
 };

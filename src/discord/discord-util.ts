@@ -1,4 +1,4 @@
-import { ChannelType, TextChannel, VoiceChannel, Message, VoiceState, AttachmentBuilder } from "discord.js";
+import { ChannelType, TextChannel, VoiceChannel, Message, VoiceState, AttachmentBuilder, ChatInputCommandInteraction } from "discord.js";
 import {
   VoiceConnectionStatus,
   joinVoiceChannel,
@@ -10,7 +10,7 @@ import { playOpenAiAnswerWithSpeech } from "./discord-voice.js";
 import { discordClient } from "../bot.js";
 import { ChannelCommonType } from "../types/discord.js";
 import { AssistantFile } from "../types/openai.js";
-import { createWavAudioBufferFromOpus } from "../util/audio-util.js";
+// import { createWavAudioBufferFromOpus } from "../util/audio-util.js";
 
 const BOT_NAME = "VoiceToGPT";
 
@@ -49,8 +49,8 @@ const addSpeakingEvents = (connection: VoiceConnection, channelId: string): void
       const userOpusStream = receiver.subscriptions.get(userId);
       if(!userOpusStream) return;
       console.log(`User ${userId} finished speaking, creating an answer...`);
-      const voiceAudioBuffer = await createWavAudioBufferFromOpus(userOpusStream, channelId);
-      await playOpenAiAnswerWithSpeech(voiceAudioBuffer, connection, channelId);
+      // const voiceAudioBuffer = await createWavAudioBufferFromOpus(userOpusStream, channelId);
+      // await playOpenAiAnswerWithSpeech(voiceAudioBuffer, connection, channelId);
     } catch (error) {
       console.error("Error playing answer on voice channel: ", error);
       await sendMessageToProperChannel("**There was problem with the answer**", channelId);
@@ -78,7 +78,6 @@ const destroyConnectionIfOnlyBotRemains = async (connection: VoiceConnection | u
   const member = isUserChannelMember(BOT_NAME, channel);
   if (member && channel.members.size === 1) {
     console.log("Destroying current voice connection and it's listeners!");
-    connection.removeAllListeners();
     connection.destroy();
   }
 };
@@ -98,14 +97,29 @@ export const sendTyping = async (message: Message, stopTyping: Function) => {
   }
 };
 
-export const sendMessageWithTypingAndClbk = async (message: Message, clbk: () => Promise<void | string>) => {
-  let messageSent = false;
-  const sendTypingPromise = sendTyping(message, () => messageSent);
-  const clbkPromise = clbk().then(() => {
-    messageSent = true;
-  });
-  await Promise.all([sendTypingPromise, clbkPromise]);
-};
+export const sendInteractionMessageWithFiles = async (message: string, files: Array<AssistantFile>, interaction: ChatInputCommandInteraction) => {
+  await sendInteractionMessageInParts(message, interaction, false);
+  if (files.length === 0) return;
+  const fileAttachments = files.map(fileData =>  new AttachmentBuilder(fileData.file, { name:  fileData.name }));
+  await interaction.editReply({files: fileAttachments });
+}
+
+export const sendInteractionMessageInParts = async (message: string, interaction: ChatInputCommandInteraction, isEphemeral: boolean) => {
+  const maxLength = 1900;
+		if (message.length <= maxLength) {
+        await interaction.editReply({content: message });
+        return;
+    }
+    const messageParts: string[] = [];
+    for (let currentIndex: number = 0; currentIndex < message.length; currentIndex += maxLength) {
+        const part = message.slice(currentIndex, currentIndex + maxLength);
+        messageParts.push(part);
+    }
+    await interaction.editReply({content: messageParts[0]});
+    for (let index = 1; index < messageParts.length; index++) {
+        await interaction.followUp({content: messageParts[index], ephemeral: isEphemeral });
+    }
+}
 
 export const sendMessageToProperChannelWithFile = async (message: string, files: Array<AssistantFile>, channelId: string) => {
   const channel = await sendMessageToProperChannel(message, channelId);

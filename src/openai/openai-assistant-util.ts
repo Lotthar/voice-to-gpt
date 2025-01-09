@@ -1,18 +1,55 @@
 import fetch from "node-fetch";
 import { openai } from "./openai-api-util.js";
-import { sendMessageToProperChannel, sendMessageToProperChannelWithFile } from "../discord/discord-util.js";
-import { AssistantFile } from "../types/openai.js";
-import { Attachment, Message } from "discord.js";
+import { sendInteractionMessageInParts, sendInteractionMessageWithFiles } from "../discord/discord-util.js";
+import { AssistantFile, AssistantFileType, AssistantTools, ChannelAssistantData } from "../types/openai.js";
+import { ChatInputCommandInteraction } from "discord.js";
 import { ResponseLike } from "openai/uploads.mjs";
-import { MessageContentText, ThreadMessage } from "openai/resources/beta/threads/messages/messages.mjs";
+import { downloadFileFromS3, uploadFileToS3 } from "../util/aws-s3-util.js";
+import { readJsonStreamToString } from "../util/stream-util.js";
+import { Annotation, Message, MessageContentPartParam, MessageCreateParams } from "openai/resources/beta/threads/messages.mjs";
 
-export const createUserMessage = async (threadId: string, content: string, fileIds: string[]) => {
+export const createUserMessage = async (threadId: string, content: string, fileTypesByid: Map<string, string>) => {
   const newMessage = await openai.beta.threads.messages.create(threadId, {
     role: "user",
-    content: content,
-    file_ids: fileIds,
+    content: createUserMessageContent(content, fileTypesByid),
+    attachments: createUserMessageAttachments(fileTypesByid),
   });
   return newMessage;
+};
+
+const createUserMessageContent = (textContent: string, fileTypesByid: Map<string, string>) => {
+  const contents: MessageContentPartParam[] = [];
+  fileTypesByid.forEach((fileType: string, fileId: string) => {
+    if (fileType === "image") {
+      contents.push({ type: "image_file", image_file: { file_id: fileId } });
+    }
+  });
+  contents.push({type: "text", text: textContent})
+  return contents;
+};
+
+const createUserMessageAttachments = (fileTypesByid: Map<string, string>) => {
+  const attachments: MessageCreateParams.Attachment[] = [];
+  fileTypesByid.forEach((fileType: string, fileId: string) => {
+    if (fileType !== "image") {
+      attachments.push({ file_id: fileId, tools: AssistantTools });
+    }
+  });
+  return attachments;
+};
+
+export const createAssistantRun = async (threadId: string, assistantId: string, status: string) => {
+  const run = await openai.beta.threads.runs.createAndPoll(threadId, {
+    assistant_id: assistantId,
+    tools: AssistantTools,
+  });
+  if (run.status === status) {
+    return run;
+  } else if (run.status === "cancelling" || run.status === "cancelled") {
+    throw new Error(`Assistant run is in canceliing state or cancelled!`);
+  } else {
+    throw new Error(`Assistant run is not in desired status: "${status}", something was wrong!`);
+  }
 };
 
 export const retrieveAssistantMessages = async (threadId: string, runId: string) => {
@@ -20,26 +57,81 @@ export const retrieveAssistantMessages = async (threadId: string, runId: string)
     order: "desc",
     limit: 10,
   });
-  const result: ThreadMessage[] = [];
-  threadMessages.data
-    .filter(tm => tm.role === "assistant" && tm.run_id === runId)
-    .forEach(tm => result.push(tm))
-  
-  return result.reverse();
+  return threadMessages.data.reverse().filter((tm) => tm.role === "assistant" && tm.run_id === runId);
+};
+
+export const getAssistantSavedConversationData = async (interaction: ChatInputCommandInteraction) => {
+  let assistantData = await getChannelAssistantFromStorage(interaction.channelId);
+  if (assistantData === null) {
+    await sendInteractionMessageInParts(
+      `Please create or select assistant for this channel before trying, use: **/assistant_change**. You can update assistant using **/assistant_update**`,
+      interaction,
+      true
+    );
+    return null;
+  }
+  const currentThreadId = await getCurrentThread(assistantData, interaction.channelId);
+  if (currentThreadId === null) {
+    await sendInteractionMessageInParts(
+      `Looks like there is a problem with getting conversation history for this channel, please reset conversation using **!assistant_clear** command`,
+      interaction,
+      true
+    );
+    return null;
+  }
+  return { assistantData, currentThreadId };
+};
+
+export const getChannelAssistantFromStorage = async (channelId: string): Promise<ChannelAssistantData | null> => {
+  try {
+    const assistantPath = getAssistantPath(channelId);
+    const assistantsJsonStream = await downloadFileFromS3(assistantPath);
+    const assistantJsonString = await readJsonStreamToString(assistantsJsonStream);
+    return JSON.parse(assistantJsonString);
+  } catch (error) {
+    console.error(`Error reading GPT Assistants data from JSON file for channel: ${channelId}:`, error);
+    return null;
+  }
+};
+
+export const saveChannelAssistantInStorage = async (assistantData: ChannelAssistantData, channelId: string): Promise<void> => {
+  try {
+    const filePath = getAssistantPath(channelId);
+    const jsonString = JSON.stringify(assistantData);
+    await uploadFileToS3(filePath, jsonString);
+    console.log(`GPT Assistant data has been saved for channel: ${channelId}`);
+  } catch (error) {
+    console.error(`Error saving GPT Assistant data to JSON file for channel: ${channelId}:`, error);
+  }
+};
+
+const getCurrentThread = async (assistantData: ChannelAssistantData, channelId: string) => {
+  try {
+    if (!assistantData.threadId || (await isThreadInactive(assistantData.threadId))) {
+      const thread = await openai.beta.threads.create();
+      assistantData.threadId = thread.id;
+      await saveChannelAssistantInStorage(assistantData, channelId);
+    }
+    console.log(`Working with threadId: ${assistantData.threadId} for channel: ${channelId}`);
+    return assistantData.threadId;
+  } catch (error) {
+    console.error(`Error while getting current thread for channel: ${channelId}`, error);
+    return null;
+  }
 };
 
 export const cancelAllRuns = async (threadId: string) => {
   const allRuns = await retrieveThreadRuns(threadId);
-  for(let run of allRuns) {
+  for (let run of allRuns) {
     try {
-      if(run.status === "queued" || run.status === "in_progress") {
-        await openai.beta.threads.runs.cancel(threadId, run.id)
+      if (run.status === "queued" || run.status === "in_progress") {
+        await openai.beta.threads.runs.cancel(threadId, run.id);
       }
-    }catch(error) {
+    } catch (error) {
       console.log(`Error canceling the run ${run.id}`, error);
     }
   }
-}
+};
 
 export const retrieveThreadRuns = async (threadId: string) => {
   try {
@@ -52,46 +144,59 @@ export const retrieveThreadRuns = async (threadId: string) => {
     console.log(error);
     return [];
   }
-}
+};
 
 export const retrieveAssistantByName = async (name: string) => {
   const assistants = await retrieveAllAssistants();
-  return assistants.find(assistant => assistant.name === name);
-}
+  return assistants.find((assistant) => assistant.name === name);
+};
 
 export const retrieveAllAssitantsNames = async () => {
   const assistants = await retrieveAllAssistants();
-  return assistants.filter(assistant => assistant.name !== null)
-                   .map(assistant => assistant.name!);
-}
+  return assistants.filter((assistant) => assistant.name !== null).map((assistant) => assistant.name!);
+};
 
 export const retrieveAllAssistants = async () => {
   try {
     const assistants = await openai.beta.assistants.list({
       limit: 20,
-      order: "desc"
+      order: "desc",
     });
     return assistants.data;
   } catch (error) {
     console.log(error);
     return [];
   }
-}
-
-export const passUserInputFilesToAssistant = async (message: Message) => {
-  const inputFiles = await getInputMessageFilesArray(message);
-  const assistantFileIds: string[] = [];
-  for (let inputFile of inputFiles) {
-    const assistantFile = await openai.files.create({
-      file: inputFile,
-      purpose: "assistants",
-    });
-    assistantFileIds.push(assistantFile.id);
-  }
-  return assistantFileIds;
 };
 
-export const extractAssistantFilesFrom = async (annotations: (MessageContentText.Text.FileCitation | MessageContentText.Text.FilePath)[]) => {
+export const passUserInputFilesToAssistant = async (fileTypesByUrl: Map<string, AssistantFileType>, interaction: ChatInputCommandInteraction) => {
+  const filesByUrl = await getInteractionFilesArray(fileTypesByUrl, interaction);
+  const assistantFileTypesById: Map<string, string> = new Map();
+  for (let inputFileUrl of fileTypesByUrl.keys()) {
+    const assistantFile = await openai.files.create({
+      file: filesByUrl.get(inputFileUrl)!,
+      purpose: fileTypesByUrl.get(inputFileUrl)! === "image" ? "vision" : "assistants",
+    });
+    assistantFileTypesById.set(assistantFile.id, fileTypesByUrl.get(inputFileUrl)!);
+  }
+  return assistantFileTypesById;
+};
+
+export const getInteractionFilesArray = async (fileTypesByUrl: Map<string, AssistantFileType>, interaction: ChatInputCommandInteraction) => {
+  const filesByUrl: Map<string, ResponseLike> = new Map();
+  for (let url of fileTypesByUrl.keys()) {
+    try {
+      const fetchResponse = await fetchFileFromUrl(url);
+      filesByUrl.set(url, fetchResponse);
+    } catch (error) {
+      await sendInteractionMessageInParts(`File ${url} was not processed properly and is not taken into consideration`, interaction, true);
+      continue;
+    }
+  }
+  return filesByUrl;
+};
+
+export const extractAssistantFilesFrom = async (annotations: Annotation[]) => {
   const files: Array<AssistantFile> = [];
   for (let annotation of annotations) {
     if (annotation.type === "file_path") {
@@ -105,23 +210,7 @@ export const extractAssistantFilesFrom = async (annotations: (MessageContentText
   return files;
 };
 
-export const getInputMessageFilesArray = async (message: Message) => {
-  const files: ResponseLike[] = [];
-  if (message.attachments.size > 0) {
-    for (let attachment of Array.from(message.attachments.values())) {
-      try {
-        const fetchResponse = await fetchFileFromUrl(attachment);
-        files.push(fetchResponse);
-      } catch (error) {
-        await sendMessageToProperChannel(`File ${attachment.name} was not processed properly and is not taken into consideration`, message.channelId);
-        continue;
-      }
-    }
-  }
-  return files;
-};
-
-export const extractAndSendAssistantMessage = async (messages: ThreadMessage[], channelId: string) => {
+export const extractAndSendAssistantMessage = async (messages: Message[], interaction: ChatInputCommandInteraction) => {
   let textMessage = null,
     annotations = null,
     assisstantFiles = null;
@@ -131,34 +220,16 @@ export const extractAndSendAssistantMessage = async (messages: ThreadMessage[], 
         textMessage = content.text.value;
         annotations = content.text.annotations;
         assisstantFiles = await extractAssistantFilesFrom(annotations);
-        await sendMessageToProperChannelWithFile(textMessage, assisstantFiles, channelId);
+        await sendInteractionMessageWithFiles(textMessage, assisstantFiles, interaction);
       }
     }
   }
 };
 
-const fetchFileFromUrl = async (attachment: Attachment) => {
-  const response = await fetch(attachment.url);
+const fetchFileFromUrl = async (url: string) => {
+  const response = await fetch(url);
   if (!response.ok) throw new Error("Can't properly fetch the attachment by url");
   return response;
-};
-
-export const pollForRunUntil = async (runId: string, threadId: string, desiredStatus: string, intervalMs = 2000, maxAttempts = 150) => {
-  for (let attempts = 0; attempts < maxAttempts; attempts++) {
-    try {
-      const run = await openai.beta.threads.runs.retrieve(threadId, runId);
-      if (run.status === 'cancelling' || run.status === 'cancelled') {
-        return false;
-      }
-      if(run.status === desiredStatus) return true;
-    
-      await new Promise((resolve) => setTimeout(resolve, intervalMs));
-    } catch (error) {
-      console.error("Poll for Assistant run failed:", error);
-    }
-  }
-  console.error(`Max attempts reached, desired status '${desiredStatus}' not found for Assistant run with id: ${runId}.`);
-  return false;
 };
 
 export const isThreadInactive = async (threadId: string) => {

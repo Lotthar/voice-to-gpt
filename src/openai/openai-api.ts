@@ -8,13 +8,22 @@ import {
   getChatGptModel,
   openai
 } from "./openai-api-util.js";
-import { sendMessageToProperChannel } from "../discord/discord-util.js";
+import { sendInteractionMessageInParts, sendMessageToProperChannel } from "../discord/discord-util.js";
+import { ChatInputCommandInteraction } from "discord.js";
 
-export const generateOpenAIAnswer = async (question: string, channelId: string): Promise<string> => {
-  if (question === null) {
-    await sendMessageToProperChannel(genericResponse, channelId);
-    return genericResponse;
+export const generateOpenAIAnswer = async (question: string, interaction: ChatInputCommandInteraction): Promise<void> => {
+  const chatHistory = await loadChatHistoryOrCreateNew(interaction.channelId);
+  const { modelName, model } = await getChatGptModel(interaction.channelId);
+  const answer = await getOpenAiResponse(question, modelName, model, chatHistory);
+  if (answer === null) {
+    await sendInteractionMessageInParts("There answer was an error and answer didn't generate!", interaction, false);
+    return;
   }
+  pushQAtoHistory(question, answer, interaction.channelId, chatHistory);
+  await sendInteractionMessageInParts(answer, interaction, false);
+};
+
+export const generateOpenAIAnswerFromTranscript = async (question: string, channelId: string): Promise<string> => {
   const chatHistory = await loadChatHistoryOrCreateNew(channelId);
   const { modelName, model } = await getChatGptModel(channelId);
   const answer = await getOpenAiResponse(question, modelName, model, chatHistory);
