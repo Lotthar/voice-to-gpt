@@ -1,6 +1,6 @@
 import { AutocompleteInteraction, ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
 import { BotCommand } from '../../types/discord.js';
-import { GPTAssistantModels } from '../../types/openai.js';
+import { AssistantTools, GPTAssistantModels } from '../../types/openai.js';
 import { AssistantTool, AssistantUpdateParams } from 'openai/resources/beta/assistants.mjs';
 
 const assistantUpdate: BotCommand = {
@@ -28,7 +28,7 @@ const assistantUpdate: BotCommand = {
                 .setDescription('Select GPT Assistant additional tools to use')
                 .addChoices(
                     { name: 'Code Interpreter', value: "code_interpreter"},
-                    { name: 'File Retrieveal', value: "file_search" },
+                    { name: 'File Search', value: "file_search" },
                 ))     
 		.setDescription('Updates selected GPT Assistant with new instructions, model or tools.'),
 	autocomplete: async(interaction: AutocompleteInteraction, getExistingAssistants: () => Promise<string[]>) => {
@@ -49,7 +49,7 @@ const assistantUpdate: BotCommand = {
         const instructions = interaction.options.getString('instructions') ?? undefined;
         const model = interaction.options.getString('model') ?? undefined;
         const choosenTool = interaction.options.getString('tools') ?? undefined;
-        const tools: Array<AssistantTool> = !choosenTool ? [{type: "code_interpreter"}, {type: "file_search"}] : [{type: choosenTool} as AssistantTool] ;
+        const tools: Array<AssistantTool> = !choosenTool ? AssistantTools : [{type: choosenTool} as AssistantTool] ;
         await updateAssistant(interaction, {name, instructions, model, tools})
     }
 };

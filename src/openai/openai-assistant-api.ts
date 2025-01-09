@@ -1,6 +1,6 @@
 import { openai } from "./openai-api-util.js";
 import { sendInteractionMessageInParts } from "../discord/discord-util.js";
-import { AssistantFileType, ChannelAssistantData, GPTAssistantModels } from "../types/openai.js";
+import { AssistantFileType, AssistantTools, ChannelAssistantData, GPTAssistantModels } from "../types/openai.js";
 import { ChatInputCommandInteraction } from "discord.js";
 import {
   cancelAllRuns,
@@ -55,13 +55,11 @@ export const changeAssistantForChannel = async (name: string, interaction: ChatI
 
 export const createAssistant = async (interaction: ChatInputCommandInteraction, newAssistant: AssistantCreateParams) => {
   try {
-    const tools: Array<AssistantTool> = [{"type": "code_interpreter"}, {"type": "file_search"}];
     const createParams = {
       name: newAssistant.name,
       instructions: newAssistant.instructions,
       model: newAssistant.model ?? GPTAssistantModels[1],
-      tools: tools
-      
+      tools: AssistantTools
     };
     const createadAssistant = await openai.beta.assistants.create(createParams);
     await interaction.reply(`You **created** a new GPT Assistant named: **${createadAssistant.name}**, model: **${createadAssistant.model}**, tools: **${JSON.stringify(createadAssistant.tools.map(t => t.type))}**, instructions: *${createadAssistant.instructions}*`);
@@ -74,10 +72,10 @@ export const createAssistant = async (interaction: ChatInputCommandInteraction, 
 
 export const updateAssistant = async (interaction: ChatInputCommandInteraction, newAssistant: AssistantUpdateParams) => {
   try {
-    let updateParams: Record<string,string> = {};
+    let updateParams: Record<string,string | AssistantTool[]> = {};
     if (!newAssistant.name) return;
     if (!!newAssistant.instructions) updateParams.instructions = newAssistant.instructions;
-    // if (!!newAssistant.tools) updateParams.tools = newAssistant.tools;
+    if (!!newAssistant.tools) updateParams.tools = newAssistant.tools;
     const currentAssistant = await retrieveAssistantByName(newAssistant.name);
     if(!currentAssistant) {
       await interaction.reply(`There is no GPT Assistant with name: **${newAssistant.name}**!`);
