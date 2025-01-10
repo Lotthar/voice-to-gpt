@@ -9,33 +9,27 @@ import { readJsonStreamToString } from "../util/stream-util.js";
 import { Annotation, Message, MessageContentPartParam, MessageCreateParams } from "openai/resources/beta/threads/messages.mjs";
 
 export const createUserMessage = async (threadId: string, content: string, fileTypesByid: Map<string, string>) => {
+  const { contents, attachments } = createMessageContentAndAttachments(content, fileTypesByid); 
   const newMessage = await openai.beta.threads.messages.create(threadId, {
     role: "user",
-    content: createUserMessageContent(content, fileTypesByid),
-    attachments: createUserMessageAttachments(fileTypesByid),
+    content: contents,
+    attachments: attachments,
   });
   return newMessage;
 };
 
-const createUserMessageContent = (textContent: string, fileTypesByid: Map<string, string>) => {
+const createMessageContentAndAttachments = (textContent: string, fileTypesByid: Map<string, string>) => {
   const contents: MessageContentPartParam[] = [];
+  const attachments: MessageCreateParams.Attachment[] = [];
   fileTypesByid.forEach((fileType: string, fileId: string) => {
     if (fileType === "image") {
       contents.push({ type: "image_file", image_file: { file_id: fileId } });
-    }
-  });
-  contents.push({type: "text", text: textContent})
-  return contents;
-};
-
-const createUserMessageAttachments = (fileTypesByid: Map<string, string>) => {
-  const attachments: MessageCreateParams.Attachment[] = [];
-  fileTypesByid.forEach((fileType: string, fileId: string) => {
-    if (fileType !== "image") {
+    } else {
       attachments.push({ file_id: fileId, tools: AssistantTools });
     }
   });
-  return attachments;
+  contents.push({type: "text", text: textContent})
+  return { contents, attachments };
 };
 
 export const createAssistantRun = async (threadId: string, assistantId: string, status: string) => {
@@ -45,11 +39,11 @@ export const createAssistantRun = async (threadId: string, assistantId: string, 
   });
   if (run.status === status) {
     return run;
-  } else if (run.status === "cancelling" || run.status === "cancelled") {
-    throw new Error(`Assistant run is in canceliing state or cancelled!`);
-  } else {
-    throw new Error(`Assistant run is not in desired status: "${status}", something was wrong!`);
   }
+  if (run.status === "cancelling" || run.status === "cancelled") {
+    throw new Error(`Assistant run is in canceliing state or cancelled!`);
+  }
+  throw new Error(`Assistant run is not in desired status: "${status}", something was wrong!`);
 };
 
 export const retrieveAssistantMessages = async (threadId: string, runId: string) => {
