@@ -13,25 +13,24 @@ import {
   retrieveAllAssistants,
   retrieveAssistantByName,
   retrieveAssistantMessages,
-  saveChannelAssistantInStorage
+  saveChannelAssistantInStorage,
 } from "./openai-assistant-util.js";
 import { AssistantCreateParams, AssistantTool, AssistantUpdateParams } from "openai/resources/beta/assistants.mjs";
 
 export const generateAssistantAnswer = async (interaction: ChatInputCommandInteraction, question: string, files: Map<string, AssistantFileType>) => {
   const assistantSavedData = await getAssistantSavedConversationData(interaction);
-  if(assistantSavedData === null) return;
+  if (assistantSavedData === null) return;
   const { currentThreadId, assistantData } = assistantSavedData;
   const assistantFileTypesById = await passUserInputFilesToAssistant(files, interaction);
   await createUserMessage(currentThreadId, question, assistantFileTypesById);
   try {
-    const assistantRun = await createAssistantRun(currentThreadId,assistantData.assistantId, "completed");
+    const assistantRun = await createAssistantRun(currentThreadId, assistantData.assistantId, "completed");
     const assistantMessages = await retrieveAssistantMessages(currentThreadId, assistantRun.id);
     await extractAndSendAssistantMessage(assistantMessages, interaction);
-  } catch(error) {
+  } catch (error) {
     console.error(error);
-    await sendInteractionMessageInParts("Something went wrong while generating Assistant answer, please try again!", interaction, false)
+    await sendInteractionMessageInParts("Something went wrong while generating Assistant answer, please try again!", interaction, false);
   }
-  
 };
 
 export const listAllAssistants = async (interaction: ChatInputCommandInteraction): Promise<void> => {
@@ -50,7 +49,11 @@ export const changeAssistantForChannel = async (name: string, interaction: ChatI
   await saveChannelAssistantInStorage(assistantData, interaction.channelId);
   const currentAssistant = await getChannelAssistantFromStorage(interaction.channelId);
   if (!!currentAssistant && !!currentAssistant.threadId) await openai.beta.threads.del(currentAssistant.threadId);
-  await interaction.reply(`Selected GPT Assistant for current channel with name: **${chosenAssistant.name}**, model: **${chosenAssistant.model}** and instructions: *${chosenAssistant.instructions}* !`);
+  await sendInteractionMessageInParts(
+    `Selected GPT Assistant for current channel with name: **${chosenAssistant.name}**, model: **${chosenAssistant.model}** and instructions: *${chosenAssistant.instructions}* !`,
+    interaction,
+    true
+  );
 };
 
 export const createAssistant = async (interaction: ChatInputCommandInteraction, newAssistant: AssistantCreateParams) => {
@@ -59,35 +62,46 @@ export const createAssistant = async (interaction: ChatInputCommandInteraction, 
       name: newAssistant.name,
       instructions: newAssistant.instructions,
       model: newAssistant.model ?? GPTAssistantModels[1],
-      tools: AssistantTools
+      tools: AssistantTools,
     };
     const createadAssistant = await openai.beta.assistants.create(createParams);
-    await interaction.reply(`You **created** a new GPT Assistant named: **${createadAssistant.name}**, model: **${createadAssistant.model}**, tools: **${JSON.stringify(createadAssistant.tools.map(t => t.type))}**, instructions: *${createadAssistant.instructions}*`);
+    await sendInteractionMessageInParts(
+      `You **created** a new GPT Assistant named: **${createadAssistant.name}**, model: **${createadAssistant.model}**, tools: **${JSON.stringify(
+        createadAssistant.tools.map((t) => t.type)
+      )}**, instructions: *${createadAssistant.instructions}*`,
+      interaction,
+      true
+    );
   } catch (error) {
     console.error(`Error creating assistant for channel: ${interaction.channelId}`, error);
-    await interaction.reply({content: `Error creating assistant!`, ephemeral: true});
+    await sendInteractionMessageInParts("Error creating assistant!", interaction, true);
   }
-  
 };
 
 export const updateAssistant = async (interaction: ChatInputCommandInteraction, newAssistant: AssistantUpdateParams) => {
   try {
-    let updateParams: Record<string,string | AssistantTool[]> = {};
+    let updateParams: Record<string, string | AssistantTool[]> = {};
     if (!newAssistant.name) return;
     if (!!newAssistant.instructions) updateParams.instructions = newAssistant.instructions;
     if (!!newAssistant.tools) updateParams.tools = newAssistant.tools;
     const currentAssistant = await retrieveAssistantByName(newAssistant.name);
-    if(!currentAssistant) {
-      await interaction.reply(`There is no GPT Assistant with name: **${newAssistant.name}**!`);
+    if (!currentAssistant) {
+      await sendInteractionMessageInParts(`There is no GPT Assistant with name: **${newAssistant.name}**!`, interaction, true);
       return;
     }
     if (!!newAssistant.model) updateParams.model = newAssistant.model;
     else updateParams.model = currentAssistant.model;
     const updatedAssistant = await openai.beta.assistants.update(currentAssistant.id, updateParams);
-    await interaction.reply(`You **updated** GPT Assistant wuth name: **${updatedAssistant.name}** model: **${updatedAssistant.model}**, tools: **${JSON.stringify(updatedAssistant.tools.map(t => t.type))}** and instructions: *${updatedAssistant.instructions}*`);
+    await sendInteractionMessageInParts(
+      `You **updated** GPT Assistant wuth name: **${updatedAssistant.name}** model: **${updatedAssistant.model}**, tools: **${JSON.stringify(
+        updatedAssistant.tools.map((t) => t.type)
+      )}** and instructions: *${updatedAssistant.instructions}*`,
+      interaction,
+      true
+    );
   } catch (error) {
     console.error(`Error updating assistant for channel: ${interaction.channelId}`, error);
-    await interaction.reply(`Error updating assistant!`);
+    await sendInteractionMessageInParts(`Error updating assistant!`, interaction, true);
   }
 };
 
@@ -96,10 +110,10 @@ export const deleteAssistantByName = async (name: string, interaction: ChatInput
     let chosenAssistant = await retrieveAssistantByName(name);
     if (!chosenAssistant) return;
     await openai.beta.assistants.del(chosenAssistant.id);
-    await interaction.reply(`GPT Assistant with the name: **${chosenAssistant.name}** successfully **deleted**!`);
+    await sendInteractionMessageInParts(`GPT Assistant with the name: **${chosenAssistant.name}** successfully **deleted**!`, interaction, true);
   } catch (error) {
     console.log(error);
-    await interaction.reply(`Error deleting assistant which name starts with: **${name}**`);
+    await sendInteractionMessageInParts(`Error deleting assistant which name starts with: **${name}**`, interaction, true);
   }
 };
 
@@ -107,7 +121,7 @@ export const resetAssistantThread = async (interaction: ChatInputCommandInteract
   let assistantData = await getChannelAssistantFromStorage(interaction.channelId);
   if (assistantData === null) return false;
   await resetCurrentThread(assistantData, interaction);
-  await interaction.reply(`You have **cleared** your conversation so far with GPT Assistant, please star over!`);
+  await sendInteractionMessageInParts(`You have **cleared** your conversation so far with GPT Assistant, please star over!`, interaction, true);
   return true;
 };
 
@@ -116,7 +130,7 @@ export const stopAssistantThreadRuns = async (interaction: ChatInputCommandInter
   if (assistantData === null) {
     return true;
   }
-  if(assistantData.threadId === null) {
+  if (assistantData.threadId === null) {
     await interaction.reply(`Current assistant has no tasks to be stoped!`);
     return true;
   }

@@ -204,16 +204,14 @@ export const extractAssistantFilesFrom = async (annotations: Annotation[]) => {
   return files;
 };
 
+
 export const extractAndSendAssistantMessage = async (messages: Message[], interaction: ChatInputCommandInteraction) => {
-  let textMessage = null,
-    annotations = null,
-    assisstantFiles = null;
   for (let message of messages) {
     for (let content of message.content) {
       if (content.type === "text") {
-        textMessage = content.text.value;
-        annotations = content.text.annotations;
-        assisstantFiles = await extractAssistantFilesFrom(annotations);
+        const textMessage = content.text.value;
+        const annotations = content.text.annotations;
+        const assisstantFiles = await extractAssistantFilesFrom(annotations);
         await sendInteractionMessageWithFiles(textMessage, assisstantFiles, interaction);
       }
     }
